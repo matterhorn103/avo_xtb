@@ -1,0 +1,11 @@
+{
+  "author": "matterhorn103",
+  "version": 1.0,
+  "url": "https://github.com/matterhorn103/avo_xtb",
+  "name": "test",
+  "description": "Run test script",
+  "type": "commands",
+  "commands": [
+    { "name": "test", "command": "test.py" }
+  ]
+}
