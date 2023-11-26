@@ -30,11 +30,18 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
+import json
+from pathlib import Path
 
-import sys
-import subprocess
+plugin_dir = Path(__file__).parent
+config_file = plugin_dir / "config.json"
 
-command = sys.argv[1:]
-print(command)
-calc = subprocess.run(command, capture_output=True)
-print(calc.stdout)
+with open(config_file, encoding="utf-8") as configuration:
+    config = json.load(configuration)
+
+if "xtb_path" in config:
+    xtb_bin = Path(config["xtb_path"])
+elif (plugin_dir / "xtb" / "bin").exists():
+    xtb_bin = plugin_dir / "xtb" / "bin" / "xtb"
+else:
+    xtb_bin = "xtb"

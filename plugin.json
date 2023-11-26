@@ -1,11 +1,16 @@
 {
-  "author": "matterhorn103",
-  "version": 1.0,
+  "author": "Matthew J. Milner",
+  "version": 0.1,
   "url": "https://github.com/matterhorn103/avo_xtb",
-  "name": "test",
-  "description": "Run test script",
+  "name": "avogadro-xtb",
+  "description": "Access the full power of xtb through the Avogadro interface.",
   "type": "commands",
   "commands": [
-    { "name": "test", "command": "test.py" }
+    { "debug": "debug", "command": "debug.py" },
+    { "name": "energy", "command": "energy.py" },
+    { "name": "optimize", "command": "opt.py" },
+    { "name": "frequencies", "command": "freq.py" },
+    { "name": "orbitals", "command": "orbitals.py" },
+    { "name": "run", "command": "run.py" }
   ]
 }
