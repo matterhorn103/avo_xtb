@@ -30,6 +30,7 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
+
 import argparse
 import json
 import os
@@ -38,16 +39,14 @@ import sys
 from pathlib import Path
 from shutil import rmtree, copytree
 
-from config import xtb_bin, plugin_dir
+from config import config, xtb_bin, calc_dir
 import convert
-from energy import parse_energy
 
 
-def run(geom_file, command_string):
-    # Change working dir to this one to run xtb correctly
+def run_xtb(command, geom_file):
+    # Change working dir to that of geometry file to run xtb correctly
     os.chdir(geom_file.parent)
     out_file = geom_file.with_name("output.out")
-    command = command_string.split()
     # Replace xtb with xtb path
     if command[0] == "xtb":
         command[0] = xtb_bin
@@ -58,8 +57,31 @@ def run(geom_file, command_string):
     calc = subprocess.run(command, capture_output=True, encoding="utf-8")
     with open(out_file, "w", encoding="utf-8") as output:
         output.write(calc.stdout)
+    
+    # Extract energy from output stream
+    # If not found, returns 0.0
     energy = parse_energy(calc.stdout)
-    return (out_file, energy)
+
+    # Return everything as a tuple including subprocess.CompletedProcess object
+    return (calc, out_file, energy)
+
+
+def parse_energy(output_string):
+    # Get final energy from output file
+    # but don't convert here as not all calculation types give in same units
+    end = output_string.split("\n")[-20:]
+    matched_lines = [line for line in end if "TOTAL ENERGY" in line]
+    if len(matched_lines) > 0:
+        energy_line = matched_lines[-1]
+    else:
+        # Placeholder result so that something is always returned
+        energy_line = "0.0"
+    for section in energy_line.split():
+        try:
+            energy = float(section)
+        except ValueError:
+            continue
+    return energy
 
 
 if __name__ == "__main__":
@@ -79,25 +101,29 @@ if __name__ == "__main__":
                 "save_dir": {
                     "type": "string",
                     "label": "Save results in",
-                    "default": "<plugin_directory>/last"
+                    "default": str(calc_dir)
                     },
-                "Number of cores": {
-                    "type": "integer",
-                    #"label": "Number of cores",
-                    "minimum": 1,
-                    "default": 1
-                    },
-                "Memory per core": {
-                    "type": "integer",
-                    #"label" "Memory per core",
-                    "minimum": 1,
-                    "default": 1,
-                    "suffix": " GB"
-                    },
+                #"Number of threads": {
+                #    "type": "integer",
+                #    #"label": "Number of cores",
+                #    "minimum": 1,
+                #    "default": 1
+                #    },
+                #"Memory per core": {
+                #    "type": "integer",
+                #    #"label" "Memory per core",
+                #    "minimum": 1,
+                #    "default": 1,
+                #    "suffix": " GB"
+                #    },
                 "command": {
                     "type": "string",
                     "label": "Command to run",
                     "default": "xtb <geometry_file> --opt --chrg 0 --uhf 0"
+                    },
+                "help": {
+                    "type": "text",
+                    "label": "See https://xtb-docs.readthedocs.io/ for help"
                     },
                 "turbomole": {
                     "type": "boolean",
@@ -106,6 +132,9 @@ if __name__ == "__main__":
                     }
                 }
             }
+        # Add solvation to default command if found in user config
+        if config["solvent"] is not None:
+            options["userOptions"]["command"]["default"] += f" --alpb {config['solvent']}"
         print(json.dumps(options))
     if args.display_name:
         print("Run…")
@@ -113,8 +142,6 @@ if __name__ == "__main__":
         print("Extensions|Semi-empirical (xtb)")
 
     if args.run_command:
-        # Run calculation within plugin directory
-        calc_dir = plugin_dir / "last"
         # Remove results of last calculation
         if calc_dir.exists():
             rmtree(calc_dir)
@@ -125,28 +152,34 @@ if __name__ == "__main__":
 
         # Extract the coords and write to file for use as xtb input
         geom = avo_input["tmol"]
-        coord_path = Path(calc_dir) / "input.coord"
-        with open(coord_path, "w", encoding="utf-8") as coord_file:
-            coord_file.write(str(geom))
+        tmol_path = Path(calc_dir) / "input.tmol"
+        with open(tmol_path, "w", encoding="utf-8") as tmol_file:
+            tmol_file.write(str(geom))
         # Convert to xyz format
-        xyz_path = convert.coord_to_xyz(coord_path)
+        xyz_path = convert.tmol_to_xyz(tmol_path)
         # Select geometry to use on basis of user choice
         if avo_input["turbomole"]:
-            geom_path = coord_path
+            geom_path = tmol_path
         else:
             geom_path = xyz_path
 
-        # Run calculation; returns path to output.out and energy
-        result_path, energy = run(
-            geom_path,
-            avo_input["command"]
+        # Run calculation; returns subprocess.CompletedProcess object and path to output.out
+        calc, result_path, energy = run_xtb(
+            avo_input["command"].split(),
+            geom_path
             )
 
         # Format everything appropriately for Avogadro
         # Start by passing back the original cjson, then add changes
-        result = {"molecularFormat": "cjson", "cjson": avo_input["cjson"]}
+        result = {"moleculeFormat": "cjson", "cjson": avo_input["cjson"]}
+
+        # Many different parts of the following may wish to report message
+        # Instantiate a message list and combine later
+        message = []
 
         # Catch errors in xtb execution (to do)
+        #except Exception as ex:
+            #print(str(ex))
         #if (error condition):
             #result["message"] = "Error message"
             # Pass back to Avogadro
@@ -156,31 +189,62 @@ if __name__ == "__main__":
         # Check if opt was requested
         if any(x in avo_input["command"] for x in ["--opt", "--ohess"]):
             # Convert geometry
-            cjson_path = convert.xyz_to_cjson(result_path.with_name("xtbopt.xyz"))
+            if geom_path.suffix == ".tmol":
+                geom_cjson_path = convert.tmol_to_cjson(result_path.with_name("xtbopt.tmol"))
+            else:
+                geom_cjson_path = convert.xyz_to_cjson(result_path.with_name("xtbopt.xyz"))
             # Open the cjson
-            with open(cjson_path, encoding="utf-8") as result_cjson:
-                cjson_geom = json.load(result_cjson)
-            result["cjson"]["atoms"]["coords"] = cjson_geom["atoms"]["coords"]
+            with open(geom_cjson_path, encoding="utf-8") as result_cjson:
+                geom_cjson = json.load(result_cjson)
+            result["cjson"]["atoms"]["coords"] = geom_cjson["atoms"]["coords"]
 
         # Check if frequencies were requested
-        # (to do)
-        #if any(x in avo_input["command"] for x in ["--hess", "--ohess"]):
-
+        if any(x in avo_input["command"] for x in ["--hess", "--ohess"]):
+            freq_cjson_path = convert.g98_to_cjson(result_path.with_name("g98.out"))
+            # Open the cjson
+            with open(freq_cjson_path, encoding="utf-8") as result_cjson:
+                freq_cjson = json.load(result_cjson)
+            result["cjson"]["vibrations"] = freq_cjson["vibrations"]
+            # xtb no longer gives Raman intensities but does write them as all 0
+            # If passed on to the user this is misleading so remove them
+            if "ramanIntensities" in result["cjson"]["vibrations"]:
+                del result["cjson"]["vibrations"]["ramanIntensities"]
+            # Inform user if there are negative frequencies
+            if float(freq_cjson["vibrations"]["frequencies"][0]) < 0:
+                # Check to see if xtb has produced a distorted geometry (ohess does this)
+                distorted_geom = geom_path.with_stem("xtbhess")
+                if distorted_geom.exists():
+                    message.append("At least one negative frequency found!\n"
+                                   "This is not a minimum on the potential energy surface.\n"
+                                   "You should reoptimize the geometry starting from the\n"
+                                   "distorted geometry found in the calculation directory\n"
+                                   "with the filename 'xtbhess.xyz' or 'xtbhess.tmol'.")
+                else:
+                    message.append("At least one negative frequency found!\n"
+                                   "This is not a minimum on the potential energy surface.\n"
+                                   "You should reoptimize the geometry.")
+            
         # Check if orbitals were requested
         # (to do)
+        # Not sure how this will be possible at the same time as any other calculation type
+        # Currently avo only accepts one file format being passed back
         #if "--molden" in command
 
-        # Add energy from output file
+        # Add energy from output
+        energy = parse_energy(calc.stdout)
         # Convert energy to eV for Avogadro
-        energy_eV = energy * 27.211386245
+        energy_eV = convert.convert_energy(energy, "hartree")["eV"]
         result["cjson"]["properties"]["totalEnergy"] = str(round(energy_eV, 7))
+
+        # Add all the messages, separated by blank lines
+        result["message"] = "\n\n".join(message)
 
         # Save result
         with open(calc_dir / "result.cjson", "w", encoding="utf-8") as save_file:
             json.dump(result["cjson"], save_file)
 
         # If user specified a save location, copy calculation directory to there
-        if avo_input["save_dir"] != "<plugin_directory>/last":
+        if Path(avo_input["save_dir"]) != calc_dir:
             copytree(calc_dir, Path(avo_input["save_dir"]), dirs_exist_ok=True)
 
         # Pass back to Avogadro

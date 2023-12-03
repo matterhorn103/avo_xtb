@@ -33,28 +33,26 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import argparse
 import json
 import os
-import subprocess
 import sys
 from pathlib import Path
 from shutil import rmtree
 
-from config import xtb_bin, plugin_dir
+from config import config, calc_dir
 import convert
-from energy import parse_energy
+from run import run_xtb
 
 
 def optimize(geom_file, charge=0, multiplicity=1):
-    # Change working dir to this one to run xtb correctly
-    os.chdir(geom_file.parent)
-    out_file = geom_file.with_name("output.out")
     spin = multiplicity - 1
-    command = [xtb_bin, geom_file, "--opt", "--chrg", str(charge), "--uhf", str(spin)]
+    command = ["xtb", geom_file, "--opt", "--chrg", str(charge), "--uhf", str(spin)]
+    # Add solvation if set globally
+    if config["solvent"] is not None:
+        command.append("--alpb")
+        command.append(config["solvent"])
     # Run xtb from command line
-    calc = subprocess.run(command, capture_output=True, encoding="utf-8")
-    with open(out_file, "w", encoding="utf-8") as output:
-        output.write(calc.stdout)
-    # Return path to geometry file with same suffix
-    return (geom_file.with_stem("xtbopt"))
+    calc, out_file, energy = run_xtb(command, geom_file)
+    # Return path to geometry file with same suffix, along with energy
+    return (geom_file.with_stem("xtbopt"), energy)
 
 
 if __name__ == "__main__":
@@ -76,8 +74,6 @@ if __name__ == "__main__":
         print("Extensions|Semi-empirical (xtb)")
 
     if args.run_command:
-        # Run calculation within plugin directory
-        calc_dir = plugin_dir / "last"
         # Remove results of last calculation
         if calc_dir.exists():
             rmtree(calc_dir)
@@ -92,7 +88,7 @@ if __name__ == "__main__":
             xyz_file.write(str(geom))
 
         # Run calculation using xyz file
-        result_path = optimize(
+        result_path, energy = optimize(
             xyz_path,
             avo_input["charge"],
             avo_input["spin"]
@@ -102,17 +98,22 @@ if __name__ == "__main__":
         # Open the cjson
         with open(cjson_path, encoding="utf-8") as result_cjson:
             cjson_geom = json.load(result_cjson)
-        # Get energy from output file
-        with open(calc_dir / "output.out", encoding="utf-8") as output_file:
-            output = output_file.read()
-            energy = parse_energy(output)
-            # Convert energy to eV for Avogadro
-            energy_eV = energy * 27.211386245
+        # Check for convergence
+        # TO DO
+        # Will need to look for "FAILED TO CONVERGE"
+        # Convert energy for Avogadro
+        energies = convert.convert_energy(energy, "hartree")
         # Format everything appropriately for Avogadro
         # Start by passing back the original cjson, then add changes
-        result = {"molecularFormat": "cjson", "cjson": avo_input["cjson"]}
+        result = {"moleculeFormat": "cjson", "cjson": avo_input["cjson"]}
         result["cjson"]["atoms"]["coords"] = cjson_geom["atoms"]["coords"]
-        result["cjson"]["properties"]["totalEnergy"] = str(round(energy_eV, 7))
+        result["cjson"]["properties"]["totalEnergy"] = str(round(energies["eV"], 7))
+        
+        # If the cjson contained frequencies or orbitals, remove them as they are no longer physical
+        for field in ["vibrations", "basisSet", "orbitals", "cube"]:
+            if field in result["cjson"]:
+                del result["cjson"][field]
+        
         # Save result
         with open(calc_dir / "result.cjson", "w", encoding="utf-8") as save_file:
             json.dump(result["cjson"], save_file)

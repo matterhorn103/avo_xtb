@@ -30,7 +30,7 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
-import json
+
 import os
 import subprocess
 import sys
@@ -50,17 +50,18 @@ def find_openbabel():
 obabel_path = find_openbabel()
 
 ####################################################################################################
+# CONVERSIONS USING OPEN BABEL
 # For now all the conversion functions are separate to allow for flexibility
 # Obviously it would be possible to combine many into a single function with more arguments
 
 # Turbomole coord >>> xyz
 # Maybe at some point do this natively but for now seems easier to use openbabel
 # Produced as xtb geometry output if input was also an xyz file
-def coord_to_xyz(coord_file):
+def tmol_to_xyz(tmol_file):
     # Change working dir to that of file to run openbabel correctly
-    os.chdir(coord_file.parent)
-    xyz_file = coord_file.with_suffix(".xyz")
-    command = [obabel_path, "-i", "tmol", coord_file, "-o", "xyz", "-O", xyz_file]
+    os.chdir(tmol_file.parent)
+    xyz_file = tmol_file.with_suffix(".xyz")
+    command = [obabel_path, "-i", "tmol", tmol_file, "-o", "xyz", "-O", xyz_file]
     conversion = subprocess.run(command, capture_output=True, encoding="utf-8")
     return xyz_file
 
@@ -75,13 +76,13 @@ def xyz_to_cjson(xyz_file):
     return cjson_file
 
 
-# Turbomole coord >>> cjson
-# Produced as xtb geometry output if input was also a coord file
-def coord_to_cjson(coord_file):
+# Turbomole tmol >>> cjson
+# Produced as xtb geometry output if input was also a tmol file
+def tmol_to_cjson(tmol_file):
     # Change working dir to that if file to run openbabel correctly
-    os.chdir(coord_file.parent)
-    cjson_file = coord_file.with_suffix(".cjson")
-    command = [obabel_path, "-i", "tmol", coord_file, "-o", "cjson", "-O", cjson_file]
+    os.chdir(tmol_file.parent)
+    cjson_file = tmol_file.with_suffix(".cjson")
+    command = [obabel_path, "-i", "tmol", tmol_file, "-o", "cjson", "-O", cjson_file]
     conversion = subprocess.run(command, capture_output=True, encoding="utf-8")
     return cjson_file
 
@@ -96,4 +97,28 @@ def g98_to_cjson(g98_file):
     conversion = subprocess.run(command, capture_output=True, encoding="utf-8")
     return cjson_file
 
+####################################################################################################
+# INTERNAL CONVERSIONS (NO OPEN BABEL)
 
+# Convert an energy in the specified unit to a dictionary of all useful units
+def convert_energy(energy, unit):
+    # Whichever unit was passed, convert to hartree
+    if unit == "hartree":
+        E_hartree = energy
+    elif unit == "eV":
+        E_hartree = energy / 27.211386245
+    elif unit == "kJ":
+        E_hartree = energy / 2625.4996395
+    elif unit == "kcal":
+        E_hartree = energy / 627.50947406
+    # Then calculate the others based on that
+    E_eV = E_hartree * 27.211386245
+    E_kJ = E_hartree * 2625.4996395
+    E_kcal = E_hartree * 627.50947406
+    E_dict = {"hartree": E_hartree, "eV": E_eV, "kJ": E_kJ, "kcal": E_kcal}
+    return E_dict
+
+
+# Can imagine it will one day be useful to do similar to above but with frequency units
+def convert_freq(freq=None, wavelength=None, wavenumber=None):
+    return

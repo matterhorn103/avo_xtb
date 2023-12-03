@@ -33,27 +33,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import argparse
 import json
-import os
-import sys
-from pathlib import Path
-from shutil import rmtree
+import platform
+import subprocess
 
-from config import config, calc_dir
-from run import run_xtb
-import convert
-
-
-def energy(geom_file, charge=0, multiplicity=1):
-    spin = multiplicity - 1
-    command = ["xtb", geom_file, "--chrg", str(charge), "--uhf", str(spin)]
-    # Add solvation if set globally
-    if config["solvent"] is not None:
-        command.append("--alpb")
-        command.append(config["solvent"])
-    # Run xtb from command line
-    calc, out_file, energy = run_xtb(command, geom_file)
-    return energy
-
+from config import calc_dir
 
 
 if __name__ == "__main__":
@@ -67,45 +50,22 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.print_options:
-        options = {"inputMoleculeFormat": "xyz"}
+        options = {}
         print(json.dumps(options))
     if args.display_name:
-        print("Energy")
+        print("Go to Calculation Files")
     if args.menu_path:
         print("Extensions|Semi-empirical (xtb)")
 
     if args.run_command:
-        # Remove results of last calculation
-        if calc_dir.exists():
-            rmtree(calc_dir)
-        Path.mkdir(calc_dir)
+        # Have to detect os
+        if platform.system() == "Windows":
+            subprocess.run(["start", calc_dir])
 
-        # Read input from Avogadro
-        avo_input = json.loads(sys.stdin.read())
-        # Extract the coords and write to file for use as xtb input
-        geom = avo_input["xyz"]
-        xyz_path = Path(calc_dir) / "input.xyz"
-        with open(xyz_path, "w", encoding="utf-8") as xyz_file:
-            xyz_file.write(str(geom))
+        elif platform.system() == "Darwin":
+            subprocess.run(["open", calc_dir])
 
-        # Run calculation; returns energy as float in hartree
-        energy_hartree = energy(
-            xyz_path,
-            avo_input["charge"],
-            avo_input["spin"]
-            )
-        # Convert energy to eV for Avogadro, other units for users
-        energies = convert.convert_energy(energy_hartree, "hartree")
-        # Format everything appropriately for Avogadro
-        # Start by passing back the original cjson, then add changes
-        result = {"moleculeFormat": "cjson", "cjson": avo_input["cjson"]}
-        # Currently Avogadro ignores the energy result
-        result["message"] = ("Energy:\n"
-                             + f"{str(round(energy_hartree, 7))} hartree\n"
-                             + f"{str(round(energies['eV'], 7))} eV\n"
-                             + f"{str(round(energies['kJ'], 7))} kJ/mol\n"
-                             + f"{str(round(energies['kcal'], 7))} kcal/mol\n"
-                             )
-        result["cjson"]["properties"]["totalEnergy"] = str(round(energies["eV"], 7))
-        # Pass back to Avogadro
-        print(json.dumps(result))
+        else:
+            subprocess.run(["xdg-open", calc_dir])
+        
+      

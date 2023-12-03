@@ -38,20 +38,21 @@ import sys
 from pathlib import Path
 from shutil import rmtree
 
-from config import xtb_bin, plugin_dir
+from config import config, calc_dir
+from run import run_xtb
 
 
 def orbitals(geom_file, charge=0, multiplicity=1):
-    # Change working dir to this one to run xtb correctly
-    os.chdir(geom_file.parent)
-    out_file = geom_file.with_name("output.out")
     spin = multiplicity - 1
     # Just do a single point calculation but pass molden option to get orbital printout
-    command = [xtb_bin, geom_file, "--molden", "--chrg", str(charge), "--uhf", str(spin)]
+    command = ["xtb", geom_file, "--molden", "--chrg", str(charge), "--uhf", str(spin)]
+    # Add solvation if set globally
+    if config["solvent"] is not None:
+        command.append("--alpb")
+        command.append(config["solvent"])
     # Run xtb from command line
-    calc = subprocess.run(command, capture_output=True, encoding="utf-8")
-    with open(out_file, "w", encoding="utf-8") as output:
-        output.write(calc.stdout)
+    calc, out_file, energy = run_xtb(command, geom_file)
+
     # Return path to molden file
     return (geom_file.with_name("molden.input"))
 
@@ -75,8 +76,6 @@ if __name__ == "__main__":
         print("Extensions|Semi-empirical (xtb)")
 
     if args.run_command:
-        # Run calculation within plugin directory
-        calc_dir = plugin_dir / "last"
         # Remove results of last calculation
         if calc_dir.exists():
             rmtree(calc_dir)
@@ -101,7 +100,16 @@ if __name__ == "__main__":
         with open(result_path, encoding="utf-8") as molden_file:
             molden_string = molden_file.read()
         # Format everything appropriately for Avogadro
-        # Just pass orbitals file with append
-        result = {"append": True, "molecularFormat": "molden", "molden": molden_string}
+        # Just pass orbitals file with instruction to read only properties
+        result = {"readProperties": True, "moleculeFormat": "molden", "molden": molden_string}
+        # As it stands, this means any other properties will be wiped
+        # If there were e.g. frequencies in the original cjson, notify the user
+        if "vibrations" in avo_input["cjson"]:
+            result["message"] = ("Calculation complete!\n"
+                                 "The vibrational frequencies may have been lost in this process.\n"
+                                 "Please recalculate them if they are missing and still desired.\n")
+        else:
+            result["message"] = "Calculation complete!"
+        
         # Pass back to Avogadro
         print(json.dumps(result))

@@ -6,11 +6,16 @@
   "description": "Access the full power of xtb through the Avogadro interface.",
   "type": "commands",
   "commands": [
-    { "debug": "debug", "command": "debug.py" },
+    { "name": "configure", "command": "config.py" },
     { "name": "energy", "command": "energy.py" },
     { "name": "optimize", "command": "opt.py" },
     { "name": "frequencies", "command": "freq.py" },
+    { "name": "opt-freq", "command": "ohess.py"},
     { "name": "orbitals", "command": "orbitals.py" },
-    { "name": "run", "command": "run.py" }
+    { "name": "conformers", "command": "conformers.py" },
+    { "name": "md", "command": "md.py" },
+    { "name": "run", "command": "run.py" },
+    { "name": "open", "command": "open.py" },
+    { "name": "go-to-docs", "command": "docs.py" }
   ]
 }

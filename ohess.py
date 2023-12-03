@@ -42,9 +42,9 @@ import convert
 from run import run_xtb
 
 
-def frequencies(geom_file, charge=0, multiplicity=1):
+def opt_freq(geom_file, charge=0, multiplicity=1):
     spin = multiplicity - 1
-    command = ["xtb", geom_file, "--hess", "--chrg", str(charge), "--uhf", str(spin)]
+    command = ["xtb", geom_file, "--ohess", "--chrg", str(charge), "--uhf", str(spin)]
     # Add solvation if set globally
     if config["solvent"] is not None:
         command.append("--alpb")
@@ -52,8 +52,18 @@ def frequencies(geom_file, charge=0, multiplicity=1):
     # Run xtb from command line
     calc, out_file, energy = run_xtb(command, geom_file)
 
+    # Make sure the first calculation has finished
+    # (How?)
+
+    # Check for distorted geometry
+    # (Generated automatically by xtb if result had negative frequency)
+    # If so, rerun
+    distorted_geom = geom_file.with_stem("xtbhess")
+    if distorted_geom.exists():
+        calc, out_file, energy = run_xtb(command, distorted_geom)
+
     # Return the path of the Gaussian file generated
-    return (geom_file.with_name("g98.out"))
+    return (geom_file.with_stem("xtbopt"), geom_file.with_name("g98.out"), energy)
 
 
 if __name__ == "__main__":
@@ -70,7 +80,7 @@ if __name__ == "__main__":
         options = {"inputMoleculeFormat": "xyz"}
         print(json.dumps(options))
     if args.display_name:
-        print("Frequencies")
+        print("Opt + Freq")
     if args.menu_path:
         print("Extensions|Semi-empirical (xtb)")
 
@@ -89,32 +99,53 @@ if __name__ == "__main__":
             xyz_file.write(str(geom))
 
         # Run calculation; returns path to Gaussian file containing frequencies
-        result_path = frequencies(
+        out_geom, out_freq, energy = opt_freq(
             xyz_path,
             avo_input["charge"],
             avo_input["spin"]
             )
+        
+        # Convert frequencies
         # Currently Avogadro fails to convert the g98 file to cjson itself
         # So we have to convert output in g98 format to cjson ourselves
-        cjson_path = convert.g98_to_cjson(result_path)
+        freq_cjson_path = convert.g98_to_cjson(out_freq)
         # Open the cjson
-        with open(cjson_path, encoding="utf-8") as result_cjson:
+        with open(freq_cjson_path, encoding="utf-8") as result_cjson:
             freq_cjson = json.load(result_cjson)
+
+        # Convert geometry
+        geom_cjson_path = convert.xyz_to_cjson(out_geom)
+        # Open the cjson
+        with open(geom_cjson_path, encoding="utf-8") as result_cjson:
+            geom_cjson = json.load(result_cjson)
+        # Check for convergence
+        # TO DO
+        # Will need to look for "FAILED TO CONVERGE"
+
+        # Convert energy for Avogadro
+        energies = convert.convert_energy(energy, "hartree")
+
         # Format appropriately for Avogadro
         # Start by passing back the original cjson, then add changes
         result = {"moleculeFormat": "cjson", "cjson": avo_input["cjson"]}
+        # Add data from calculation
         result["cjson"]["vibrations"] = freq_cjson["vibrations"]
+        result["cjson"]["atoms"]["coords"] = geom_cjson["atoms"]["coords"]
+        result["cjson"]["properties"]["totalEnergy"] = str(round(energies["eV"], 7))
         # xtb no longer gives Raman intensities but does write them as all 0
         # If passed on to the user this is misleading so remove them
         if "ramanIntensities" in result["cjson"]["vibrations"]:
             del result["cjson"]["vibrations"]["ramanIntensities"]
+        # If the cjson contained orbitals, remove them as they are no longer physical
+        for field in ["basisSet", "orbitals", "cube"]:
+            if field in result["cjson"]:
+                del result["cjson"][field]
         
         # Inform user if there are negative frequencies
         if float(freq_cjson["vibrations"]["frequencies"][0]) < 0:
             result["message"] = ("At least one negative frequency found!\n"
                                  "This is not a minimum on the potential energy surface.\n"
-                                 "You should reoptimize the geometry.\n"
-                                 "This can be avoided in future by using the Opt + Freq method.")
+                                 "You should reoptimize the geometry.")
 
         # Save result
         with open(calc_dir / "result.cjson", "w", encoding="utf-8") as save_file:
