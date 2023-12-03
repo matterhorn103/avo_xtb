@@ -123,7 +123,8 @@ if __name__ == "__main__":
                     },
                 "help": {
                     "type": "text",
-                    "label": "See https://xtb-docs.readthedocs.io/ for help"
+                    "label": "For help see",
+                    "default": "https://xtb-docs.readthedocs.io/"
                     },
                 "turbomole": {
                     "type": "boolean",

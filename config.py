@@ -174,7 +174,8 @@ if __name__ == "__main__":
                 },
                 "warning": {
                     "type": "text",
-                    "label": "Note that changes here will only affect\nother menus after restarting Avogadro"
+                    "label": "Note",
+                    "default": "Changes here will only affect other\nmenus after restarting Avogadro!"
                 }
             }
         }

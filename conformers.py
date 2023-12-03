@@ -91,7 +91,8 @@ if __name__ == "__main__":
                 #    },
                 "help": {
                     "type": "text",
-                    "label": "See https://crest-lab.github.io/crest-docs/ for help"
+                    "label": "For help see",
+                    "default": "https://crest-lab.github.io/crest-docs/"
                     },
                 "solvent": {
                     "type": "stringList",
