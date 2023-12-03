@@ -171,6 +171,10 @@ if __name__ == "__main__":
                     "label": "Preferred energy units",
                     "values": ["kJ/mol", "kcal/mol"],
                     "default": 0
+                },
+                "warning": {
+                    "type": "text",
+                    "label": "Note that changes here will only affect\nother menus after restarting Avogadro"
                 }
             }
         }
@@ -212,6 +216,10 @@ if __name__ == "__main__":
             solvent_selected = avo_input["solvent"]
         # Save change to solvent if there has been one
         config["solvent"] = solvent_selected
+
+        # Save change to energy units if there has been one
+        if avo_input["energy_units"] != config["energy_units"]:
+            config["energy_units"] = avo_input["energy_units"]
         
         with open(config_file, "w", encoding="utf-8") as config_path:
             json.dump(config, config_path)
