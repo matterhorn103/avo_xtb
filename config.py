@@ -127,12 +127,14 @@ if __name__ == "__main__":
                 "user_dir": {
                     "type": "string",
                     "label": "Run calculations in",
-                    "default": str(calc_dir.parent)
+                    "default": str(calc_dir.parent),
+                    "order": 2.0
                 },
                 "xtb_bin": {
                     "type": "string",
                     "label": "Location of the xtb binary",
-                    "default": str(xtb_bin)
+                    "default": str(xtb_bin),
+                    "order": 1.0
                 },
                 "solvent": {
                     "type": "stringList",
@@ -164,18 +166,21 @@ if __name__ == "__main__":
                         "thf",
                         "water"
                         ],
-                    "default": 0
+                    "default": 0,
+                    "order": 4.0
                 },
                 "energy_units": {
                     "type": "stringList",
                     "label": "Preferred energy units",
                     "values": ["kJ/mol", "kcal/mol"],
-                    "default": 0
+                    "default": 0,
+                    "order": 3.0
                 },
                 "warning": {
                     "type": "text",
                     "label": "Note",
-                    "default": "Changes here will only affect other\nmenus after restarting Avogadro!"
+                    "default": "Changes here will only affect other\nmenus after restarting Avogadro!",
+                    "order": 10.0
                 }
             }
         }
@@ -188,7 +193,7 @@ if __name__ == "__main__":
     if args.display_name:
         print("Configure…")
     if args.menu_path:
-        print("Extensions|Semi-empirical (xtb)")
+        print("Extensions|Semi-empirical (xtb){20}")
     
     if args.run_command:
         # Read input from Avogadro

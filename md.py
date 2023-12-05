@@ -139,9 +139,9 @@ if __name__ == "__main__":
         print(json.dumps(options))
 
     if args.display_name:
-        print("Molecular Dynamics")
+        print("Molecular Dynamics…")
     if args.menu_path:
-        print("Extensions|Semi-empirical (xtb)")
+        print("Extensions|Semi-empirical (xtb){740}")
 
     if args.run_command:
         # Remove results of last calculation

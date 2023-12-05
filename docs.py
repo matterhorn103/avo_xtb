@@ -51,7 +51,7 @@ if __name__ == "__main__":
     if args.display_name:
         print("xtb Help")
     if args.menu_path:
-        print("Extensions|Semi-empirical (xtb)")
+        print("Extensions|Semi-empirical (xtb){10}")
 
     if args.run_command:
         webbrowser.open("https://xtb-docs.readthedocs.io/en/latest/commandline.html")

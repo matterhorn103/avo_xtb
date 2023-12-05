@@ -72,7 +72,7 @@ if __name__ == "__main__":
     if args.display_name:
         print("Frequencies")
     if args.menu_path:
-        print("Extensions|Semi-empirical (xtb)")
+        print("Extensions|Semi-empirical (xtb){870}")
 
     if args.run_command:
         # Remove results of last calculation

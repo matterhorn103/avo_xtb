@@ -74,25 +74,29 @@ if __name__ == "__main__":
                 "save_dir": {
                     "type": "string",
                     "label": "Save results in",
-                    "default": str(calc_dir)
+                    "default": str(calc_dir),
+                    "order": 1.0
                     },
                 #"Number of threads": {
                 #    "type": "integer",
                 #    #"label": "Number of cores",
                 #    "minimum": 1,
-                #    "default": 1
+                #    "default": 1,
+                #    "order": 2.0
                 #    },
                 #"Memory per core": {
                 #    "type": "integer",
                 #    #"label" "Memory per core",
                 #    "minimum": 1,
                 #    "default": 1,
-                #    "suffix": " GB"
+                #    "suffix": " GB",
+                #    "order": 3.0
                 #    },
                 "help": {
                     "type": "text",
                     "label": "For help see",
-                    "default": "https://crest-lab.github.io/crest-docs/"
+                    "default": "https://crest-lab.github.io/crest-docs/",
+                    "order": 9.0
                     },
                 "solvent": {
                     "type": "stringList",
@@ -124,7 +128,8 @@ if __name__ == "__main__":
                         "thf",
                         "water"
                         ],
-                    "default": 0
+                    "default": 0,
+                    "order": 6.0
                     },
                 "ewin": {
                     "type": "integer",
@@ -132,12 +137,14 @@ if __name__ == "__main__":
                     "default": 25,
                     "minimum": 1,
                     "maximum": 1000,
-                    "suffix": " kJ/mol"
+                    "suffix": " kJ/mol",
+                    "order": 7.0
                 },
                 "hess": {
                     "type": "boolean",
-                    "label": "Calculate frequencies for conformers\nand weight ensemble on free energies",
-                    "default": False
+                    "label": "Calculate frequencies for conformers\nand re-weight ensemble on free energies",
+                    "default": False,
+                    "order": 8.0
                 }
                 }
             }
@@ -152,7 +159,7 @@ if __name__ == "__main__":
     if args.display_name:
         print("Conformers…")
     if args.menu_path:
-        print("Extensions|Semi-empirical (xtb)")
+        print("Extensions|Semi-empirical (xtb){770}")
 
     if args.run_command:
         # Remove results of last calculation

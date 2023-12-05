@@ -101,35 +101,41 @@ if __name__ == "__main__":
                 "save_dir": {
                     "type": "string",
                     "label": "Save results in",
-                    "default": str(calc_dir)
+                    "default": str(calc_dir),
+                    "order": 1.0
                     },
                 #"Number of threads": {
                 #    "type": "integer",
                 #    #"label": "Number of cores",
                 #    "minimum": 1,
-                #    "default": 1
+                #    "default": 1,
+                #    "order": 2.0
                 #    },
                 #"Memory per core": {
                 #    "type": "integer",
                 #    #"label" "Memory per core",
                 #    "minimum": 1,
                 #    "default": 1,
-                #    "suffix": " GB"
+                #    "suffix": " GB",
+                #    "order": 3.0
                 #    },
                 "command": {
                     "type": "string",
                     "label": "Command to run",
-                    "default": "xtb <geometry_file> --opt --chrg 0 --uhf 0"
+                    "default": "xtb <geometry_file> --opt --chrg 0 --uhf 0",
+                    "order": 10.0
                     },
                 "help": {
                     "type": "text",
                     "label": "For help see",
-                    "default": "https://xtb-docs.readthedocs.io/"
+                    "default": "https://xtb-docs.readthedocs.io/",
+                    "order": 9.0
                     },
                 "turbomole": {
                     "type": "boolean",
                     "label": "Use Turbomole geometry\n(use for periodic systems)",
-                    "default": False
+                    "default": False,
+                    "order": 4.0
                     }
                 }
             }
@@ -140,7 +146,7 @@ if __name__ == "__main__":
     if args.display_name:
         print("Run…")
     if args.menu_path:
-        print("Extensions|Semi-empirical (xtb)")
+        print("Extensions|Semi-empirical (xtb){350}")
 
     if args.run_command:
         # Remove results of last calculation
