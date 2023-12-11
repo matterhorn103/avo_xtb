@@ -244,7 +244,7 @@ if __name__ == "__main__":
 
         # Save result
         with open(calc_dir / "result.cjson", "w", encoding="utf-8") as save_file:
-            json.dump(result["cjson"], save_file)
+            json.dump(result["cjson"], save_file, indent=2)
 
         # If user specified a save location, copy calculation directory to there
         if Path(avo_input["save_dir"]) != calc_dir:
