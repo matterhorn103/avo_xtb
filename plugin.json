@@ -16,6 +16,7 @@
     { "name": "md", "command": "md.py" },
     { "name": "run", "command": "run.py" },
     { "name": "open", "command": "open.py" },
+    { "name": "install", "command": "install.py" },
     { "name": "go-to-docs", "command": "docs.py" }
   ]
 }

@@ -146,7 +146,11 @@ if __name__ == "__main__":
     if args.display_name:
         print("Run…")
     if args.menu_path:
-        print("Extensions|Semi-empirical (xtb){350}")
+        # Only show menu option if xtb binary was found
+        if xtb_bin is not None:
+            print("Extensions|Semi-empirical (xtb){350}")
+        else:
+            pass
 
     if args.run_command:
         # Remove results of last calculation

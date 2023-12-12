@@ -37,7 +37,7 @@ import sys
 from pathlib import Path
 from shutil import rmtree
 
-from config import config, calc_dir
+from config import config, calc_dir, xtb_bin
 import convert
 from run import run_xtb
 
@@ -71,7 +71,11 @@ if __name__ == "__main__":
     if args.display_name:
         print("Optimize")
     if args.menu_path:
-        print("Extensions|Semi-empirical (xtb){880}")
+        # Only show menu option if xtb binary was found
+        if xtb_bin is not None:
+            print("Extensions|Semi-empirical (xtb){880}")
+        else:
+            pass
 
     if args.run_command:
         # Remove results of last calculation
