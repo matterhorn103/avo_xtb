@@ -39,7 +39,7 @@ import sys
 from pathlib import Path
 from shutil import rmtree, copytree
 
-from config import config, calc_dir, xtb_bin, crest_bin
+from config import config, calc_dir, xtb_bin, crest_bin, config_file
 
 def run_crest(command, geom_file, charge=0, multiplicity=1):
     # Change working dir to that of geometry file to run crest correctly
@@ -71,18 +71,24 @@ if __name__ == "__main__":
         options = {
             "inputMoleculeFormat": "xyz",
             "userOptions": {
+                "crest_bin": {
+                    "type": "string",
+                    "label": "Location of the crest binary",
+                    "default": str(crest_bin),
+                    "order": 1.0
+                },
                 "save_dir": {
                     "type": "string",
                     "label": "Save results in",
                     "default": str(calc_dir),
-                    "order": 1.0
+                    "order": 2.0
                     },
                 #"Number of threads": {
                 #    "type": "integer",
                 #    #"label": "Number of cores",
                 #    "minimum": 1,
                 #    "default": 1,
-                #    "order": 2.0
+                #    "order": 3.0
                 #    },
                 #"Memory per core": {
                 #    "type": "integer",
@@ -90,7 +96,7 @@ if __name__ == "__main__":
                 #    "minimum": 1,
                 #    "default": 1,
                 #    "suffix": " GB",
-                #    "order": 3.0
+                #    "order": 4.0
                 #    },
                 "help": {
                     "type": "text",
@@ -159,7 +165,11 @@ if __name__ == "__main__":
     if args.display_name:
         print("Conformers…")
     if args.menu_path:
-        print("Extensions|Semi-empirical (xtb){770}")
+        # Only show menu option if crest binary was found
+        if crest_bin is not None:
+            print("Extensions|Semi-empirical (xtb){770}")
+        else:
+            pass
 
     if args.run_command:
         # Remove results of last calculation
@@ -175,7 +185,14 @@ if __name__ == "__main__":
         with open(xyz_path, "w", encoding="utf-8") as xyz_file:
             xyz_file.write(str(geom))
 
-        # Firs setup command to be passed
+        # If provided crest path different to that stored, use it and save it
+        if Path(avo_input["crest_bin"]) != crest_bin:
+            crest_bin = Path(avo_input["crest_bin"])
+            config["crest_bin"] = str(crest_bin)
+            with open(config_file, "w", encoding="utf-8") as config_path:
+                json.dump(config, config_path)
+
+        # First setup command to be passed
         charge = avo_input["charge"]
         # "Spin" passed by Avogadro is actually muliplicity so convert to n(unpaired e-)
         spin = avo_input["spin"] - 1

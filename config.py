@@ -33,8 +33,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import argparse
 import json
+import platform
 import sys
 from pathlib import Path
+from shutil import which
 
 
 plugin_dir = Path(__file__).parent
@@ -92,22 +94,27 @@ else:
     calc_dir = Path(plugin_dir / "last")
 
 # Find xtb
-if "xtb_path" in config:
-    xtb_bin = Path(config["xtb_path"])
+if "xtb_bin" in config:
+    xtb_bin = Path(config["xtb_bin"])
 elif (plugin_dir / "xtb" / "bin").exists():
     xtb_bin = plugin_dir / "xtb" / "bin" / "xtb"
+    if platform.system() == "Windows":
+        xtb_bin = xtb_bin.with_suffix(".exe")
 else:
-    xtb_bin = "xtb"
+    xtb_bin = which("xtb")
 
 # Find crest
-if "crest_path" in config:
-    crest_bin = Path(config["crest_path"])
+if "crest_bin" in config:
+    crest_bin = Path(config["crest_bin"])
 elif (plugin_dir / "crest").exists():
     crest_bin = plugin_dir / "crest"
 elif (plugin_dir / "xtb" / "bin" / "crest").exists():
     crest_bin = plugin_dir / "xtb" / "bin" / "crest"
+# Currently there is no Windows binary for crest but let's assume there will be one day
+elif (plugin_dir / "xtb" / "bin" / "crest.exe").exists():
+    crest_bin = plugin_dir / "xtb" / "bin" / "crest.exe"
 else:
-    crest_bin = "crest"
+    crest_bin = which("crest")
 
 
 
