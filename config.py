@@ -70,7 +70,7 @@ if init:
         config["calc_dir"] = str(calc_dir)
     # If we don't have write permission, use user's home instead, in cross-platform way
     except PermissionError:
-        calc_dir = Path.home() / "xtb" / "last"
+        calc_dir = Path.home() / "avo_xtb" / "last"
         Path.mkdir(calc_dir, parents=True, exist_ok=True)
         config["calc_dir"] = str(calc_dir)
     # Save the initialized configuration to a new config file
