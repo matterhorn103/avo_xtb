@@ -19,10 +19,13 @@ There is also the option to submit a custom command to `xtb`, permitting any cal
 
 # Requirements
 
-Currently, the extension does not download the `xtb` binary automatically, and they are not bundled with Avogadro. `xtb` (and `crest` for conformer searches) must be obtained separately. There are three options that will make `xtb` visible to the extension:
+Currently, the extension does not download the `xtb` binary automatically, and they are not bundled with Avogadro. `xtb` (and `crest` for conformer searches) must be obtained separately. There are four options that will make `xtb` visible to the extension:
 1. Install xtb with `conda` from conda-forge and start Avogadro within the `conda` environment
-2. Download the xtb binary and put it into the system PATH
-3. Download xtb and place it entirely within the `Avogadro/commands/avo_xtb/` directory
+2. Manually download the `xtb` binary and put it into the system PATH
+3. Manually download `xtb` and place it entirely within the `Avogadro/commands/avo_xtb/` directory
+4. Use the "Get xtb..." function within Avogadro after installing this extension
+
+`xtb` and `crest` are distributed by the Grimme group under the LGPL license v3. The authors of Avogadro and avo_xtb bear no responsibility for xtb or crest or the contents of the Grimme group's repositories. Source code for the programs is available at the repositories linked above.
 
 # Cite
 
