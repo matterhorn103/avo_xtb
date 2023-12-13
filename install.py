@@ -158,7 +158,7 @@ if __name__ == "__main__":
         if xtb_bin is None:
             print("Extensions|Semi-empirical (xtb){30}")
         else:
-            quit()
+            pass
 
     if args.run_command:
         # Read input from Avogadro
