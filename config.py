@@ -38,6 +38,8 @@ import sys
 from pathlib import Path
 from shutil import which
 
+# Temporary fix to make sure stdout stream is always Unicode, as Avogadro 1.99 expects
+sys.stdout.reconfigure(encoding='utf-8')
 
 plugin_dir = Path(__file__).parent
 
