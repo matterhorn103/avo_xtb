@@ -43,6 +43,7 @@ from config import config, xtb_bin, calc_dir
 import convert
 
 
+# Provides generic function to run any xtb calculation, used by all other calcs
 def run_xtb(command, geom_file):
     # Change working dir to that of geometry file to run xtb correctly
     os.chdir(geom_file.parent)
@@ -84,6 +85,7 @@ def parse_energy(output_string):
     return energy
 
 
+# Define behaviour of Run menu command
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--debug", action="store_true")

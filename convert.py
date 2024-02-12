@@ -36,18 +36,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-
-def find_openbabel():
-    # Current directory upon execution of script seems to be the avo "prefix" directory
-    prefix_dir = Path.cwd()
-    # openbabel should be in the bin directory
-    if (prefix_dir / "bin" / "obabel").exists():
-        obabel_path = prefix_dir / "bin" / "obabel"
-    else:
-        obabel_path = "obabel"
-    return obabel_path
-
-obabel_path = find_openbabel()
+from config import obabel_bin
 
 ####################################################################################################
 # CONVERSIONS USING OPEN BABEL
@@ -61,7 +50,7 @@ def tmol_to_xyz(tmol_file):
     # Change working dir to that of file to run openbabel correctly
     os.chdir(tmol_file.parent)
     xyz_file = tmol_file.with_suffix(".xyz")
-    command = [obabel_path, "-i", "tmol", tmol_file, "-o", "xyz", "-O", xyz_file]
+    command = [obabel_bin, "-i", "tmol", tmol_file, "-o", "xyz", "-O", xyz_file]
     conversion = subprocess.run(command, capture_output=True, encoding="utf-8")
     return xyz_file
 
@@ -71,7 +60,7 @@ def xyz_to_cjson(xyz_file):
     # Change working dir to that of file to run openbabel correctly
     os.chdir(xyz_file.parent)
     cjson_file = xyz_file.with_suffix(".cjson")
-    command = [obabel_path, "-i", "xyz", xyz_file, "-o", "cjson", "-O", cjson_file]
+    command = [obabel_bin, "-i", "xyz", xyz_file, "-o", "cjson", "-O", cjson_file]
     conversion = subprocess.run(command, capture_output=True, encoding="utf-8")
     return cjson_file
 
@@ -82,7 +71,7 @@ def tmol_to_cjson(tmol_file):
     # Change working dir to that if file to run openbabel correctly
     os.chdir(tmol_file.parent)
     cjson_file = tmol_file.with_suffix(".cjson")
-    command = [obabel_path, "-i", "tmol", tmol_file, "-o", "cjson", "-O", cjson_file]
+    command = [obabel_bin, "-i", "tmol", tmol_file, "-o", "cjson", "-O", cjson_file]
     conversion = subprocess.run(command, capture_output=True, encoding="utf-8")
     return cjson_file
 
@@ -93,7 +82,7 @@ def g98_to_cjson(g98_file):
     # Change working dir to that of file to run openbabel correctly
     os.chdir(g98_file.parent)
     cjson_file = g98_file.with_suffix(".cjson")
-    command = [obabel_path, "-i", "g98", g98_file, "-o", "cjson", "-O", cjson_file]
+    command = [obabel_bin, "-i", "g98", g98_file, "-o", "cjson", "-O", cjson_file]
     conversion = subprocess.run(command, capture_output=True, encoding="utf-8")
     return cjson_file
 

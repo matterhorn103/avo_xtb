@@ -66,7 +66,9 @@ if init:
         calc_dir = plugin_dir / "last"
         calc_dir.mkdir(parents=True, exist_ok=True)
         with open((calc_dir / "probe.txt"), "w", encoding="utf-8") as probe_file:
-            probe_file.write("This file is created only to check everything works.\nIt will be deleted when the first calculation is run.")
+            probe_file.write(
+                "This file is created only to check everything works.\nIt will be deleted when the first calculation is run."
+                )
         config["calc_dir"] = str(calc_dir)
     # If we don't have write permission, use user's home instead, in cross-platform way
     except PermissionError:
@@ -101,7 +103,10 @@ elif (plugin_dir / "xtb" / "bin").exists():
     if platform.system() == "Windows":
         xtb_bin = xtb_bin.with_suffix(".exe")
 else:
+    # Check PATH
     xtb_bin = which("xtb")
+    if xtb_bin is not None:
+        xtb_bin = Path(xtb_bin)
 
 # Find crest
 if "crest_bin" in config:
@@ -114,7 +119,29 @@ elif (plugin_dir / "xtb" / "bin" / "crest").exists():
 elif (plugin_dir / "xtb" / "bin" / "crest.exe").exists():
     crest_bin = plugin_dir / "xtb" / "bin" / "crest.exe"
 else:
+    # Check PATH
     crest_bin = which("crest")
+    if crest_bin is not None:
+        crest_bin = Path(crest_bin)
+
+# Find obabel
+if "obabel_bin" in config:
+    obabel_bin = Path(config["obabel_bin"])
+# Otherwise try to find the version of Open Babel bundled with Avogadro
+# Current directory upon execution of script seems to be the avo "prefix" directory
+# AS OF 12/02/2024 NO LONGER SEEMS TO BE THE CASE
+# to do: find new way to find Avo's install directory
+# openbabel should be in the Avo bin directory
+elif (Path.cwd() / "bin" / "obabel").exists():
+    obabel_bin = Path.cwd() / "bin" / "obabel"
+# Or if on Windows
+elif (Path.cwd() / "bin" / "obabel.exe").exists():
+    obabel_bin = Path.cwd() / "bin" / "obabel.exe"
+else:
+    # Check PATH
+    obabel_bin = which("obabel")
+    if obabel_bin is not None:
+        obabel_bin = Path(obabel_bin)
 
 
 
@@ -135,13 +162,19 @@ if __name__ == "__main__":
                     "type": "string",
                     "label": "Run calculations in",
                     "default": str(calc_dir.parent),
-                    "order": 2.0
+                    "order": 3.0
                 },
                 "xtb_bin": {
                     "type": "string",
                     "label": "Location of the xtb binary",
                     "default": str(xtb_bin),
                     "order": 1.0
+                },
+                "obabel_bin": {
+                    "type": "string",
+                    "label": "Location of the Open Babel binary",
+                    "default": str(obabel_bin),
+                    "order": 2.0
                 },
                 "solvent": {
                     "type": "stringList",
@@ -174,14 +207,14 @@ if __name__ == "__main__":
                         "water"
                         ],
                     "default": 0,
-                    "order": 4.0
+                    "order": 5.0
                 },
                 "energy_units": {
                     "type": "stringList",
                     "label": "Preferred energy units",
                     "values": ["kJ/mol", "kcal/mol"],
                     "default": 0,
-                    "order": 3.0
+                    "order": 4.0
                 },
                 "warning": {
                     "type": "text",
@@ -221,6 +254,11 @@ if __name__ == "__main__":
         if avo_input["xtb_bin"] != str(xtb_bin):
             xtb_bin = Path(avo_input["xtb_bin"])
             config["xtb_bin"] = str(xtb_bin)
+
+        # Save change to obabel_bin if there has been one
+        if avo_input["obabel_bin"] != str(obabel_bin):
+            obabel_bin = Path(avo_input["obabel_bin"])
+            config["obabel_bin"] = str(obabel_bin)
         
         # Convert "none" string to Python None
         if avo_input["solvent"] == "none":
