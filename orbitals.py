@@ -83,7 +83,7 @@ if __name__ == "__main__":
         # Remove results of last calculation
         if calc_dir.exists():
             rmtree(calc_dir)
-        Path.mkdir(calc_dir)
+        calc_dir.mkdir()
 
         # Read input from Avogadro
         avo_input = json.loads(sys.stdin.read())

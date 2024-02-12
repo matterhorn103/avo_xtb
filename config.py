@@ -64,14 +64,14 @@ if init:
     # If so we can use it
     try:
         calc_dir = plugin_dir / "last"
-        Path.mkdir(calc_dir, parents=True, exist_ok=True)
+        calc_dir.mkdir(parents=True, exist_ok=True)
         with open((calc_dir / "probe.txt"), "w", encoding="utf-8") as probe_file:
             probe_file.write("This file is created only to check everything works.\nIt will be deleted when the first calculation is run.")
         config["calc_dir"] = str(calc_dir)
     # If we don't have write permission, use user's home instead, in cross-platform way
     except PermissionError:
         calc_dir = Path.home() / "avo_xtb" / "last"
-        Path.mkdir(calc_dir, parents=True, exist_ok=True)
+        calc_dir.mkdir(parents=True, exist_ok=True)
         config["calc_dir"] = str(calc_dir)
     # Save the initialized configuration to a new config file
     with open((calc_dir.parent / "config.json"), "w", encoding="utf-8") as new_config_path:
@@ -210,7 +210,7 @@ if __name__ == "__main__":
         if avo_input["user_dir"] != str(calc_dir.parent):
             calc_dir = Path(avo_input["user_dir"]) / "last"
             try:
-                Path.mkdir(calc_dir, parents=True, exist_ok=True)
+                calc_dir.mkdir(parents=True, exist_ok=True)
             except PermissionError:
                 result = {"message": "A folder could not be created at the path specified!"}
                 # Pass back to Avogadro to display to user

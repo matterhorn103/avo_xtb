@@ -102,7 +102,7 @@ def get_crest(url, install_dir):
 
 def set_xtb_bin(install_dir):
     # Set variable to binary at ./xtb/bin/xtb
-    xtb_bin = Path(install_dir / "xtb/bin/xtb")
+    xtb_bin = Path(install_dir / "xtb" / "bin" / "xtb")
     # Add to config
     config["xtb_bin"] = str(xtb_bin)
     # Save config
@@ -183,7 +183,7 @@ if __name__ == "__main__":
         else:
             # First make sure the install directory exists
             try:
-                install_dir.mkdir(exist_ok=True)
+                install_dir.mkdir(parents=True, exist_ok=True)
                 # Check write permissions
                 (install_dir / "probe_file.txt").touch()
                 (install_dir / "probe_file.txt").unlink()
