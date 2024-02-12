@@ -41,7 +41,7 @@ import zipfile
 
 from pathlib import Path
 
-from config import config, calc_dir, xtb_bin
+from config import config, config_file, calc_dir, xtb_bin
 
 # For now just hard code the URLs of xtb and crest
 if platform.system() == "Windows":
@@ -73,6 +73,7 @@ def extract_tar(archive, target):
 
 
 def get_xtb(url, install_dir):
+    # Download archive to specified directory, then extract there
     archive = download(url, install_dir)
     if archive.suffix == ".zip":
         extract_zip(archive, install_dir)
@@ -97,6 +98,16 @@ def get_crest(url, install_dir):
             extract_tar(archive, install_dir / "xtb" / "bin")
         # Remove archive
         archive.unlink()
+
+
+def set_xtb_bin(install_dir):
+    # Set variable to binary at ./xtb/bin/xtb
+    xtb_bin = Path(install_dir / "xtb/bin/xtb")
+    # Add to config
+    config["xtb_bin"] = str(xtb_bin)
+    # Save config
+    with open(config_file, "w", encoding="utf-8") as config_path:
+        json.dump(config, config_path)
 
 
 if __name__ == "__main__":
@@ -170,11 +181,21 @@ if __name__ == "__main__":
             result = {"message": "The Grimme group does not supply binaries for macOS.\nYou will have to install xtb manually.\nSorry!"}
         
         else:
-            get_xtb(xtb_url, install_dir)
-            get_crest(crest_url, install_dir)
-            # Report success
-            result = {"message": "xtb (and crest if requested) were successfully installed.\nPlease restart Avogadro."}
+            # First make sure the install directory exists
+            try:
+                install_dir.mkdir(exist_ok=True)
+                # Check write permissions
+                (install_dir / "probe_file.txt").touch()
+                (install_dir / "probe_file.txt").unlink()
+            except PermissionError:
+                result = {"message": "Install directory is not writeable"}
+            else:
+                get_xtb(xtb_url, install_dir)
+                get_crest(crest_url, install_dir)
+                set_xtb_bin(install_dir)
+                # Report success
+                result = {"message": "xtb (and crest if requested) were successfully installed.\nPlease restart Avogadro."}
         
-        # Pass back to Avogadro to display to user
+        # Pass result back to Avogadro to display to user
         print(json.dumps(result))
 
