@@ -30,15 +30,14 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
+
 import argparse
 import json
-import os
 import sys
 from pathlib import Path
 from shutil import rmtree, copytree
 
 from config import config, calc_dir, xtb_bin
-import convert
 from run import run_xtb
 
 
@@ -141,11 +140,7 @@ if __name__ == "__main__":
     if args.display_name:
         print("Molecular Dynamics…")
     if args.menu_path:
-        # Only show menu option if xtb binary was found
-        if xtb_bin is not None:
-            print("Extensions|Semi-empirical (xtb){740}")
-        else:
-            pass
+        print("Extensions|Semi-empirical (xtb){740}")
 
     if args.run_command:
         # Remove results of last calculation

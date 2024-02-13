@@ -43,6 +43,12 @@ from pathlib import Path
 
 from config import config, config_file, calc_dir, xtb_bin
 
+
+# Disable this command if xtb has been found
+if xtb_bin is not None:
+    quit()
+
+
 # For now just hard code the URLs of xtb and crest
 if platform.system() == "Windows":
     xtb_url = "https://github.com/grimme-lab/xtb/releases/download/v6.6.1/xtb-6.6.1-windows-x86_64.zip"
@@ -165,11 +171,7 @@ if __name__ == "__main__":
     if args.display_name:
         print("Get xtb…")
     if args.menu_path:
-        # Only show menu option if xtb binary was not found
-        if xtb_bin is None:
-            print("Extensions|Semi-empirical (xtb){30}")
-        else:
-            pass
+        print("Extensions|Semi-empirical (xtb){30}")
 
     if args.run_command:
         # Read input from Avogadro

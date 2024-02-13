@@ -33,10 +33,15 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os
 import subprocess
-import sys
-from pathlib import Path
 
 from config import obabel_bin
+
+
+# Most commands rely on the functionality in this module
+# This thus effectively disables the menu command if executing would be impossible
+if obabel_bin is None:
+    raise FileNotFoundError("Open Babel binary not found.")
+    quit()
 
 ####################################################################################################
 # CONVERSIONS USING OPEN BABEL

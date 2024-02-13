@@ -41,6 +41,12 @@ from shutil import rmtree, copytree
 
 from config import config, calc_dir, xtb_bin, crest_bin, config_file
 
+
+# Disable if xtb and crest missing
+if xtb_bin is None or crest_bin is None:
+    quit()
+
+
 def run_crest(command, geom_file, charge=0, multiplicity=1):
     # Change working dir to that of geometry file to run crest correctly
     os.chdir(geom_file.parent)

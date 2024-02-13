@@ -97,53 +97,80 @@ if "calc_dir" in config:
 else:
     calc_dir = Path(plugin_dir / "last")
 
-# Find xtb
+
+# Define functions to find the binaries if not already specified
+# Each returns either a Path object or None
+def find_xtb():
+    if (plugin_dir / "xtb" / "bin").exists():
+        xtb_bin = plugin_dir / "xtb" / "bin" / "xtb"
+        if platform.system() == "Windows":
+            xtb_bin = xtb_bin.with_suffix(".exe")
+    else:
+        # Check PATH
+        xtb_bin = which("xtb")
+        if xtb_bin is not None:
+            xtb_bin = Path(xtb_bin)
+    return xtb_bin
+
+def find_crest():
+    if (plugin_dir / "crest").exists():
+        crest_bin = plugin_dir / "crest"
+    elif (plugin_dir / "xtb" / "bin" / "crest").exists():
+        crest_bin = plugin_dir / "xtb" / "bin" / "crest"
+    # Currently there is no Windows binary for crest but let's assume there will be one day
+    elif (plugin_dir / "xtb" / "bin" / "crest.exe").exists():
+        crest_bin = plugin_dir / "xtb" / "bin" / "crest.exe"
+    else:
+        # Check PATH
+        crest_bin = which("crest")
+        if crest_bin is not None:
+            crest_bin = Path(crest_bin)
+    return crest_bin
+
+def find_obabel():
+    # Try to find the version of Open Babel bundled with Avogadro
+    # Current directory upon execution of script seems to be the avo "prefix" directory
+    # AS OF 12/02/2024 NO LONGER SEEMS TO BE THE CASE
+    # to do: find new way to find Avo's install directory
+    # openbabel should be in the Avo bin directory
+    if (Path.cwd() / "bin" / "obabel").exists():
+        obabel_bin = Path.cwd() / "bin" / "obabel"
+    # Or if on Windows
+    elif (Path.cwd() / "bin" / "obabel.exe").exists():
+        obabel_bin = Path.cwd() / "bin" / "obabel.exe"
+    else:
+        # Check PATH
+        obabel_bin = which("obabel")
+        if obabel_bin is not None:
+            obabel_bin = Path(obabel_bin)
+    return obabel_bin
+
+
+# Initialize and find the various binaries
+# Confirm that those loaded from the config can be found
+# If not, do the same search
+# Each bin will be set to None if nothing found anywhere
+# Note that the binary paths are not saved to the config unless they are
+# changed in the Configure... dialog
 if "xtb_bin" in config:
     xtb_bin = Path(config["xtb_bin"])
-elif (plugin_dir / "xtb" / "bin").exists():
-    xtb_bin = plugin_dir / "xtb" / "bin" / "xtb"
-    if platform.system() == "Windows":
-        xtb_bin = xtb_bin.with_suffix(".exe")
+    if not xtb_bin.exists():
+        xtb_bin = find_xtb()
 else:
-    # Check PATH
-    xtb_bin = which("xtb")
-    if xtb_bin is not None:
-        xtb_bin = Path(xtb_bin)
-
-# Find crest
+    xtb_bin = find_xtb()
 if "crest_bin" in config:
     crest_bin = Path(config["crest_bin"])
-elif (plugin_dir / "crest").exists():
-    crest_bin = plugin_dir / "crest"
-elif (plugin_dir / "xtb" / "bin" / "crest").exists():
-    crest_bin = plugin_dir / "xtb" / "bin" / "crest"
-# Currently there is no Windows binary for crest but let's assume there will be one day
-elif (plugin_dir / "xtb" / "bin" / "crest.exe").exists():
-    crest_bin = plugin_dir / "xtb" / "bin" / "crest.exe"
+    if not crest_bin.exists():
+        crest_bin = find_crest()
 else:
-    # Check PATH
-    crest_bin = which("crest")
-    if crest_bin is not None:
-        crest_bin = Path(crest_bin)
-
-# Find obabel
+    crest_bin = find_crest()
 if "obabel_bin" in config:
     obabel_bin = Path(config["obabel_bin"])
-# Otherwise try to find the version of Open Babel bundled with Avogadro
-# Current directory upon execution of script seems to be the avo "prefix" directory
-# AS OF 12/02/2024 NO LONGER SEEMS TO BE THE CASE
-# to do: find new way to find Avo's install directory
-# openbabel should be in the Avo bin directory
-elif (Path.cwd() / "bin" / "obabel").exists():
-    obabel_bin = Path.cwd() / "bin" / "obabel"
-# Or if on Windows
-elif (Path.cwd() / "bin" / "obabel.exe").exists():
-    obabel_bin = Path.cwd() / "bin" / "obabel.exe"
+    if not obabel_bin.exists():
+        obabel_bin = find_obabel()
 else:
-    # Check PATH
-    obabel_bin = which("obabel")
-    if obabel_bin is not None:
-        obabel_bin = Path(obabel_bin)
+    obabel_bin = find_obabel()
+
 
 
 

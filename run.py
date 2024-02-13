@@ -43,6 +43,13 @@ from config import config, xtb_bin, calc_dir
 import convert
 
 
+# All xtb commands rely on the functionality in this module
+# This thus effectively disables the menu command if executing would be impossible
+if xtb_bin is None:
+    raise FileNotFoundError("xtb binary not found.")
+    quit()
+
+
 # Provides generic function to run any xtb calculation, used by all other calcs
 def run_xtb(command, geom_file):
     # Change working dir to that of geometry file to run xtb correctly
@@ -148,11 +155,7 @@ if __name__ == "__main__":
     if args.display_name:
         print("Run…")
     if args.menu_path:
-        # Only show menu option if xtb binary was found
-        if xtb_bin is not None:
-            print("Extensions|Semi-empirical (xtb){350}")
-        else:
-            pass
+        print("Extensions|Semi-empirical (xtb){350}")
 
     if args.run_command:
         # Remove results of last calculation
