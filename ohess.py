@@ -42,13 +42,13 @@ import convert
 from run import run_xtb
 
 
-def opt_freq(geom_file, charge=0, multiplicity=1):
+def opt_freq(geom_file, charge=0, multiplicity=1, solvation=None):
     spin = multiplicity - 1
     command = ["xtb", geom_file, "--ohess", "--chrg", str(charge), "--uhf", str(spin)]
-    # Add solvation if set globally
-    if config["solvent"] is not None:
+    # Add solvation if requested
+    if solvation is not None:
         command.append("--alpb")
-        command.append(config["solvent"])
+        command.append(solvation)
     # Run xtb from command line
     calc, out_file, energy = run_xtb(command, geom_file)
 
@@ -101,8 +101,9 @@ if __name__ == "__main__":
         # Run calculation; returns path to Gaussian file containing frequencies
         out_geom, out_freq, energy = opt_freq(
             xyz_path,
-            avo_input["charge"],
-            avo_input["spin"]
+            charge=avo_input["charge"],
+            multiplicity=avo_input["spin"],
+            solvation=config["solvent"]
             )
         
         # Convert frequencies

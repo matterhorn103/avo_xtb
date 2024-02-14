@@ -40,25 +40,25 @@ from pathlib import Path
 from shutil import rmtree, copytree
 
 from config import config, calc_dir, xtb_bin, crest_bin, config_file
-
+from run import run_crest
 
 # Disable if xtb and crest missing
 if xtb_bin is None or crest_bin is None:
     quit()
 
 
-def run_crest(command, geom_file, charge=0, multiplicity=1):
-    # Change working dir to that of geometry file to run crest correctly
-    os.chdir(geom_file.parent)
-    out_file = geom_file.with_name("output.out")
-
-    # Run in parallel
-    #os.environ["PATH"] += os.pathsep + path
+def conformers(geom_file, charge=0, multiplicity=1, solvation=None, ewin=6, hess=False):
+    unpaired_e = multiplicity - 1
+    command = [crest_bin, geom_file, "--xnam", xtb_bin, "--chrg", str(charge), "--uhf", str(unpaired_e), "--ewin", str(ewin)]
+    # Add solvation if requested
+    if solvation is not None:
+        command.append("--alpb")
+        command.append(solvation)
+    if hess:
+        command.extend(["--prop", "hess"])
 
     # Run crest from command line
-    calc = subprocess.run(command, capture_output=True, encoding="utf-8")
-    with open(out_file, "w", encoding="utf-8") as output:
-        output.write(calc.stdout)
+    calc, out_file = run_crest(command, geom_file)
 
     return geom_file.with_stem("crest_conformers")
 
@@ -79,7 +79,7 @@ if __name__ == "__main__":
             "userOptions": {
                 "crest_bin": {
                     "type": "string",
-                    "label": "Location of the crest binary",
+                    "label": "Location of the CREST binary",
                     "default": str(crest_bin),
                     "order": 1.0
                 },
@@ -171,11 +171,7 @@ if __name__ == "__main__":
     if args.display_name:
         print("Conformers…")
     if args.menu_path:
-        # Only show menu option if crest binary was found
-        if crest_bin is not None:
-            print("Extensions|Semi-empirical (xtb){770}")
-        else:
-            pass
+        print("Extensions|Semi-empirical (xtb){770}")
 
     if args.run_command:
         # Remove results of last calculation
@@ -198,26 +194,20 @@ if __name__ == "__main__":
             with open(config_file, "w", encoding="utf-8") as config_path:
                 json.dump(config, config_path)
 
-        # First setup command to be passed
-        charge = avo_input["charge"]
-        # "Spin" passed by Avogadro is actually muliplicity so convert to n(unpaired e-)
-        spin = avo_input["spin"] - 1
-        command = [crest_bin, xyz_path, "--xnam", xtb_bin, "--chrg", str(charge), "--uhf", str(spin)]
-        if avo_input["hess"]:
-            command.extend(["--prop", "hess"])
         # crest takes energies in kcal so convert if provided in kJ (default)
         if config["energy_units"] == "kJ/mol":
             ewin_kcal = avo_input["ewin"] / 4.184
         else:
             ewin_kcal = avo_input["ewin"]
-        command.extend(["--ewin", str(ewin_kcal)])
-        if avo_input["solvent"] != "none":
-            command.extend(["--alpb", avo_input["solvent"]])
 
-        # Run calculation using formatted command and xyz file
-        conformers_path = run_crest(
-            command,
-            xyz_path
+        # Run calculation using xyz file
+        conformers_path = conformers(
+            xyz_path,
+            charge=avo_input["charge"],
+            multiplicity=avo_input["spin"],
+            solvation=avo_input["solvent"],
+            ewin=ewin_kcal,
+            hess=avo_input["hess"]
             )
 
         # Format everything appropriately for Avogadro

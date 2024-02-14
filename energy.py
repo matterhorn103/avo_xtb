@@ -37,18 +37,18 @@ import sys
 from pathlib import Path
 from shutil import rmtree
 
-from config import config, calc_dir, xtb_bin
+from config import config, calc_dir
 from run import run_xtb
 import convert
 
 
-def energy(geom_file, charge=0, multiplicity=1):
-    spin = multiplicity - 1
-    command = ["xtb", geom_file, "--chrg", str(charge), "--uhf", str(spin)]
-    # Add solvation if set globally
-    if config["solvent"] is not None:
+def energy(geom_file, charge=0, multiplicity=1, solvation=None):
+    unpaired_e = multiplicity - 1
+    command = ["xtb", geom_file, "--chrg", str(charge), "--uhf", str(unpaired_e)]
+    # Add solvation if requested
+    if solvation is not None:
         command.append("--alpb")
-        command.append(config["solvent"])
+        command.append(solvation)
     # Run xtb from command line
     calc, out_file, energy = run_xtb(command, geom_file)
     return energy
@@ -90,8 +90,9 @@ if __name__ == "__main__":
         # Run calculation; returns energy as float in hartree
         energy_hartree = energy(
             xyz_path,
-            avo_input["charge"],
-            avo_input["spin"]
+            charge=avo_input["charge"],
+            multiplicity=avo_input["spin"],
+            solvation=config["solvent"],
             )
         # Convert energy to eV for Avogadro, other units for users
         energies = convert.convert_energy(energy_hartree, "hartree")

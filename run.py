@@ -39,11 +39,11 @@ import sys
 from pathlib import Path
 from shutil import rmtree, copytree
 
-from config import config, xtb_bin, calc_dir
+from config import config, xtb_bin, crest_bin, calc_dir
 import convert
 
 
-# All xtb commands rely on the functionality in this module
+# All xtb and crest commands rely on the functionality in this module
 # This thus effectively disables the menu command if executing would be impossible
 if xtb_bin is None:
     raise FileNotFoundError("xtb binary not found.")
@@ -55,12 +55,14 @@ def run_xtb(command, geom_file):
     # Change working dir to that of geometry file to run xtb correctly
     os.chdir(geom_file.parent)
     out_file = geom_file.with_name("output.out")
+
     # Replace xtb with xtb path
     if command[0] == "xtb":
         command[0] = xtb_bin
     # Replace <geometry file> string with geom_file
     if "<geometry_file>" in command:
         command[command.index("<geometry_file>")] = geom_file
+
     # Run xtb from command line
     calc = subprocess.run(command, capture_output=True, encoding="utf-8")
     with open(out_file, "w", encoding="utf-8") as output:
@@ -72,6 +74,30 @@ def run_xtb(command, geom_file):
 
     # Return everything as a tuple including subprocess.CompletedProcess object
     return calc, out_file, energy
+
+
+# Similarly, provide a generic function to run any crest calculation
+def run_crest(command, geom_file):
+    # Change working dir to that of geometry file to run crest correctly
+    os.chdir(geom_file.parent)
+    out_file = geom_file.with_name("output.out")
+
+    # Replace crest with crest path
+    if command[0] == "crest":
+        command[0] = crest_bin
+    # Replace <geometry file> string with geom_file
+    if "<geometry_file>" in command:
+        command[command.index("<geometry_file>")] = geom_file
+
+    # Run in parallel
+    #os.environ["PATH"] += os.pathsep + path
+    # Run crest from command line
+    calc = subprocess.run(command, capture_output=True, encoding="utf-8")
+    with open(out_file, "w", encoding="utf-8") as output:
+        output.write(calc.stdout)
+
+    # Return everything as a tuple including subprocess.CompletedProcess object
+    return calc, out_file
 
 
 def parse_energy(output_string):

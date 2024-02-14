@@ -37,18 +37,18 @@ import sys
 from pathlib import Path
 from shutil import rmtree
 
-from config import config, calc_dir, xtb_bin
+from config import config, calc_dir
 import convert
 from run import run_xtb
 
 
-def frequencies(geom_file, charge=0, multiplicity=1):
-    spin = multiplicity - 1
-    command = ["xtb", geom_file, "--hess", "--chrg", str(charge), "--uhf", str(spin)]
-    # Add solvation if set globally
-    if config["solvent"] is not None:
+def frequencies(geom_file, charge=0, multiplicity=1, solvation=None):
+    unpaired_e = multiplicity - 1
+    command = ["xtb", geom_file, "--hess", "--chrg", str(charge), "--uhf", str(unpaired_e)]
+    # Add solvation if requested
+    if solvation is not None:
         command.append("--alpb")
-        command.append(config["solvent"])
+        command.append(solvation)
     # Run xtb from command line
     calc, out_file, energy = run_xtb(command, geom_file)
 
@@ -91,8 +91,9 @@ if __name__ == "__main__":
         # Run calculation; returns path to Gaussian file containing frequencies
         result_path = frequencies(
             xyz_path,
-            avo_input["charge"],
-            avo_input["spin"]
+            charge=avo_input["charge"],
+            multiplicity=avo_input["spin"],
+            solvation=config["solvent"]
             )
         # Currently Avogadro fails to convert the g98 file to cjson itself
         # So we have to convert output in g98 format to cjson ourselves

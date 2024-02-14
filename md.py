@@ -37,17 +37,17 @@ import sys
 from pathlib import Path
 from shutil import rmtree, copytree
 
-from config import config, calc_dir, xtb_bin
+from config import config, calc_dir
 from run import run_xtb
 
 
-def md(geom_file, input_file, charge=0, multiplicity=1):
+def md(geom_file, input_file, charge=0, multiplicity=1, solvation=None):
     spin = multiplicity - 1
     command = ["xtb", geom_file, "--input", input_file, "--omd", "--chrg", str(charge), "--uhf", str(spin)]
-    # Add solvation if set globally
-    if config["solvent"] is not None:
+    # Add solvation if requested
+    if solvation is not None:
         command.append("--alpb")
-        command.append(config["solvent"])
+        command.append(solvation)
     # Run xtb from command line
     calc, out_file, energy = run_xtb(command, geom_file)
     # Return path to trajectory file, along with energy
@@ -169,8 +169,9 @@ if __name__ == "__main__":
         trj_path = md(
             xyz_path,
             input_path,
-            avo_input["charge"],
-            avo_input["spin"]
+            charge=avo_input["charge"],
+            multiplicity=avo_input["spin"],
+            solvation=config["solvent"]
             )
 
         # Make sure that the calculation was successful before investing any more time

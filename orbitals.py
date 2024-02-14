@@ -39,14 +39,14 @@ from config import config, calc_dir, xtb_bin
 from run import run_xtb
 
 
-def orbitals(geom_file, charge=0, multiplicity=1):
+def orbitals(geom_file, charge=0, multiplicity=1, solvation=None):
     spin = multiplicity - 1
     # Just do a single point calculation but pass molden option to get orbital printout
     command = ["xtb", geom_file, "--molden", "--chrg", str(charge), "--uhf", str(spin)]
-    # Add solvation if set globally
-    if config["solvent"] is not None:
+    # Add solvation if requested
+    if solvation is not None:
         command.append("--alpb")
-        command.append(config["solvent"])
+        command.append(solvation)
     # Run xtb from command line
     calc, out_file, energy = run_xtb(command, geom_file)
 
@@ -89,8 +89,9 @@ if __name__ == "__main__":
         # Run calculation using xyz file
         result_path = orbitals(
             xyz_path,
-            avo_input["charge"],
-            avo_input["spin"]
+            charge=avo_input["charge"],
+            multiplicity=avo_input["spin"],
+            solvation=config["solvent"]
             )
 
         # Get molden file as string
