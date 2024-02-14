@@ -36,7 +36,7 @@ import json
 import platform
 import sys
 from pathlib import Path
-from shutil import which
+from shutil import which, copy
 
 # Temporary fix to make sure stdout stream is always Unicode, as Avogadro 1.99 expects
 sys.stdout.reconfigure(encoding='utf-8')
@@ -82,6 +82,14 @@ if init:
         json.dump(config, new_config_path)
         config_file = new_config_path
 
+# Check if energy script is in Avogadro/energy, copy it there if not
+# Only copy if directory tree has expected structure
+if plugin_dir.parent.name == "commands" and plugin_dir.parent.parent.name == "Avogadro":
+    xtb_bin = True
+    dst = plugin_dir.parent.parent / "energy"
+    if not (dst / "gfn2-xtb.py").exists():
+        dst.mkdir(exist_ok=True)
+        copied_file = copy(plugin_dir / "gfn2-xtb.py", dst)
 
 # Most user options read by other modules should be stored in config;
 # that way only the config dictionary has to be loaded.

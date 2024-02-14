@@ -50,7 +50,7 @@ def optimize(geom_file, charge=0, multiplicity=1):
     # Run xtb from command line
     calc, out_file, energy = run_xtb(command, geom_file)
     # Return path to geometry file with same suffix, along with energy
-    return (geom_file.with_stem("xtbopt"), energy)
+    return geom_file.with_stem("xtbopt"), energy
 
 
 if __name__ == "__main__":
