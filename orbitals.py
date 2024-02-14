@@ -51,7 +51,7 @@ def orbitals(geom_file, charge=0, multiplicity=1):
     calc, out_file, energy = run_xtb(command, geom_file)
 
     # Return path to molden file
-    return (geom_file.with_name("molden.input"))
+    return geom_file.with_name("molden.input")
 
 
 if __name__ == "__main__":

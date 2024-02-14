@@ -60,7 +60,7 @@ def run_crest(command, geom_file, charge=0, multiplicity=1):
     with open(out_file, "w", encoding="utf-8") as output:
         output.write(calc.stdout)
 
-    return (geom_file.with_stem("crest_conformers"))
+    return geom_file.with_stem("crest_conformers")
 
 
 if __name__ == "__main__":

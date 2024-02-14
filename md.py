@@ -51,7 +51,7 @@ def md(geom_file, input_file, charge=0, multiplicity=1):
     # Run xtb from command line
     calc, out_file, energy = run_xtb(command, geom_file)
     # Return path to trajectory file, along with energy
-    return (geom_file.with_name("xtb.trj"))
+    return geom_file.with_name("xtb.trj")
 
 
 #def parse_trajectory(trj_file):

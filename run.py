@@ -71,7 +71,7 @@ def run_xtb(command, geom_file):
     energy = parse_energy(calc.stdout)
 
     # Return everything as a tuple including subprocess.CompletedProcess object
-    return (calc, out_file, energy)
+    return calc, out_file, energy
 
 
 def parse_energy(output_string):

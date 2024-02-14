@@ -53,7 +53,7 @@ def frequencies(geom_file, charge=0, multiplicity=1):
     calc, out_file, energy = run_xtb(command, geom_file)
 
     # Return the path of the Gaussian file generated
-    return (geom_file.with_name("g98.out"))
+    return geom_file.with_name("g98.out")
 
 
 if __name__ == "__main__":

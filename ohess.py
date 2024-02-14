@@ -63,7 +63,7 @@ def opt_freq(geom_file, charge=0, multiplicity=1):
         calc, out_file, energy = run_xtb(command, distorted_geom)
 
     # Return the path of the Gaussian file generated
-    return (geom_file.with_stem("xtbopt"), geom_file.with_name("g98.out"), energy)
+    return geom_file.with_stem("xtbopt"), geom_file.with_name("g98.out"), energy
 
 
 if __name__ == "__main__":
