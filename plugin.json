@@ -1,6 +1,6 @@
 {
   "author": "Matthew J. Milner",
-  "version": 0.1,
+  "version": 0.3.0,
   "url": "https://github.com/matterhorn103/avo_xtb",
   "name": "avogadro-xtb",
   "description": "Access the full power of xtb through the Avogadro interface.",
