@@ -33,6 +33,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import os
 import subprocess
+from pathlib import Path
 
 from config import obabel_bin
 
@@ -47,11 +48,11 @@ if obabel_bin is None:
 # CONVERSIONS USING OPEN BABEL
 # For now all the conversion functions are separate to allow for flexibility
 # Obviously it would be possible to combine many into a single function with more arguments
-
-# Turbomole coord >>> xyz
-# Maybe at some point do this natively but for now seems easier to use openbabel
-# Produced as xtb geometry output if input was also an xyz file
-def tmol_to_xyz(tmol_file):
+# Maybe at some point do these natively but for now seems easier to use openbabel
+    
+# tmol is produced as xtb geometry output if input was also a tmol file
+def tmol_to_xyz(tmol_file: Path) -> Path:
+    """Convert a (tmol/coord) Turbomole format geometry file to xyz format using Open Babel."""
     # Change working dir to that of file to run openbabel correctly
     os.chdir(tmol_file.parent)
     xyz_file = tmol_file.with_suffix(".xyz")
@@ -60,8 +61,8 @@ def tmol_to_xyz(tmol_file):
     return xyz_file
 
 
-# xyz >>> cjson
-def xyz_to_cjson(xyz_file):
+def xyz_to_cjson(xyz_file: Path) -> Path:
+    """Convert an xyz format geometry file to cjson format using Open Babel."""
     # Change working dir to that of file to run openbabel correctly
     os.chdir(xyz_file.parent)
     cjson_file = xyz_file.with_suffix(".cjson")
@@ -70,9 +71,8 @@ def xyz_to_cjson(xyz_file):
     return cjson_file
 
 
-# Turbomole tmol >>> cjson
-# Produced as xtb geometry output if input was also a tmol file
-def tmol_to_cjson(tmol_file):
+def tmol_to_cjson(tmol_file: Path) -> Path:
+    """Convert a (tmol/coord) Turbomole format geometry file to cjson format using Open Babel."""
     # Change working dir to that if file to run openbabel correctly
     os.chdir(tmol_file.parent)
     cjson_file = tmol_file.with_suffix(".cjson")
@@ -81,9 +81,9 @@ def tmol_to_cjson(tmol_file):
     return cjson_file
 
 
-# Gaussian 98 format >>> cjson
 # Frequency calculations with xtb produce "g98.out" files
-def g98_to_cjson(g98_file):
+def g98_to_cjson(g98_file: Path) -> Path:
+    """Convert a Gaussian 98 format output file to cjson format using Open Babel"""
     # Change working dir to that of file to run openbabel correctly
     os.chdir(g98_file.parent)
     cjson_file = g98_file.with_suffix(".cjson")
@@ -95,7 +95,8 @@ def g98_to_cjson(g98_file):
 # INTERNAL CONVERSIONS (NO OPEN BABEL)
 
 # Convert an energy in the specified unit to a dictionary of all useful units
-def convert_energy(energy, unit):
+def convert_energy(energy: float, unit: str) -> dict:
+    """Return a dictionary of equivalent energies in different units."""
     # Whichever unit was passed, convert to hartree
     if unit == "hartree":
         E_hartree = energy

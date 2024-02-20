@@ -42,7 +42,13 @@ from run import run_xtb
 import convert
 
 
-def energy(geom_file, charge=0, multiplicity=1, solvation=None):
+def energy(
+        geom_file: Path,
+        charge: int = 0,
+        multiplicity: int = 1,
+        solvation: str | None = None,
+        ) -> float:
+    """Calculate energy in hartree for given geometry."""
     unpaired_e = multiplicity - 1
     command = ["xtb", geom_file, "--chrg", str(charge), "--uhf", str(unpaired_e)]
     # Add solvation if requested

@@ -41,7 +41,14 @@ from config import config, calc_dir
 from run import run_xtb
 
 
-def md(geom_file, input_file, charge=0, multiplicity=1, solvation=None):
+def md(
+        geom_file: Path,
+        input_file: Path,
+        charge: int = 0,
+        multiplicity: int = 1,
+        solvation: str | None = None,
+        ) -> Path:
+    """Carry out molecular dynamics simulation and return resulting trajectory as multi-geometry xyz-style .trj file."""
     spin = multiplicity - 1
     command = ["xtb", geom_file, "--input", input_file, "--omd", "--chrg", str(charge), "--uhf", str(spin)]
     # Add solvation if requested

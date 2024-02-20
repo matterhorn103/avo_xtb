@@ -34,12 +34,19 @@ import argparse
 import json
 import sys
 from shutil import rmtree
+from pathlib import Path
 
 from config import config, calc_dir, xtb_bin
 from run import run_xtb
 
 
-def orbitals(geom_file, charge=0, multiplicity=1, solvation=None):
+def orbitals(
+        geom_file: Path,
+        charge: int = 0,
+        multiplicity: int = 1,
+        solvation: str | None = None,
+        ) -> Path:
+    """Calculate molecular orbitals for given geometry, return file in Molden format."""
     spin = multiplicity - 1
     # Just do a single point calculation but pass molden option to get orbital printout
     command = ["xtb", geom_file, "--molden", "--chrg", str(charge), "--uhf", str(spin)]
