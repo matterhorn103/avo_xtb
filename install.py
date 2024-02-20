@@ -1,3 +1,4 @@
+"""Automatically download xtb and crest binaries from their repositories on behalf of the user."""
 """
 avo_xtb
 A full-featured interface to xtb in Avogadro 2.

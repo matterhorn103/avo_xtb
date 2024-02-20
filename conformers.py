@@ -33,8 +33,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import argparse
 import json
-import os
-import subprocess
 import sys
 from pathlib import Path
 from shutil import rmtree, copytree
@@ -47,7 +45,19 @@ if xtb_bin is None or crest_bin is None:
     quit()
 
 
-def conformers(geom_file, charge=0, multiplicity=1, solvation=None, ewin=6, hess=False):
+def conformers(
+        geom_file: Path,
+        charge: int = 0,
+        multiplicity: int = 1,
+        solvation: str | None = None,
+        ewin: int | float = 6,
+        hess: bool = False,
+        ) -> Path:
+    """Simulate a conformer ensemble and return multi-geometry xyz file.
+    
+    All conformers within <ewin> kcal/mol are kept.
+    If hess=True, vibrational frequencies are calculated and the conformers reordered by Gibbs energy.
+    """
     unpaired_e = multiplicity - 1
     command = [crest_bin, geom_file, "--xnam", xtb_bin, "--chrg", str(charge), "--uhf", str(unpaired_e), "--ewin", str(ewin)]
     # Add solvation if requested

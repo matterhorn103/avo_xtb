@@ -42,7 +42,13 @@ import convert
 from run import run_xtb
 
 
-def opt_freq(geom_file, charge=0, multiplicity=1, solvation=None):
+def opt_freq(
+        geom_file: Path,
+        charge: int = 0,
+        multiplicity: int = 1,
+        solvation: str | None = None,
+        ) -> tuple[Path, Path, float]:
+    """Optimize geometry then calculate vibrational frequencies. Distort and reoptimize if negative frequency detected."""
     spin = multiplicity - 1
     command = ["xtb", geom_file, "--ohess", "--chrg", str(charge), "--uhf", str(spin)]
     # Add solvation if requested

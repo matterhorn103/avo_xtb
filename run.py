@@ -1,3 +1,4 @@
+"""Provide functions to run any calculation on the command line, used by all calculation options."""
 """
 avo_xtb
 A full-featured interface to xtb in Avogadro 2.
@@ -50,8 +51,8 @@ if xtb_bin is None:
     quit()
 
 
-# Provides generic function to run any xtb calculation, used by all other calcs
-def run_xtb(command, geom_file):
+def run_xtb(command: str, geom_file: Path) -> tuple[subprocess.CompletedProcess, Path, float]:
+    """Run provided command with xtb on the command line, then return the process, the output file, and the parsed energy."""
     # Change working dir to that of geometry file to run xtb correctly
     os.chdir(geom_file.parent)
     out_file = geom_file.with_name("output.out")
@@ -77,7 +78,8 @@ def run_xtb(command, geom_file):
 
 
 # Similarly, provide a generic function to run any crest calculation
-def run_crest(command, geom_file):
+def run_crest(command: str, geom_file: Path) -> tuple[subprocess.CompletedProcess, Path]:
+    """Run provided command with crest on the command line, then return the process and the output file."""
     # Change working dir to that of geometry file to run crest correctly
     os.chdir(geom_file.parent)
     out_file = geom_file.with_name("output.out")
@@ -100,8 +102,8 @@ def run_crest(command, geom_file):
     return calc, out_file
 
 
-def parse_energy(output_string):
-    # Get final energy from output file
+def parse_energy(output_string: str) -> float:
+    """Find the final energy in an xtb output file and return as a float. Units vary depending on calculation type."""
     # but don't convert here as not all calculation types give in same units
     end = output_string.split("\n")[-20:]
     matched_lines = [line for line in end if "TOTAL ENERGY" in line]

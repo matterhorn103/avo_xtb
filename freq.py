@@ -42,7 +42,13 @@ import convert
 from run import run_xtb
 
 
-def frequencies(geom_file, charge=0, multiplicity=1, solvation=None):
+def frequencies(
+        geom_file: Path,
+        charge: int = 0,
+        multiplicity: int = 1,
+        solvation: str | None = None,
+        ) -> Path:
+    """Calculate vibrational frequencies and return Gaussian 98 format output file."""
     unpaired_e = multiplicity - 1
     command = ["xtb", geom_file, "--hess", "--chrg", str(charge), "--uhf", str(unpaired_e)]
     # Add solvation if requested

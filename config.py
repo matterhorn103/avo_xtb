@@ -1,3 +1,4 @@
+"""Setup plugin, load settings and detect binaries then expose them as variables."""
 """
 avo_xtb
 A full-featured interface to xtb in Avogadro 2.
@@ -99,8 +100,8 @@ else:
 
 
 # Define functions to find the binaries if not already specified
-# Each returns either a Path object or None
 def find_xtb():
+    """Return path to xtb binary as Path object, or None"""
     if (plugin_dir / "xtb" / "bin").exists():
         xtb_bin = plugin_dir / "xtb" / "bin" / "xtb"
         if platform.system() == "Windows":
@@ -113,6 +114,7 @@ def find_xtb():
     return xtb_bin
 
 def find_crest():
+    """Return path to crest binary as Path object, or None"""
     if (plugin_dir / "crest").exists():
         crest_bin = plugin_dir / "crest"
     elif (plugin_dir / "xtb" / "bin" / "crest").exists():
@@ -128,6 +130,7 @@ def find_crest():
     return crest_bin
 
 def find_obabel():
+    """Return path to obabel binary as Path object, or None"""
     # Try to find the version of Open Babel bundled with Avogadro
     # Current directory upon execution of script seems to be the avo "prefix" directory
     # AS OF 12/02/2024 NO LONGER SEEMS TO BE THE CASE

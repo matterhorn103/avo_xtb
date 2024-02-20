@@ -34,13 +34,20 @@ import argparse
 import json
 import sys
 from shutil import rmtree
+from pathlib import Path
 
 from config import config, calc_dir, xtb_bin
 import convert
 from run import run_xtb
 
 
-def optimize(geom_file, charge=0, multiplicity=1, solvation=None):
+def optimize(
+        geom_file: Path,
+        charge: int = 0,
+        multiplicity: int = 1,
+        solvation: str | None = None,
+        ) -> tuple[Path, float]:
+    """Return optimized geometry as file in same format as the input, along with the energy."""
     unpaired_e = multiplicity - 1
     command = ["xtb", geom_file, "--opt", "--chrg", str(charge), "--uhf", str(unpaired_e)]
     # Add solvation if requested
