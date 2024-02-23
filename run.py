@@ -42,6 +42,7 @@ from shutil import rmtree, copytree
 
 from config import config, xtb_bin, crest_bin, calc_dir
 import convert
+import obabel
 
 
 # All xtb and crest commands rely on the functionality in this module
@@ -139,14 +140,14 @@ if __name__ == "__main__":
                     "type": "string",
                     "label": "Save results in",
                     "default": str(calc_dir),
-                    "order": 1.0
+                    "order": 1.0,
                     },
                 #"Number of threads": {
                 #    "type": "integer",
                 #    #"label": "Number of cores",
                 #    "minimum": 1,
                 #    "default": 1,
-                #    "order": 2.0
+                #    "order": 2.0,
                 #    },
                 #"Memory per core": {
                 #    "type": "integer",
@@ -154,25 +155,25 @@ if __name__ == "__main__":
                 #    "minimum": 1,
                 #    "default": 1,
                 #    "suffix": " GB",
-                #    "order": 3.0
+                #    "order": 3.0,
                 #    },
                 "command": {
                     "type": "string",
                     "label": "Command to run",
                     "default": "xtb <geometry_file> --opt --chrg 0 --uhf 0",
-                    "order": 10.0
+                    "order": 10.0,
                     },
                 "help": {
                     "type": "text",
                     "label": "For help see",
                     "default": "https://xtb-docs.readthedocs.io/",
-                    "order": 9.0
+                    "order": 9.0,
                     },
                 "turbomole": {
                     "type": "boolean",
                     "label": "Use Turbomole geometry\n(use for periodic systems)",
                     "default": False,
-                    "order": 4.0
+                    "order": 4.0,
                     }
                 }
             }
@@ -195,22 +196,25 @@ if __name__ == "__main__":
         avo_input = json.loads(sys.stdin.read())
 
         # Extract the coords and write to file for use as xtb input
-        geom = avo_input["tmol"]
-        tmol_path = Path(calc_dir) / "input.tmol"
-        with open(tmol_path, "w", encoding="utf-8") as tmol_file:
-            tmol_file.write(str(geom))
-        # Convert to xyz format
-        xyz_path = convert.tmol_to_xyz(tmol_path)
         # Select geometry to use on basis of user choice
         if avo_input["turbomole"]:
+            tmol_path = Path(calc_dir) / "input.tmol"
+            with open(tmol_path, "w", encoding="utf-8") as tmol_file:
+                tmol_file.write(str(avo_input["tmol"]))
             geom_path = tmol_path
         else:
+            # Use xyz - first get xyz format (as list of lines) from cjson
+            xyz = convert.cjson_to_xyz(avo_input["cjson"], lines=True)
+            # Save to file, don't forget to add newlines
+            xyz_path = Path(calc_dir) / "input.xyz"
+            with open(xyz_path, "w", encoding="utf-8") as xyz_file:
+                xyz_file.write("\n".join(xyz))
             geom_path = xyz_path
 
         # Run calculation; returns subprocess.CompletedProcess object and path to output.out
         calc, result_path, energy = run_xtb(
             avo_input["command"].split(),
-            geom_path
+            geom_path,
             )
 
         # Format everything appropriately for Avogadro
@@ -232,19 +236,23 @@ if __name__ == "__main__":
 
         # Check if opt was requested
         if any(x in avo_input["command"] for x in ["--opt", "--ohess"]):
-            # Convert geometry
             if geom_path.suffix == ".tmol":
-                geom_cjson_path = convert.tmol_to_cjson(result_path.with_name("xtbopt.tmol"))
+                # Convert geometry with Open Babel
+                geom_cjson_path = obabel.tmol_to_cjson(result_path.with_name("xtbopt.tmol"))
+                # Open the generated cjson
+                with open(geom_cjson_path, encoding="utf-8") as result_cjson:
+                    geom_cjson = json.load(result_cjson)
             else:
-                geom_cjson_path = convert.xyz_to_cjson(result_path.with_name("xtbopt.xyz"))
-            # Open the cjson
-            with open(geom_cjson_path, encoding="utf-8") as result_cjson:
-                geom_cjson = json.load(result_cjson)
+                # Read the xyz file
+                with open(result_path.with_name("xtbopt.xyz"), encoding="utf-8") as result_xyz:
+                    xyz = result_xyz.readlines().rstrip()
+                # Convert geometry without Open Babel
+                geom_cjson = convert.xyz_to_cjson(xyz_lines=xyz)
             result["cjson"]["atoms"]["coords"] = geom_cjson["atoms"]["coords"]
 
         # Check if frequencies were requested
         if any(x in avo_input["command"] for x in ["--hess", "--ohess"]):
-            freq_cjson_path = convert.g98_to_cjson(result_path.with_name("g98.out"))
+            freq_cjson_path = obabel.g98_to_cjson(result_path.with_name("g98.out"))
             # Open the cjson
             with open(freq_cjson_path, encoding="utf-8") as result_cjson:
                 freq_cjson = json.load(result_cjson)

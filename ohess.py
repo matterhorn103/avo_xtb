@@ -39,6 +39,7 @@ from shutil import rmtree
 
 from config import config, calc_dir, xtb_bin
 import convert
+import obabel
 from run import run_xtb
 
 
@@ -115,13 +116,13 @@ if __name__ == "__main__":
         # Convert frequencies
         # Currently Avogadro fails to convert the g98 file to cjson itself
         # So we have to convert output in g98 format to cjson ourselves
-        freq_cjson_path = convert.g98_to_cjson(out_freq)
+        freq_cjson_path = obabel.g98_to_cjson(out_freq)
         # Open the cjson
         with open(freq_cjson_path, encoding="utf-8") as result_cjson:
             freq_cjson = json.load(result_cjson)
 
         # Convert geometry
-        geom_cjson_path = convert.xyz_to_cjson(out_geom)
+        geom_cjson_path = obabel.xyz_to_cjson(out_geom)
         # Open the cjson
         with open(geom_cjson_path, encoding="utf-8") as result_cjson:
             geom_cjson = json.load(result_cjson)

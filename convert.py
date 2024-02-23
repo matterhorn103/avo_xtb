@@ -1,4 +1,7 @@
 """
+Provides conversions in memory that do not rely on Open Babel.
+"""
+"""
 avo_xtb
 A full-featured interface to xtb in Avogadro 2.
 Copyright (c) 2023, Matthew J. Milner
@@ -31,68 +34,6 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 
-import os
-import subprocess
-from pathlib import Path
-
-from config import obabel_bin
-
-
-# Most commands rely on the functionality in this module
-# This thus effectively disables the menu command if executing would be impossible
-if obabel_bin is None:
-    raise FileNotFoundError("Open Babel binary not found.")
-    quit()
-
-####################################################################################################
-# CONVERSIONS USING OPEN BABEL
-# For now all the conversion functions are separate to allow for flexibility
-# Obviously it would be possible to combine many into a single function with more arguments
-# Maybe at some point do these natively but for now seems easier to use openbabel
-    
-# tmol is produced as xtb geometry output if input was also a tmol file
-def tmol_to_xyz(tmol_file: Path) -> Path:
-    """Convert a (tmol/coord) Turbomole format geometry file to xyz format using Open Babel."""
-    # Change working dir to that of file to run openbabel correctly
-    os.chdir(tmol_file.parent)
-    xyz_file = tmol_file.with_suffix(".xyz")
-    command = [obabel_bin, "-i", "tmol", tmol_file, "-o", "xyz", "-O", xyz_file]
-    conversion = subprocess.run(command, capture_output=True, encoding="utf-8")
-    return xyz_file
-
-
-def xyz_to_cjson(xyz_file: Path) -> Path:
-    """Convert an xyz format geometry file to cjson format using Open Babel."""
-    # Change working dir to that of file to run openbabel correctly
-    os.chdir(xyz_file.parent)
-    cjson_file = xyz_file.with_suffix(".cjson")
-    command = [obabel_bin, "-i", "xyz", xyz_file, "-o", "cjson", "-O", cjson_file]
-    conversion = subprocess.run(command, capture_output=True, encoding="utf-8")
-    return cjson_file
-
-
-def tmol_to_cjson(tmol_file: Path) -> Path:
-    """Convert a (tmol/coord) Turbomole format geometry file to cjson format using Open Babel."""
-    # Change working dir to that if file to run openbabel correctly
-    os.chdir(tmol_file.parent)
-    cjson_file = tmol_file.with_suffix(".cjson")
-    command = [obabel_bin, "-i", "tmol", tmol_file, "-o", "cjson", "-O", cjson_file]
-    conversion = subprocess.run(command, capture_output=True, encoding="utf-8")
-    return cjson_file
-
-
-# Frequency calculations with xtb produce "g98.out" files
-def g98_to_cjson(g98_file: Path) -> Path:
-    """Convert a Gaussian 98 format output file to cjson format using Open Babel"""
-    # Change working dir to that of file to run openbabel correctly
-    os.chdir(g98_file.parent)
-    cjson_file = g98_file.with_suffix(".cjson")
-    command = [obabel_bin, "-i", "g98", g98_file, "-o", "cjson", "-O", cjson_file]
-    conversion = subprocess.run(command, capture_output=True, encoding="utf-8")
-    return cjson_file
-
-####################################################################################################
-# INTERNAL CONVERSIONS (NO OPEN BABEL)
 
 # Convert an energy in the specified unit to a dictionary of all useful units
 def convert_energy(energy: float, unit: str) -> dict:
@@ -119,15 +60,15 @@ def convert_freq(freq=None, wavelength=None, wavenumber=None):
     return
 
 
-def xyz_from_cjson(
+def cjson_to_xyz(
         cjson: dict,
-        coords: bool = False
-        ) -> list | tuple[int, list[list[str]]]:
-    """ Take cjson dict and return geometry in xyz format.
+        lines: bool = False
+        ) -> list[str] | tuple[int, list[list[str]]]:
+    """ Take cjson dict and return geometry in xyz style.
 
-    If `coords=False`, the geometry is returned as a list of lines of an xyz file.
-    If `coords=True`, a tuple is returned of the number of atoms, and the
-    coordinates as a list of lists.
+    If `lines=True`, the geometry is returned as a list of lines of an xyz file.
+    If `lines=False`, a tuple is returned of the number of atoms, and the elements
+    and coordinates as a list of lists i.e. [[El,x,y,z],[El,x,y,z],...].
     """
     all_coords = cjson["atoms"]["coords"]["3d"]
     all_element_numbers = cjson["atoms"]["elements"]["number"]
@@ -137,7 +78,7 @@ def xyz_from_cjson(
     for index, element in enumerate(all_element_numbers):
         atom = [get_element_symbol(element), str(all_coords[index * 3]), str(all_coords[(index * 3) + 1]), str(all_coords[(index * 3) + 2])]
         coords_array.append(atom)
-    if coords:
+    if not lines:
         return n_atoms, coords_array
     else:
         xyz = [n_atoms, "xyz converted from cjson by avo_xtb"]
@@ -148,6 +89,42 @@ def xyz_from_cjson(
             atom_line.replace(" -", "-")
             xyz.append(atom_line)
         return xyz
+
+
+def xyz_to_cjson(
+        xyz_lines: list[str] = None,
+        xyz_tuple: tuple[int, list[str]] = None,
+        ) -> dict:
+    """ Take geometry in xyz style and return cjson dict.
+    
+    Provide either a list of the lines of an xyz file, or a tuple of the number of atoms
+    and the coordinates as a list of lists of strings i.e. [[El,x,y,z],[El,x,y,z],...]
+    Note that coordinates are stored in the cjson dict as floats, not strings.
+    """
+    # Convert to array of coordinates
+    if xyz_lines:
+        n_atoms = int(xyz_lines[0])
+        coords_array = []
+        for atom_line in xyz_lines[2:]:
+            atom = atom_line.split()
+            coords_array.append(atom)
+    elif xyz_tuple:
+        n_atoms, coords_array = xyz_tuple
+    all_coords = []
+    all_element_numbers = []
+    for atom in coords_array:
+        element = atom[0]
+        all_element_numbers.append(get_atomic_number(element))
+        all_coords.extend([float(atom[1]), float(atom[2]), float(atom[3])])
+    cjson = {
+        "atoms": {
+            "coords": {
+                "3d": all_coords
+                },
+            "elements": all_element_numbers
+            }
+        }
+    return cjson
 
 
 def get_element_symbol(num: int) -> str:
@@ -239,5 +216,99 @@ def get_element_symbol(num: int) -> str:
         84: "Po",
         85: "At",
         86: "Rn",
-    }
+        }
     return element_dict[num]
+
+
+def get_atomic_number(element_symbol: str) -> int:
+    """Return the atomic number for the provided element symbol (case insensitive)."""
+    element_dict = {
+        "H": 1,
+        "He": 2,
+        "Li": 3,
+        "Be": 4,
+        "B": 5,
+        "C": 6,
+        "N": 7,
+        "O": 8,
+        "F": 9,
+        "Ne": 10,
+        "Na": 11,
+        "Mg": 12,
+        "Al": 13,
+        "Si": 14,
+        "P": 15,
+        "S": 16,
+        "Cl": 17,
+        "Ar": 18,
+        "K": 19,
+        "Ca": 20,
+        "Sc": 21,
+        "Ti": 22,
+        "V": 23,
+        "Cr": 24,
+        "Mn": 25,
+        "Fe": 26,
+        "Co": 27,
+        "Ni": 28,
+        "Cu": 29,
+        "Zn": 30,
+        "Ga": 31,
+        "Ge": 32,
+        "As": 33,
+        "Se": 34,
+        "Br": 35,
+        "Kr": 36,
+        "Rb": 37,
+        "Sr": 38,
+        "Y": 39,
+        "Zr": 40,
+        "Nb": 41,
+        "Mo": 42,
+        "Tc": 43,
+        "Ru": 44,
+        "Rh": 45,
+        "Pd": 46,
+        "Ag": 47,
+        "Cd": 48,
+        "In": 49,
+        "Sn": 50,
+        "Sb": 51,
+        "Te": 52,
+        "I": 53,
+        "Xe": 54,
+        "Cs": 55,
+        "Ba": 56,
+        "La": 57,
+        "Ce": 58,
+        "Pr": 59,
+        "Nd": 60,
+        "Pm": 61,
+        "Sm": 62,
+        "Eu": 63,
+        "Gd": 64,
+        "Tb": 65,
+        "Dy": 66,
+        "Ho": 67,
+        "Er": 68,
+        "Tm": 69,
+        "Yb": 70,
+        "Lu": 71,
+        "Hf": 72,
+        "Ta": 73,
+        "W": 74,
+        "Re": 75,
+        "Os": 76,
+        "Ir": 77,
+        "Pt": 78,
+        "Au": 79,
+        "Hg": 80,
+        "Tl": 81,
+        "Pb": 82,
+        "Bi": 83,
+        "Po": 84,
+        "At": 85,
+        "Rn": 86,
+        }
+    # Make sure symbol is capitalized
+    return element_dict[element_symbol.title()]
