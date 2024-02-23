@@ -117,3 +117,127 @@ def convert_energy(energy: float, unit: str) -> dict:
 # Can imagine it will one day be useful to do similar to above but with frequency units
 def convert_freq(freq=None, wavelength=None, wavenumber=None):
     return
+
+
+def xyz_from_cjson(
+        cjson: dict,
+        coords: bool = False
+        ) -> list | tuple[int, list[list[str]]]:
+    """ Take cjson dict and return geometry in xyz format.
+
+    If `coords=False`, the geometry is returned as a list of lines of an xyz file.
+    If `coords=True`, a tuple is returned of the number of atoms, and the
+    coordinates as a list of lists.
+    """
+    all_coords = cjson["atoms"]["coords"]["3d"]
+    all_element_numbers = cjson["atoms"]["elements"]["number"]
+    # Format into list of lists in style of xyz file i.e. [[El,x,y,z],[El,x,y,z],...]
+    n_atoms = len(all_element_numbers)
+    coords_array = []
+    for index, element in enumerate(all_element_numbers):
+        atom = [get_element_symbol(element), str(all_coords[index * 3]), str(all_coords[(index * 3) + 1]), str(all_coords[(index * 3) + 2])]
+        coords_array.append(atom)
+    if coords:
+        return n_atoms, coords_array
+    else:
+        xyz = [n_atoms, "xyz converted from cjson by avo_xtb"]
+        for atom in coords_array:
+            # Turn each atom (line of array) into a single string and add to xyz
+            atom_line = "     ".join(atom)
+            # Make everything line up by removing a space in front of each minus
+            atom_line.replace(" -", "-")
+            xyz.append(atom_line)
+        return xyz
+
+
+def get_element_symbol(num: int) -> str:
+    """Return the element symbol for the provided atomic number."""
+    element_dict = {
+        1: "H",
+        2: "He",
+        3: "Li",
+        4: "Be",
+        5: "B",
+        6: "C",
+        7: "N",
+        8: "O",
+        9: "F",
+        10: "Ne",
+        11: "Na",
+        12: "Mg",
+        13: "Al",
+        14: "Si",
+        15: "P",
+        16: "S",
+        17: "Cl",
+        18: "Ar",
+        19: "K",
+        20: "Ca",
+        21: "Sc",
+        22: "Ti",
+        23: "V",
+        24: "Cr",
+        25: "Mn",
+        26: "Fe",
+        27: "Co",
+        28: "Ni",
+        29: "Cu",
+        30: "Zn",
+        31: "Ga",
+        32: "Ge",
+        33: "As",
+        34: "Se",
+        35: "Br",
+        36: "Kr",
+        37: "Rb",
+        38: "Sr",
+        39: "Y",
+        40: "Zr",
+        41: "Nb",
+        42: "Mo",
+        43: "Tc",
+        44: "Ru",
+        45: "Rh",
+        46: "Pd",
+        47: "Ag",
+        48: "Cd",
+        49: "In",
+        50: "Sn",
+        51: "Sb",
+        52: "Te",
+        53: "I",
+        54: "Xe",
+        55: "Cs",
+        56: "Ba",
+        57: "La",
+        58: "Ce",
+        59: "Pr",
+        60: "Nd",
+        61: "Pm",
+        62: "Sm",
+        63: "Eu",
+        64: "Gd",
+        65: "Tb",
+        66: "Dy",
+        67: "Ho",
+        68: "Er",
+        69: "Tm",
+        70: "Yb",
+        71: "Lu",
+        72: "Hf",
+        73: "Ta",
+        74: "W",
+        75: "Re",
+        76: "Os",
+        77: "Ir",
+        78: "Pt",
+        79: "Au",
+        80: "Hg",
+        81: "Tl",
+        82: "Pb",
+        83: "Bi",
+        84: "Po",
+        85: "At",
+        86: "Rn",
+    }
+    return element_dict[num]

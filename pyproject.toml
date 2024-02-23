@@ -1,28 +1,12 @@
-[project]
-name = "avo-xtb"
-version = "0.3.1"
-requires-python = ">= 3.10"
-authors = [
-    {name = "Matthew J. Milner", email = "matterhorn103@proton.me"},
-    ]
-maintainers = [
-    {name = "Matthew J. Milner", email = "matterhorn103@proton.me"},
-    ]
-description = "Access the full power of xtb through the Avogadro interface."
-readme = "README.md"
-license = {text = "BSD 3-Clause License"}
-
-
-[project.optional-dependencies]
-linter-formatter = ["ruff"]
-
-[project.urls]
-Repository = "https://github.com/matterhorn103/avo_xtb"
-
 [tool.ruff]
 target-version = "py310"
 
 [tool.avogadro]
+author = "Matthew J. Milner"
+version = "0.3.1"
+url = "https://github.com/matterhorn103/avo_xtb"
+name = "avogadro-xtb"
+description = "Access the full power of xtb through the Avogadro interface."
 type = "commands"
 commands = [
     {name = "configure", command = "config.py"},
