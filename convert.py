@@ -107,7 +107,8 @@ def xyz_to_cjson(
         coords_array = []
         for atom_line in xyz_lines[2:]:
             atom = atom_line.split()
-            coords_array.append(atom)
+            if len(atom) > 0:
+                coords_array.append(atom)
     elif xyz_tuple:
         n_atoms, coords_array = xyz_tuple
     all_coords = []

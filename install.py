@@ -114,7 +114,7 @@ def set_xtb_bin(install_dir):
     config["xtb_bin"] = str(xtb_bin)
     # Save config
     with open(config_file, "w", encoding="utf-8") as config_path:
-        json.dump(config, config_path)
+        json.dump(config, config_path, indent=2)
 
 
 if __name__ == "__main__":
