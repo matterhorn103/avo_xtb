@@ -200,7 +200,12 @@ if __name__ == "__main__":
         if avo_input["turbomole"]:
             tmol_path = Path(calc_dir) / "input.tmol"
             with open(tmol_path, "w", encoding="utf-8") as tmol_file:
-                tmol_file.write(str(avo_input["tmol"]))
+                # Avogadro seems to pass tmol string with \r\n newlines on Windows
+                # Python writes \r\n as \r\r\n on Windows
+                # Open Babel then reads two new lines not one
+                # So make sure we only have Python newlines (\n) by removing any \r
+                tmol_str = str(avo_input["tmol"]).replace("\r", "")
+                tmol_file.write()
             geom_path = tmol_path
         else:
             # Use xyz - first get xyz format (as list of lines) from cjson
