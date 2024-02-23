@@ -99,14 +99,14 @@ if __name__ == "__main__":
             multiplicity=avo_input["spin"],
             solvation=config["solvent"]
             )
+        # Read the xyz file
+        with open(result_path.with_name("xtbopt.xyz"), encoding="utf-8") as result_xyz:
+            xyz = result_xyz.read().split("\n")
         # Convert geometry
-        cjson_path = convert.xyz_to_cjson(result_path)
-        # Open the cjson
-        with open(cjson_path, encoding="utf-8") as result_cjson:
-            cjson_geom = json.load(result_cjson)
+        cjson_geom = convert.xyz_to_cjson(xyz_lines=xyz)
         # Check for convergence
-        # TO DO
-        # Will need to look for "FAILED TO CONVERGE"
+            # TO DO
+            # Will need to look for "FAILED TO CONVERGE"
         # Convert energy for Avogadro
         energies = convert.convert_energy(energy, "hartree")
         # Format everything appropriately for Avogadro

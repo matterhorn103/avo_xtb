@@ -38,7 +38,7 @@ from pathlib import Path
 from shutil import rmtree
 
 from config import config, calc_dir
-import convert
+import obabel_convert
 from run import run_xtb
 
 
@@ -103,7 +103,7 @@ if __name__ == "__main__":
             )
         # Currently Avogadro fails to convert the g98 file to cjson itself
         # So we have to convert output in g98 format to cjson ourselves
-        cjson_path = convert.g98_to_cjson(result_path)
+        cjson_path = obabel_convert.g98_to_cjson(result_path)
         # Open the cjson
         with open(cjson_path, encoding="utf-8") as result_cjson:
             freq_cjson = json.load(result_cjson)
