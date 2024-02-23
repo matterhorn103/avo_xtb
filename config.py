@@ -80,7 +80,7 @@ if init:
         config["calc_dir"] = str(calc_dir)
     # Save the initialized configuration to a new config file
     with open((calc_dir.parent / "config.json"), "w", encoding="utf-8") as new_config_path:
-        json.dump(config, new_config_path)
+        json.dump(config, new_config_path, indent=2)
         config_file = new_config_path
 
 
@@ -305,4 +305,4 @@ if __name__ == "__main__":
             config["energy_units"] = avo_input["energy_units"]
         
         with open(config_file, "w", encoding="utf-8") as config_path:
-            json.dump(config, config_path)
+            json.dump(config, config_path, indent=2)

@@ -1,1 +1,4 @@
-{"solvent": null, "energy_units": "kJ/mol"}
+{
+  "solvent": null,
+  "energy_units": "kJ/mol"
+}
