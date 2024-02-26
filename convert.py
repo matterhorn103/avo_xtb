@@ -81,7 +81,7 @@ def cjson_to_xyz(
     if not lines:
         return n_atoms, coords_array
     else:
-        xyz = [n_atoms, "xyz converted from cjson by avo_xtb"]
+        xyz = [str(n_atoms), "xyz converted from cjson by avo_xtb"]
         for atom in coords_array:
             # Turn each atom (line of array) into a single string and add to xyz
             atom_line = "     ".join(atom)

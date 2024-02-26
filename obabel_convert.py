@@ -37,7 +37,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 import os
 import subprocess
 from pathlib import Path
-from time import sleep
 
 from config import obabel_bin
 

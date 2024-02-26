@@ -128,7 +128,7 @@ if __name__ == "__main__":
                 # Open Babel then reads two new lines not one
                 # So make sure we only have Python newlines (\n) by removing any \r
                 tmol_str = str(avo_input["tmol"]).replace("\r", "")
-                tmol_file.write()
+                tmol_file.write(tmol_str)
             geom_path = tmol_path
         else:
             # Use xyz - first get xyz format (as list of lines) from cjson
@@ -173,7 +173,7 @@ if __name__ == "__main__":
             else:
                 # Read the xyz file
                 with open(result_path.with_name("xtbopt.xyz"), encoding="utf-8") as result_xyz:
-                    xyz = result_xyz.readlines().rstrip()
+                    xyz = result_xyz.read().split("\n")
                 # Convert geometry without Open Babel
                 geom_cjson = convert.xyz_to_cjson(xyz_lines=xyz)
             result["cjson"]["atoms"]["coords"] = geom_cjson["atoms"]["coords"]
