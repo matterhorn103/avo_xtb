@@ -98,6 +98,10 @@ if "calc_dir" in config:
 else:
     calc_dir = Path(plugin_dir / "last")
 
+# Create calculation directory if it doesn't yet exist
+if not calc_dir.exists():
+    calc_dir.mkdir()
+
 
 # Define functions to find the binaries if not already specified
 def find_xtb():

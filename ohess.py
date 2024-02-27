@@ -94,8 +94,11 @@ if __name__ == "__main__":
     if args.run_command:
         # Remove results of last calculation
         if calc_dir.exists():
-            rmtree(calc_dir)
-        calc_dir.mkdir()
+            for x in calc_dir.iterdir():
+                if x.is_file():
+                    x.unlink()
+                elif x.is_dir():
+                    rmtree(x)
 
         # Read input from Avogadro
         avo_input = json.loads(sys.stdin.read())

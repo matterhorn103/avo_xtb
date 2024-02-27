@@ -61,8 +61,8 @@ if __name__ == "__main__":
             "userOptions": {
                 "save_dir": {
                     "type": "string",
-                    "label": "Save results in",
-                    "default": str(calc_dir),
+                    "label": "Save extra copy of results in",
+                    "default": "",
                     "order": 1.0,
                     },
                 #"Number of threads": {
@@ -112,8 +112,11 @@ if __name__ == "__main__":
     if args.run_command:
         # Remove results of last calculation
         if calc_dir.exists():
-            rmtree(calc_dir)
-        calc_dir.mkdir()
+            for x in calc_dir.iterdir():
+                if x.is_file():
+                    x.unlink()
+                elif x.is_dir():
+                    rmtree(x)
 
         # Read input from Avogadro
         avo_input = json.loads(sys.stdin.read())
@@ -224,7 +227,7 @@ if __name__ == "__main__":
             json.dump(result["cjson"], save_file, indent=2)
 
         # If user specified a save location, copy calculation directory to there
-        if Path(avo_input["save_dir"]) != calc_dir:
+        if not (avo_input["save_dir"] in ["", None] or Path(avo_input["save_dir"]) == calc_dir):
             copytree(calc_dir, Path(avo_input["save_dir"]), dirs_exist_ok=True)
 
         # Pass back to Avogadro
