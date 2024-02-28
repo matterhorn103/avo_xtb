@@ -273,7 +273,7 @@ if __name__ == "__main__":
             json.dump(result["cjson"], save_file, indent=2)
 
         # If user specified a save location, copy calculation directory to there
-        if Path(avo_input["save_dir"]) != calc_dir:
+        if not (avo_input["save_dir"] in ["", None] or Path(avo_input["save_dir"]) == calc_dir):
             copytree(calc_dir, Path(avo_input["save_dir"]), dirs_exist_ok=True)
 
         # Pass back to Avogadro
