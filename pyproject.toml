@@ -1,9 +1,10 @@
 [tool.ruff]
+required-version = "0.3.0"
 target-version = "py310"
 
 [tool.avogadro]
 author = "Matthew J. Milner"
-version = "0.3.1"
+version = "0.4.0"
 url = "https://github.com/matterhorn103/avo_xtb"
 name = "avogadro-xtb"
 description = "Access the full power of xtb through the Avogadro interface."
@@ -17,7 +18,7 @@ commands = [
     {name = "orbitals", command = "orbitals.py"},
     {name = "conformers", command = "conformers.py"},
     {name = "md", command = "md.py"},
-    {name = "run", command = "run.py"},
+    {name = "run-calc", command = "run_calc.py"},
     {name = "open", command = "open.py"},
     {name = "install", command = "install.py"},
     {name = "go-to-docs", command = "docs.py"},

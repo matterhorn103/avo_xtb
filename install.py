@@ -1,36 +1,8 @@
+# Copyright (c) 2023-2024, Matthew J. Milner
+# This file is part of avo_xtb which is released under the BSD 3-Clause License.
+# See LICENSE or go to https://opensource.org/license/BSD-3-clause for full details.
+
 """Automatically download xtb and crest binaries from their repositories on behalf of the user."""
-"""
-avo_xtb
-A full-featured interface to xtb in Avogadro 2.
-Copyright (c) 2023, Matthew J. Milner
-
-BSD 3-Clause License
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-
-1. Redistributions of source code must retain the above copyright notice, this
-   list of conditions and the following disclaimer.
-
-2. Redistributions in binary form must reproduce the above copyright notice,
-   this list of conditions and the following disclaimer in the documentation
-   and/or other materials provided with the distribution.
-
-3. Neither the name of the copyright holder nor the names of its
-   contributors may be used to endorse or promote products derived from
-   this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-"""
 
 import argparse
 import json
@@ -134,38 +106,38 @@ if __name__ == "__main__":
                     "type": "text",
                     "label": "Info",
                     "default": "xtb was not found on launch!\nThis tool can install it for you.",
-                    "order": 1.0
+                    "order": 1.0,
                 },
                 "xtb_url": {
                     "type": "text",
                     "label": "xtb URL",
                     "default": xtb_url,
-                    "order": 2.0
+                    "order": 2.0,
                 },
                 "crest_url": {
                     "type": "text",
                     "label": "crest URL",
                     "default": crest_url,
-                    "order": 3.0
+                    "order": 3.0,
                 },
                 "install_dir": {
                     "type": "string",
                     "label": "Install in",
                     "default": str(calc_dir.parent),
-                    "order": 5.0
+                    "order": 5.0,
                 },
                 "notice": {
                     "type": "text",
                     "label": "By clicking OK",
                     "default": "xtb and crest will be installed from the Grimme group repositories to the above location.",
-                    "order": 6.0
+                    "order": 6.0,
                 },
                 "license": {
                     "type": "text",
                     "label": "Important",
                     "default": "xtb and crest are distributed independently under the LGPL license v3.\nThe authors of Avogadro and avo_xtb bear no responsibility for xtb or crest or the contents of the Grimme group's repositories.\nSource code for the programs is available at the above web addresses.",
-                    "order": 7.0
-                }
+                    "order": 7.0,
+                },
             }
         }
         print(json.dumps(options))
@@ -181,8 +153,10 @@ if __name__ == "__main__":
         install_dir = Path(avo_input["install_dir"])
 
         if platform.system() == "Darwin":
-            result = {"message": "The Grimme group does not supply binaries for macOS.\nYou will have to install xtb manually.\nSorry!"}
-        
+            result = {
+                "message": "The Grimme group does not supply binaries for macOS.\nYou will have to install xtb manually.\nSorry!"
+            }
+
         else:
             # First make sure the install directory exists
             try:
@@ -197,8 +171,9 @@ if __name__ == "__main__":
                 get_crest(crest_url, install_dir)
                 set_xtb_bin(install_dir)
                 # Report success
-                result = {"message": "xtb (and crest if requested) were successfully installed.\nPlease restart Avogadro."}
-        
+                result = {
+                    "message": "xtb (and crest if requested) were successfully installed.\nPlease restart Avogadro."
+                }
+
         # Pass result back to Avogadro to display to user
         print(json.dumps(result))
-

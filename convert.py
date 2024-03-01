@@ -1,38 +1,8 @@
-"""
-Provides conversions in memory that do not rely on Open Babel.
-"""
-"""
-avo_xtb
-A full-featured interface to xtb in Avogadro 2.
-Copyright (c) 2023, Matthew J. Milner
+# Copyright (c) 2023-2024, Matthew J. Milner
+# This file is part of avo_xtb which is released under the BSD 3-Clause License.
+# See LICENSE or go to https://opensource.org/license/BSD-3-clause for full details.
 
-BSD 3-Clause License
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-
-1. Redistributions of source code must retain the above copyright notice, this
-   list of conditions and the following disclaimer.
-
-2. Redistributions in binary form must reproduce the above copyright notice,
-   this list of conditions and the following disclaimer in the documentation
-   and/or other materials provided with the distribution.
-
-3. Neither the name of the copyright holder nor the names of its
-   contributors may be used to endorse or promote products derived from
-   this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-"""
+"""Provides conversions in memory that do not rely on Open Babel."""
 
 
 # Convert an energy in the specified unit to a dictionary of all useful units
@@ -61,10 +31,9 @@ def convert_freq(freq=None, wavelength=None, wavenumber=None):
 
 
 def cjson_to_xyz(
-        cjson: dict,
-        lines: bool = False
-        ) -> list[str] | tuple[int, list[list[str]]]:
-    """ Take cjson dict and return geometry in xyz style.
+    cjson: dict, lines: bool = False
+) -> list[str] | tuple[int, list[list[str]]]:
+    """Take cjson dict and return geometry in xyz style.
 
     If `lines=True`, the geometry is returned as a list of lines of an xyz file.
     If `lines=False`, a tuple is returned of the number of atoms, and the elements
@@ -76,7 +45,12 @@ def cjson_to_xyz(
     n_atoms = len(all_element_numbers)
     coords_array = []
     for index, element in enumerate(all_element_numbers):
-        atom = [get_element_symbol(element), str(all_coords[index * 3]), str(all_coords[(index * 3) + 1]), str(all_coords[(index * 3) + 2])]
+        atom = [
+            get_element_symbol(element),
+            str(all_coords[index * 3]),
+            str(all_coords[(index * 3) + 1]),
+            str(all_coords[(index * 3) + 2]),
+        ]
         coords_array.append(atom)
     if not lines:
         return n_atoms, coords_array
@@ -92,11 +66,11 @@ def cjson_to_xyz(
 
 
 def xyz_to_cjson(
-        xyz_lines: list[str] = None,
-        xyz_tuple: tuple[int, list[str]] = None,
-        ) -> dict:
-    """ Take geometry in xyz style and return cjson dict.
-    
+    xyz_lines: list[str] = None,
+    xyz_tuple: tuple[int, list[str]] = None,
+) -> dict:
+    """Take geometry in xyz style and return cjson dict.
+
     Provide either a list of the lines of an xyz file, or a tuple of the number of atoms
     and the coordinates as a list of lists of strings i.e. [[El,x,y,z],[El,x,y,z],...]
     Note that coordinates are stored in the cjson dict as floats, not strings.
@@ -117,14 +91,7 @@ def xyz_to_cjson(
         element = atom[0]
         all_element_numbers.append(get_atomic_number(element))
         all_coords.extend([float(atom[1]), float(atom[2]), float(atom[3])])
-    cjson = {
-        "atoms": {
-            "coords": {
-                "3d": all_coords
-                },
-            "elements": all_element_numbers
-            }
-        }
+    cjson = {"atoms": {"coords": {"3d": all_coords}, "elements": all_element_numbers}}
     return cjson
 
 
@@ -217,7 +184,7 @@ def get_element_symbol(num: int) -> str:
         84: "Po",
         85: "At",
         86: "Rn",
-        }
+    }
     return element_dict[num]
 
 
@@ -310,6 +277,6 @@ def get_atomic_number(element_symbol: str) -> int:
         "Po": 84,
         "At": 85,
         "Rn": 86,
-        }
+    }
     # Make sure symbol is capitalized
     return element_dict[element_symbol.title()]
