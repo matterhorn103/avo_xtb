@@ -4,6 +4,7 @@
 
 import argparse
 import json
+import sys
 import webbrowser
 
 if __name__ == "__main__":
@@ -25,9 +26,15 @@ if __name__ == "__main__":
         print("Extensions|Semi-empirical (xtb){10}")
 
     if args.run_command:
+        # Still have to read input from Avogadro and pass cjson back
+        # Otherwise molecule disappears
+        avo_input = json.loads(sys.stdin.read())
+        
         webbrowser.open("https://xtb-docs.readthedocs.io/en/latest/commandline.html")
         result = {
-            "message": "The xtb documentation should have opened in your browser."
+            "message": "The xtb documentation should have opened in your browser.",
+            "moleculeFormat": "cjson",
+            "cjson": avo_input["cjson"],
         }
         # Pass back to Avogadro
         print(json.dumps(result))
