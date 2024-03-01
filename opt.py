@@ -14,16 +14,27 @@ from run import run_xtb
 
 
 def optimize(
-        geom_file: Path,
-        charge: int = 0,
-        multiplicity: int = 1,
-        solvation: str | None = None,
-        method: int = 2,
-        level: str = "normal",
-        ) -> tuple[Path, float]:
+    geom_file: Path,
+    charge: int = 0,
+    multiplicity: int = 1,
+    solvation: str | None = None,
+    method: int = 2,
+    level: str = "normal",
+) -> tuple[Path, float]:
     """Return optimized geometry as file in same format as the input, along with the energy."""
     unpaired_e = multiplicity - 1
-    command = ["xtb", geom_file, "--opt", level, "--chrg", str(charge), "--uhf", str(unpaired_e), "--gfn", str(method)]
+    command = [
+        "xtb",
+        geom_file,
+        "--opt",
+        level,
+        "--chrg",
+        str(charge),
+        "--uhf",
+        str(unpaired_e),
+        "--gfn",
+        str(method),
+    ]
 
     # Add solvation if requested
     if solvation is not None:
@@ -77,7 +88,7 @@ if __name__ == "__main__":
             solvation=config["solvent"],
             method=config["method"],
             level=config["level"],
-            )
+        )
 
         # Read the xyz file
         with open(result_path.with_name("xtbopt.xyz"), encoding="utf-8") as result_xyz:

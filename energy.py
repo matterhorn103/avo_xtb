@@ -22,7 +22,16 @@ def energy(
 ) -> float:
     """Calculate energy in hartree for given geometry."""
     unpaired_e = multiplicity - 1
-    command = ["xtb", geom_file, "--chrg", str(charge), "--uhf", str(unpaired_e), "--gfn", str(method)]
+    command = [
+        "xtb",
+        geom_file,
+        "--chrg",
+        str(charge),
+        "--uhf",
+        str(unpaired_e),
+        "--gfn",
+        str(method),
+    ]
     # Add solvation if requested
     if solvation is not None:
         command.extend(["--alpb", solvation])
@@ -80,12 +89,13 @@ if __name__ == "__main__":
         # Start by passing back the original cjson, then add changes
         result = {"moleculeFormat": "cjson", "cjson": avo_input["cjson"]}
         # Currently Avogadro ignores the energy result
-        result["message"] = (f"Energy from GFN{config["method"]}-xTB:\n"
-                             + f"{str(round(energy_hartree, 7))} hartree\n"
-                             + f"{str(round(energies['eV'], 7))} eV\n"
-                             + f"{str(round(energies['kJ'], 7))} kJ/mol\n"
-                             + f"{str(round(energies['kcal'], 7))} kcal/mol\n"
-                             )
+        result["message"] = (
+            f"Energy from GFN{config["method"]}-xTB:\n"
+            + f"{str(round(energy_hartree, 7))} hartree\n"
+            + f"{str(round(energies['eV'], 7))} eV\n"
+            + f"{str(round(energies['kJ'], 7))} kJ/mol\n"
+            + f"{str(round(energies['kcal'], 7))} kcal/mol\n"
+        )
         result["cjson"]["properties"]["totalEnergy"] = str(round(energies["eV"], 7))
         # Pass back to Avogadro
         print(json.dumps(result))

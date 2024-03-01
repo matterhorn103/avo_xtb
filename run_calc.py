@@ -74,7 +74,9 @@ if __name__ == "__main__":
         }
         # Add solvation to default command if found in user config
         if config["solvent"] is not None:
-            options["userOptions"]["command"]["default"] += f" --alpb {config['solvent']}"
+            options["userOptions"]["command"]["default"] += (
+                f" --alpb {config['solvent']}"
+            )
         # Add method to default command but only if not the default (currently GFN2-xTB)
         if config["method"] != 2:
             options["userOptions"]["command"]["default"] += f" --gfn {config['method']}"

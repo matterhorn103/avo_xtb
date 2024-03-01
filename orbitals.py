@@ -13,17 +13,26 @@ from run import run_xtb
 
 
 def orbitals(
-        geom_file: Path,
-        charge: int = 0,
-        multiplicity: int = 1,
-        solvation: str | None = None,
-        method: int = 2,
-        ) -> Path:
-
+    geom_file: Path,
+    charge: int = 0,
+    multiplicity: int = 1,
+    solvation: str | None = None,
+    method: int = 2,
+) -> Path:
     """Calculate molecular orbitals for given geometry, return file in Molden format."""
     spin = multiplicity - 1
     # Just do a single point calculation but pass molden option to get orbital printout
-    command = ["xtb", geom_file, "--molden", "--chrg", str(charge), "--uhf", str(spin), "--gfn", str(method)]
+    command = [
+        "xtb",
+        geom_file,
+        "--molden",
+        "--chrg",
+        str(charge),
+        "--uhf",
+        str(spin),
+        "--gfn",
+        str(method),
+    ]
     # Add solvation if requested
     if solvation is not None:
         command.extend(["--alpb", solvation])
@@ -76,7 +85,7 @@ if __name__ == "__main__":
             multiplicity=avo_input["spin"],
             solvation=config["solvent"],
             method=config["method"],
-            )
+        )
 
         # Get molden file as string
         with open(result_path, encoding="utf-8") as molden_file:

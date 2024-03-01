@@ -15,16 +15,27 @@ from run import run_xtb
 
 
 def opt_freq(
-        geom_file: Path,
-        charge: int = 0,
-        multiplicity: int = 1,
-        solvation: str | None = None,
-        method: int = 2,
-        level: str = "normal",
-        ) -> tuple[Path, Path, float]:
+    geom_file: Path,
+    charge: int = 0,
+    multiplicity: int = 1,
+    solvation: str | None = None,
+    method: int = 2,
+    level: str = "normal",
+) -> tuple[Path, Path, float]:
     """Optimize geometry then calculate vibrational frequencies. Distort and reoptimize if negative frequency detected."""
     spin = multiplicity - 1
-    command = ["xtb", geom_file, "--ohess", level, "--chrg", str(charge), "--uhf", str(spin), "--gfn", str(method)]
+    command = [
+        "xtb",
+        geom_file,
+        "--ohess",
+        level,
+        "--chrg",
+        str(charge),
+        "--uhf",
+        str(spin),
+        "--gfn",
+        str(method),
+    ]
     # Add solvation if requested
     if solvation is not None:
         command.extend(["--alpb", solvation])
@@ -88,8 +99,8 @@ if __name__ == "__main__":
             solvation=config["solvent"],
             method=config["method"],
             level=config["level"],
-            )
-        
+        )
+
         # Convert frequencies
         # Currently Avogadro fails to convert the g98 file to cjson itself
         # So we have to convert output in g98 format to cjson ourselves

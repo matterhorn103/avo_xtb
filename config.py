@@ -41,7 +41,7 @@ for option, default in {
     "energy_units": "kJ/mol",
     "method": 2,
     "opt_lvl": "normal",
-    }.items():
+}.items():
     if option not in config:
         config[option] = default
 
@@ -177,7 +177,6 @@ if xtb_bin is not None:
 methods = ["GFN0-xTB", "GFN1-xTB", "GFN2-xTB"]
 
 
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--debug", action="store_true")
@@ -207,14 +206,14 @@ if __name__ == "__main__":
                     "type": "string",
                     "label": "Run calculations (in subfolder) in",
                     "default": str(calc_dir.parent),
-                    "order": 3.0
+                    "order": 3.0,
                 },
                 "energy_units": {
                     "type": "stringList",
                     "label": "Preferred energy units",
                     "values": ["kJ/mol", "kcal/mol"],
                     "default": 0,
-                    "order": 4.0
+                    "order": 4.0,
                 },
                 "solvent": {
                     "type": "stringList",
@@ -254,7 +253,7 @@ if __name__ == "__main__":
                     "label": "Method (xtb only)",
                     "values": methods,
                     "default": methods[-1],
-                    "order": 6.0
+                    "order": 6.0,
                 },
                 "opt_lvl": {
                     "type": "stringList",
@@ -267,17 +266,17 @@ if __name__ == "__main__":
                         "normal",
                         "tight",
                         "vtight",
-                        "extreme"
-                        ],
+                        "extreme",
+                    ],
                     "default": 4,
-                    "order": 7.0
+                    "order": 7.0,
                 },
                 "warning": {
                     "type": "text",
                     "label": "Note",
                     "default": "Some changes here will only affect other\nmenus after restarting Avogadro!",
-                    "order": 10.0
-                }
+                    "order": 10.0,
+                },
             }
         }
         # Set other options' defaults to match that found in user config
@@ -316,7 +315,7 @@ if __name__ == "__main__":
         if avo_input["obabel_bin"] != str(obabel_bin):
             obabel_bin = Path(avo_input["obabel_bin"])
             config["obabel_bin"] = str(obabel_bin)
-        
+
         # Update energy units
         config["energy_units"] = avo_input["energy_units"]
 
@@ -327,9 +326,9 @@ if __name__ == "__main__":
             solvent_selected = avo_input["solvent"]
         # Update solvent
         config["solvent"] = solvent_selected
-        
+
         # Update method
         config["method"] = methods.index(avo_input["method"])
-        
+
         with open(config_file, "w", encoding="utf-8") as config_path:
             json.dump(config, config_path, indent=2)
