@@ -18,14 +18,14 @@ def energy(
     charge: int = 0,
     multiplicity: int = 1,
     solvation: str | None = None,
+    method: int = 2,
 ) -> float:
     """Calculate energy in hartree for given geometry."""
     unpaired_e = multiplicity - 1
-    command = ["xtb", geom_file, "--chrg", str(charge), "--uhf", str(unpaired_e)]
+    command = ["xtb", geom_file, "--chrg", str(charge), "--uhf", str(unpaired_e), "--gfn", str(method)]
     # Add solvation if requested
     if solvation is not None:
-        command.append("--alpb")
-        command.append(solvation)
+        command.extend(["--alpb", solvation])
     # Run xtb from command line
     calc, out_file, energy = run_xtb(command, geom_file)
     return energy
@@ -72,6 +72,7 @@ if __name__ == "__main__":
             charge=avo_input["charge"],
             multiplicity=avo_input["spin"],
             solvation=config["solvent"],
+            method=config["method"],
         )
         # Convert energy to eV for Avogadro, other units for users
         energies = convert.convert_energy(energy_hartree, "hartree")
@@ -79,13 +80,12 @@ if __name__ == "__main__":
         # Start by passing back the original cjson, then add changes
         result = {"moleculeFormat": "cjson", "cjson": avo_input["cjson"]}
         # Currently Avogadro ignores the energy result
-        result["message"] = (
-            "Energy:\n"
-            + f"{str(round(energy_hartree, 7))} hartree\n"
-            + f"{str(round(energies['eV'], 7))} eV\n"
-            + f"{str(round(energies['kJ'], 7))} kJ/mol\n"
-            + f"{str(round(energies['kcal'], 7))} kcal/mol\n"
-        )
+        result["message"] = (f"Energy from GFN{config["method"]}-xTB:\n"
+                             + f"{str(round(energy_hartree, 7))} hartree\n"
+                             + f"{str(round(energies['eV'], 7))} eV\n"
+                             + f"{str(round(energies['kJ'], 7))} kJ/mol\n"
+                             + f"{str(round(energies['kcal'], 7))} kcal/mol\n"
+                             )
         result["cjson"]["properties"]["totalEnergy"] = str(round(energies["eV"], 7))
         # Pass back to Avogadro
         print(json.dumps(result))

@@ -14,26 +14,20 @@ from run import run_xtb
 
 
 def frequencies(
-    geom_file: Path,
-    charge: int = 0,
-    multiplicity: int = 1,
-    solvation: str | None = None,
-) -> Path:
+
+        geom_file: Path,
+        charge: int = 0,
+        multiplicity: int = 1,
+        solvation: str | None = None,
+        method: int = 2,
+        ) -> Path:
     """Calculate vibrational frequencies and return Gaussian 98 format output file."""
     unpaired_e = multiplicity - 1
-    command = [
-        "xtb",
-        geom_file,
-        "--hess",
-        "--chrg",
-        str(charge),
-        "--uhf",
-        str(unpaired_e),
-    ]
+    command = ["xtb", geom_file, "--hess", "--chrg", str(charge), "--uhf", str(unpaired_e), "--gfn", str(method)]
+
     # Add solvation if requested
     if solvation is not None:
-        command.append("--alpb")
-        command.append(solvation)
+        command.extend(["--alpb", solvation])
     # Run xtb from command line
     calc, out_file, energy = run_xtb(command, geom_file)
 
@@ -82,7 +76,9 @@ if __name__ == "__main__":
             charge=avo_input["charge"],
             multiplicity=avo_input["spin"],
             solvation=config["solvent"],
-        )
+            method=config["method"],
+            )
+
         # Currently Avogadro fails to convert the g98 file to cjson itself
         # So we have to convert output in g98 format to cjson ourselves
         cjson_path = obabel_convert.g98_to_cjson(result_path)

@@ -6,6 +6,7 @@
 
 import argparse
 import json
+import os
 import platform
 import sys
 from pathlib import Path
@@ -32,6 +33,18 @@ else:
 # Load configuration
 with open(config_file, encoding="utf-8") as configuration:
     config = json.load(configuration)
+
+# Make sure that any config options added in later versions of the
+# plugin are in config even if they weren't in the config.json file
+for option, default in {
+    "solvent": None,
+    "energy_units": "kJ/mol",
+    "method": 2,
+    "opt_lvl": "normal",
+    }.items():
+    if option not in config:
+        config[option] = default
+
 
 # If this is first run, determine a suitable place for config and calculations
 if init:
@@ -155,6 +168,16 @@ else:
     obabel_bin = find_obabel()
 
 
+# Have to set environment variable XTBPATH so that parameterization of GFN0-xTB is found
+if xtb_bin is not None:
+    os.environ["XTBPATH"] = str(xtb_bin.parent.parent / "share" / "xtb")
+
+
+# List of available methods
+methods = ["GFN0-xTB", "GFN1-xTB", "GFN2-xTB"]
+
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--debug", action="store_true")
@@ -168,12 +191,6 @@ if __name__ == "__main__":
     if args.print_options:
         options = {
             "userOptions": {
-                "user_dir": {
-                    "type": "string",
-                    "label": "Run calculations in",
-                    "default": str(calc_dir.parent),
-                    "order": 3.0,
-                },
                 "xtb_bin": {
                     "type": "string",
                     "label": "Location of the xtb binary",
@@ -185,6 +202,19 @@ if __name__ == "__main__":
                     "label": "Location of the Open Babel binary",
                     "default": str(obabel_bin),
                     "order": 2.0,
+                },
+                "user_dir": {
+                    "type": "string",
+                    "label": "Run calculations (in subfolder) in",
+                    "default": str(calc_dir.parent),
+                    "order": 3.0
+                },
+                "energy_units": {
+                    "type": "stringList",
+                    "label": "Preferred energy units",
+                    "values": ["kJ/mol", "kcal/mol"],
+                    "default": 0,
+                    "order": 4.0
                 },
                 "solvent": {
                     "type": "stringList",
@@ -219,26 +249,41 @@ if __name__ == "__main__":
                     "default": 0,
                     "order": 5.0,
                 },
-                "energy_units": {
+                "method": {
                     "type": "stringList",
-                    "label": "Preferred energy units",
-                    "values": ["kJ/mol", "kcal/mol"],
-                    "default": 0,
-                    "order": 4.0,
+                    "label": "Method (xtb only)",
+                    "values": methods,
+                    "default": methods[-1],
+                    "order": 6.0
+                },
+                "opt_lvl": {
+                    "type": "stringList",
+                    "label": "Optimization level (xtb only)",
+                    "values": [
+                        "crude",
+                        "sloppy",
+                        "loose",
+                        "lax",
+                        "normal",
+                        "tight",
+                        "vtight",
+                        "extreme"
+                        ],
+                    "default": 4,
+                    "order": 7.0
                 },
                 "warning": {
                     "type": "text",
                     "label": "Note",
-                    "default": "Changes here will only affect other\nmenus after restarting Avogadro!",
-                    "order": 10.0,
-                },
+                    "default": "Some changes here will only affect other\nmenus after restarting Avogadro!",
+                    "order": 10.0
+                }
             }
         }
-        # Make solvation default if found in user config
-        if config["solvent"] is not None:
-            options["userOptions"]["solvent"]["default"] = config["solvent"]
-        # Make energy units displayed match that found in user config
-        options["userOptions"]["energy_units"]["default"] = config["energy_units"]
+        # Set other options' defaults to match that found in user config
+        for option in ["solvent", "energy_units", "method", "opt_lvl"]:
+            if config[option] is not None:
+                options["userOptions"][option]["default"] = config[option]
         print(json.dumps(options))
     if args.display_name:
         print("Configure…")
@@ -271,18 +316,20 @@ if __name__ == "__main__":
         if avo_input["obabel_bin"] != str(obabel_bin):
             obabel_bin = Path(avo_input["obabel_bin"])
             config["obabel_bin"] = str(obabel_bin)
+        
+        # Update energy units
+        config["energy_units"] = avo_input["energy_units"]
 
         # Convert "none" string to Python None
         if avo_input["solvent"] == "none":
             solvent_selected = None
         else:
             solvent_selected = avo_input["solvent"]
-        # Save change to solvent if there has been one
+        # Update solvent
         config["solvent"] = solvent_selected
-
-        # Save change to energy units if there has been one
-        if avo_input["energy_units"] != config["energy_units"]:
-            config["energy_units"] = avo_input["energy_units"]
-
+        
+        # Update method
+        config["method"] = methods.index(avo_input["method"])
+        
         with open(config_file, "w", encoding="utf-8") as config_path:
             json.dump(config, config_path, indent=2)

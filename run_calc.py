@@ -33,8 +33,8 @@ if __name__ == "__main__":
             "userOptions": {
                 "save_dir": {
                     "type": "string",
-                    "label": "Save extra copy of results in",
-                    "default": "",
+                    "label": "Save results in",
+                    "default": str(calc_dir),
                     "order": 1.0,
                 },
                 # "Number of threads": {
@@ -55,7 +55,7 @@ if __name__ == "__main__":
                 "command": {
                     "type": "string",
                     "label": "Command to run",
-                    "default": "xtb <geometry_file> --opt --chrg 0 --uhf 0",
+                    "default": f"xtb <geometry_file> --opt {config["level"]} --chrg 0 --uhf 0",
                     "order": 10.0,
                 },
                 "help": {
@@ -74,9 +74,10 @@ if __name__ == "__main__":
         }
         # Add solvation to default command if found in user config
         if config["solvent"] is not None:
-            options["userOptions"]["command"]["default"] += (
-                f" --alpb {config['solvent']}"
-            )
+            options["userOptions"]["command"]["default"] += f" --alpb {config['solvent']}"
+        # Add method to default command but only if not the default (currently GFN2-xTB)
+        if config["method"] != 2:
+            options["userOptions"]["command"]["default"] += f" --gfn {config['method']}"
         print(json.dumps(options))
     if args.display_name:
         print("Run…")
