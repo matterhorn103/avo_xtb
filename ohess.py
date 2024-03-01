@@ -1,35 +1,6 @@
-"""
-avo_xtb
-A full-featured interface to xtb in Avogadro 2.
-Copyright (c) 2023, Matthew J. Milner
-
-BSD 3-Clause License
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-
-1. Redistributions of source code must retain the above copyright notice, this
-   list of conditions and the following disclaimer.
-
-2. Redistributions in binary form must reproduce the above copyright notice,
-   this list of conditions and the following disclaimer in the documentation
-   and/or other materials provided with the distribution.
-
-3. Neither the name of the copyright holder nor the names of its
-   contributors may be used to endorse or promote products derived from
-   this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-"""
+# Copyright (c) 2023-2024, Matthew J. Milner
+# This file is part of avo_xtb which is released under the BSD 3-Clause License.
+# See LICENSE or go to https://opensource.org/license/BSD-3-clause for full details.
 
 import argparse
 import json
@@ -37,18 +8,18 @@ import sys
 from pathlib import Path
 from shutil import rmtree
 
-from config import config, calc_dir, xtb_bin
+from config import config, calc_dir
 import convert
 import obabel_convert
 from run import run_xtb
 
 
 def opt_freq(
-        geom_file: Path,
-        charge: int = 0,
-        multiplicity: int = 1,
-        solvation: str | None = None,
-        ) -> tuple[Path, Path, float]:
+    geom_file: Path,
+    charge: int = 0,
+    multiplicity: int = 1,
+    solvation: str | None = None,
+) -> tuple[Path, Path, float]:
     """Optimize geometry then calculate vibrational frequencies. Distort and reoptimize if negative frequency detected."""
     spin = multiplicity - 1
     command = ["xtb", geom_file, "--ohess", "--chrg", str(charge), "--uhf", str(spin)]
@@ -113,9 +84,9 @@ if __name__ == "__main__":
             xyz_path,
             charge=avo_input["charge"],
             multiplicity=avo_input["spin"],
-            solvation=config["solvent"]
-            )
-        
+            solvation=config["solvent"],
+        )
+
         # Convert frequencies
         # Currently Avogadro fails to convert the g98 file to cjson itself
         # So we have to convert output in g98 format to cjson ourselves
@@ -130,7 +101,7 @@ if __name__ == "__main__":
         with open(geom_cjson_path, encoding="utf-8") as result_cjson:
             geom_cjson = json.load(result_cjson)
         # Check for convergence
-        # TO DO
+        # TODO
         # Will need to look for "FAILED TO CONVERGE"
 
         # Convert energy for Avogadro
@@ -151,12 +122,14 @@ if __name__ == "__main__":
         for field in ["basisSet", "orbitals", "cube"]:
             if field in result["cjson"]:
                 del result["cjson"][field]
-        
+
         # Inform user if there are negative frequencies
         if float(freq_cjson["vibrations"]["frequencies"][0]) < 0:
-            result["message"] = ("At least one negative frequency found!\n"
-                                 "This is not a minimum on the potential energy surface.\n"
-                                 "You should reoptimize the geometry.")
+            result["message"] = (
+                "At least one negative frequency found!\n"
+                "This is not a minimum on the potential energy surface.\n"
+                "You should reoptimize the geometry."
+            )
 
         # Save result
         with open(calc_dir / "result.cjson", "w", encoding="utf-8") as save_file:

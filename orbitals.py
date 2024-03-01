@@ -1,51 +1,23 @@
-"""
-avo_xtb
-A full-featured interface to xtb in Avogadro 2.
-Copyright (c) 2023, Matthew J. Milner
+# Copyright (c) 2023-2024, Matthew J. Milner
+# This file is part of avo_xtb which is released under the BSD 3-Clause License.
+# See LICENSE or go to https://opensource.org/license/BSD-3-clause for full details.
 
-BSD 3-Clause License
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-
-1. Redistributions of source code must retain the above copyright notice, this
-   list of conditions and the following disclaimer.
-
-2. Redistributions in binary form must reproduce the above copyright notice,
-   this list of conditions and the following disclaimer in the documentation
-   and/or other materials provided with the distribution.
-
-3. Neither the name of the copyright holder nor the names of its
-   contributors may be used to endorse or promote products derived from
-   this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-"""
 import argparse
 import json
 import sys
 from shutil import rmtree
 from pathlib import Path
 
-from config import config, calc_dir, xtb_bin
+from config import config, calc_dir
 from run import run_xtb
 
 
 def orbitals(
-        geom_file: Path,
-        charge: int = 0,
-        multiplicity: int = 1,
-        solvation: str | None = None,
-        ) -> Path:
+    geom_file: Path,
+    charge: int = 0,
+    multiplicity: int = 1,
+    solvation: str | None = None,
+) -> Path:
     """Calculate molecular orbitals for given geometry, return file in Molden format."""
     spin = multiplicity - 1
     # Just do a single point calculation but pass molden option to get orbital printout
@@ -101,23 +73,29 @@ if __name__ == "__main__":
             xyz_path,
             charge=avo_input["charge"],
             multiplicity=avo_input["spin"],
-            solvation=config["solvent"]
-            )
+            solvation=config["solvent"],
+        )
 
         # Get molden file as string
         with open(result_path, encoding="utf-8") as molden_file:
             molden_string = molden_file.read()
         # Format everything appropriately for Avogadro
         # Just pass orbitals file with instruction to read only properties
-        result = {"readProperties": True, "moleculeFormat": "molden", "molden": molden_string}
+        result = {
+            "readProperties": True,
+            "moleculeFormat": "molden",
+            "molden": molden_string,
+        }
         # As it stands, this means any other properties will be wiped
         # If there were e.g. frequencies in the original cjson, notify the user
         if "vibrations" in avo_input["cjson"]:
-            result["message"] = ("Calculation complete!\n"
-                                 "The vibrational frequencies may have been lost in this process.\n"
-                                 "Please recalculate them if they are missing and still desired.\n")
+            result["message"] = (
+                "Calculation complete!\n"
+                "The vibrational frequencies may have been lost in this process.\n"
+                "Please recalculate them if they are missing and still desired.\n"
+            )
         else:
             result["message"] = "Calculation complete!"
-        
+
         # Pass back to Avogadro
         print(json.dumps(result))

@@ -1,36 +1,8 @@
+# Copyright (c) 2023-2024, Matthew J. Milner
+# This file is part of avo_xtb which is released under the BSD 3-Clause License.
+# See LICENSE or go to https://opensource.org/license/BSD-3-clause for full details.
+
 """Setup plugin, load settings and detect binaries then expose them as variables."""
-"""
-avo_xtb
-A full-featured interface to xtb in Avogadro 2.
-Copyright (c) 2023, Matthew J. Milner
-
-BSD 3-Clause License
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-
-1. Redistributions of source code must retain the above copyright notice, this
-   list of conditions and the following disclaimer.
-
-2. Redistributions in binary form must reproduce the above copyright notice,
-   this list of conditions and the following disclaimer in the documentation
-   and/or other materials provided with the distribution.
-
-3. Neither the name of the copyright holder nor the names of its
-   contributors may be used to endorse or promote products derived from
-   this software without specific prior written permission.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-"""
 
 import argparse
 import json
@@ -40,7 +12,7 @@ from pathlib import Path
 from shutil import which
 
 # Temporary fix to make sure stdout stream is always Unicode, as Avogadro 1.99 expects
-sys.stdout.reconfigure(encoding='utf-8')
+sys.stdout.reconfigure(encoding="utf-8")
 
 plugin_dir = Path(__file__).parent
 
@@ -71,7 +43,7 @@ if init:
         with open((calc_dir / "probe.txt"), "w", encoding="utf-8") as probe_file:
             probe_file.write(
                 "This file is created only to check everything works.\nIt will be deleted when the first calculation is run."
-                )
+            )
         config["calc_dir"] = str(calc_dir)
     # If we don't have write permission, use user's home instead, in cross-platform way
     except PermissionError:
@@ -79,7 +51,9 @@ if init:
         calc_dir.mkdir(parents=True, exist_ok=True)
         config["calc_dir"] = str(calc_dir)
     # Save the initialized configuration to a new config file
-    with open((calc_dir.parent / "config.json"), "w", encoding="utf-8") as new_config_path:
+    with open(
+        (calc_dir.parent / "config.json"), "w", encoding="utf-8"
+    ) as new_config_path:
         json.dump(config, new_config_path, indent=2)
         config_file = new_config_path
 
@@ -117,6 +91,7 @@ def find_xtb():
             xtb_bin = Path(xtb_bin)
     return xtb_bin
 
+
 def find_crest():
     """Return path to crest binary as Path object, or None"""
     if (plugin_dir / "crest").exists():
@@ -133,12 +108,13 @@ def find_crest():
             crest_bin = Path(crest_bin)
     return crest_bin
 
+
 def find_obabel():
     """Return path to obabel binary as Path object, or None"""
     # Try to find the version of Open Babel bundled with Avogadro
     # Current directory upon execution of script seems to be the avo "prefix" directory
     # AS OF 12/02/2024 NO LONGER SEEMS TO BE THE CASE
-    # to do: find new way to find Avo's install directory
+    # TODO: find new way to find Avo's install directory
     # openbabel should be in the Avo bin directory
     if (Path.cwd() / "bin" / "obabel").exists():
         obabel_bin = Path.cwd() / "bin" / "obabel"
@@ -179,8 +155,6 @@ else:
     obabel_bin = find_obabel()
 
 
-
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--debug", action="store_true")
@@ -198,19 +172,19 @@ if __name__ == "__main__":
                     "type": "string",
                     "label": "Run calculations in",
                     "default": str(calc_dir.parent),
-                    "order": 3.0
+                    "order": 3.0,
                 },
                 "xtb_bin": {
                     "type": "string",
                     "label": "Location of the xtb binary",
                     "default": str(xtb_bin),
-                    "order": 1.0
+                    "order": 1.0,
                 },
                 "obabel_bin": {
                     "type": "string",
                     "label": "Location of the Open Babel binary",
                     "default": str(obabel_bin),
-                    "order": 2.0
+                    "order": 2.0,
                 },
                 "solvent": {
                     "type": "stringList",
@@ -240,24 +214,24 @@ if __name__ == "__main__":
                         "phenol",
                         "toluene",
                         "thf",
-                        "water"
-                        ],
+                        "water",
+                    ],
                     "default": 0,
-                    "order": 5.0
+                    "order": 5.0,
                 },
                 "energy_units": {
                     "type": "stringList",
                     "label": "Preferred energy units",
                     "values": ["kJ/mol", "kcal/mol"],
                     "default": 0,
-                    "order": 4.0
+                    "order": 4.0,
                 },
                 "warning": {
                     "type": "text",
                     "label": "Note",
                     "default": "Changes here will only affect other\nmenus after restarting Avogadro!",
-                    "order": 10.0
-                }
+                    "order": 10.0,
+                },
             }
         }
         # Make solvation default if found in user config
@@ -270,22 +244,24 @@ if __name__ == "__main__":
         print("Configure…")
     if args.menu_path:
         print("Extensions|Semi-empirical (xtb){20}")
-    
+
     if args.run_command:
         # Read input from Avogadro
         avo_input = json.loads(sys.stdin.read())
-        
+
         # Save change to user_dir if there has been one
         if avo_input["user_dir"] != str(calc_dir.parent):
             calc_dir = Path(avo_input["user_dir"]) / "last"
             try:
                 calc_dir.mkdir(parents=True, exist_ok=True)
             except PermissionError:
-                result = {"message": "A folder could not be created at the path specified!"}
+                result = {
+                    "message": "A folder could not be created at the path specified!"
+                }
                 # Pass back to Avogadro to display to user
                 print(json.dumps(result))
             config["calc_dir"] = str(calc_dir)
-        
+
         # Save change to xtb_bin if there has been one
         if avo_input["xtb_bin"] != str(xtb_bin):
             xtb_bin = Path(avo_input["xtb_bin"])
@@ -295,7 +271,7 @@ if __name__ == "__main__":
         if avo_input["obabel_bin"] != str(obabel_bin):
             obabel_bin = Path(avo_input["obabel_bin"])
             config["obabel_bin"] = str(obabel_bin)
-        
+
         # Convert "none" string to Python None
         if avo_input["solvent"] == "none":
             solvent_selected = None
@@ -307,6 +283,6 @@ if __name__ == "__main__":
         # Save change to energy units if there has been one
         if avo_input["energy_units"] != config["energy_units"]:
             config["energy_units"] = avo_input["energy_units"]
-        
+
         with open(config_file, "w", encoding="utf-8") as config_path:
             json.dump(config, config_path, indent=2)
