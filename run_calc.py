@@ -55,7 +55,7 @@ if __name__ == "__main__":
                 "command": {
                     "type": "string",
                     "label": "Command to run",
-                    "default": f"xtb <geometry_file> --opt {config["level"]} --chrg 0 --uhf 0",
+                    "default": f"xtb <geometry_file> --opt {config['opt_lvl']} --chrg 0 --uhf 0",
                     "order": 10.0,
                 },
                 "help": {
@@ -182,16 +182,16 @@ if __name__ == "__main__":
                 if distorted_geom.exists():
                     message.append(
                         "At least one negative frequency found!\n"
-                        "This is not a minimum on the potential energy surface.\n"
-                        "You should reoptimize the geometry starting from the\n"
-                        "distorted geometry found in the calculation directory\n"
-                        "with the filename 'xtbhess.xyz' or 'xtbhess.tmol'."
+                        + "This is not a minimum on the potential energy surface.\n"
+                        + "You should reoptimize the geometry starting from the\n"
+                        + "distorted geometry found in the calculation directory\n"
+                        + "with the filename 'xtbhess.xyz' or 'xtbhess.tmol'."
                     )
                 else:
                     message.append(
                         "At least one negative frequency found!\n"
-                        "This is not a minimum on the potential energy surface.\n"
-                        "You should reoptimize the geometry."
+                        + "This is not a minimum on the potential energy surface.\n"
+                        + "You should reoptimize the geometry."
                     )
 
         # Check if orbitals were requested

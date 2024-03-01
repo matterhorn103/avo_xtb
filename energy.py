@@ -90,7 +90,7 @@ if __name__ == "__main__":
         result = {"moleculeFormat": "cjson", "cjson": avo_input["cjson"]}
         # Currently Avogadro ignores the energy result
         result["message"] = (
-            f"Energy from GFN{config["method"]}-xTB:\n"
+            f"Energy from GFN{config['method']}-xTB:\n"
             + f"{str(round(energy_hartree, 7))} hartree\n"
             + f"{str(round(energies['eV'], 7))} eV\n"
             + f"{str(round(energies['kJ'], 7))} kJ/mol\n"

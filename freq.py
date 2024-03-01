@@ -107,9 +107,9 @@ if __name__ == "__main__":
         if float(freq_cjson["vibrations"]["frequencies"][0]) < 0:
             result["message"] = (
                 "At least one negative frequency found!\n"
-                "This is not a minimum on the potential energy surface.\n"
-                "You should reoptimize the geometry.\n"
-                "This can be avoided in future by using the Opt + Freq method."
+                + "This is not a minimum on the potential energy surface.\n"
+                + "You should reoptimize the geometry.\n"
+                + "This can be avoided in future by using the Opt + Freq method."
             )
 
         # Save result

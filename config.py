@@ -324,11 +324,15 @@ if __name__ == "__main__":
             solvent_selected = None
         else:
             solvent_selected = avo_input["solvent"]
+
         # Update solvent
         config["solvent"] = solvent_selected
 
         # Update method
         config["method"] = methods.index(avo_input["method"])
+
+        # Update optimization level
+        config["opt_lvl"] = avo_input["opt_lvl"]
 
         with open(config_file, "w", encoding="utf-8") as config_path:
             json.dump(config, config_path, indent=2)

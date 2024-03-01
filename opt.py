@@ -87,7 +87,7 @@ if __name__ == "__main__":
             multiplicity=avo_input["spin"],
             solvation=config["solvent"],
             method=config["method"],
-            level=config["level"],
+            level=config["opt_lvl"],
         )
 
         # Read the xyz file

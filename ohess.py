@@ -98,7 +98,7 @@ if __name__ == "__main__":
             multiplicity=avo_input["spin"],
             solvation=config["solvent"],
             method=config["method"],
-            level=config["level"],
+            level=config["opt_lvl"],
         )
 
         # Convert frequencies
@@ -141,8 +141,8 @@ if __name__ == "__main__":
         if float(freq_cjson["vibrations"]["frequencies"][0]) < 0:
             result["message"] = (
                 "At least one negative frequency found!\n"
-                "This is not a minimum on the potential energy surface.\n"
-                "You should reoptimize the geometry."
+                + "This is not a minimum on the potential energy surface.\n"
+                + "You should reoptimize the geometry."
             )
 
         # Save result

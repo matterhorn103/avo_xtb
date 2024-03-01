@@ -121,7 +121,7 @@ if __name__ == "__main__":
                 "save_dir": {
                     "type": "string",
                     "label": "Save results in",
-                    "default": "<plugin_directory>/last",
+                    "default": str(calc_dir),
                 },
             },
         }
@@ -205,7 +205,10 @@ if __name__ == "__main__":
                     ].extend(xyz)
 
         # If user specified a save location, copy calculation directory to there
-        if avo_input["save_dir"] != "<plugin_directory>/last":
+        if not (
+            avo_input["save_dir"] in ["", None]
+            or Path(avo_input["save_dir"]) == calc_dir
+        ):
             copytree(calc_dir, Path(avo_input["save_dir"]), dirs_exist_ok=True)
 
         # Save result
