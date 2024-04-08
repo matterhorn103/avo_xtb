@@ -52,10 +52,16 @@ The plugin also relies on Open Babel for conversion of output files to Avogadro'
 
 # Cite
 
+General reference to `xtb` and the implemented GFN methods:
+* C. Bannwarth, E. Caldeweyher, S. Ehlert, A. Hansen, P. Pracht, J. Seibert, S. Spicher, S. Grimme
+  *WIREs Comput. Mol. Sci.*, **2020**, 11, e01493.
+  DOI: [10.1002/wcms.1493](https://doi.org/10.1002/wcms.1493)
+
 For GFN2-xTB (default method):
 * C. Bannwarth, S. Ehlert and S. Grimme., *J. Chem. Theory Comput.*, **2019**, 15, 1652-1671. DOI: [10.1021/acs.jctc.8b01176](https://dx.doi.org/10.1021/acs.jctc.8b01176)
 
 For CREST:
+* P. Pracht, S. Grimme, C. Bannwarth, F. Bohle, S. Ehlert, G. Feldmann, J. Gorges, M. Müller, T. Neudecker, C. Plett, S. Spicher, P. Steinbach, P. Wesołowski, F. Zeller, *J. Chem. Phys.*, **2024**, *160*, 114110. DOI: [10.1063/5.0197592](https://doi.org/10.1063/5.0197592)
 * P. Pracht, F. Bohle, S. Grimme, *Phys. Chem. Chem. Phys.*, **2020**, 22, 7169-7192. DOI: [10.1039/C9CP06869D](https://dx.doi.org/10.1039/C9CP06869D)
 
 See the xtb and CREST GitHub repositories for other citations.
