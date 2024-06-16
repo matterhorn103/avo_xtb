@@ -6,6 +6,7 @@
 
 import argparse
 import json
+import os
 import platform
 import sys
 import tarfile
@@ -24,41 +25,46 @@ if xtb_bin is not None:
 
 # For now just hard code the URLs of xtb and crest
 if platform.system() == "Windows":
-    xtb_url = "https://github.com/grimme-lab/xtb/releases/download/v6.6.1/xtb-6.6.1-windows-x86_64.zip"
+    xtb_url = "https://github.com/grimme-lab/xtb/releases/download/v6.7.0/xtb-6.7.0-Windows-x86_64.zip"
     crest_url = "Not available for Windows!"
 elif platform.system() == "Darwin":
     xtb_url = "Not available for macOS!"
     crest_url = "Not available for macOS!"
 elif platform.system() == "Linux":
-    xtb_url = "https://github.com/grimme-lab/xtb/releases/download/v6.6.1/xtb-6.6.1-linux-x86_64.tar.xz"
-    crest_url = "https://github.com/crest-lab/crest/releases/download/v2.12/crest.zip"
+    xtb_url = "https://github.com/grimme-lab/xtb/releases/download/v6.7.0/xtb-6.7.0-linux-x86_64.tar.xz"
+    crest_url = "https://github.com/crest-lab/crest/releases/download/v3.0.1/crest-latest.tar.xz"
 
 
-def download(url, parent_dir):
+def download(url, parent_dir) -> Path:
     archive_name = url.split("/")[-1]
     archive_path = parent_dir / archive_name
     urllib.request.urlretrieve(url, archive_path)
     return archive_path
 
 
-def extract_zip(archive, target):
+def extract_zip(archive, target_dir) -> Path:
     with zipfile.ZipFile(archive, "r") as zip:
-        zip.extractall(target)
+        # Get name of file or folder that will be placed into target
+        extracted = target_dir / zip.namelist()[0].split(os.sep)[0]
+        zip.extractall(target_dir)
+    return extracted
 
 
-def extract_tar(archive, target):
+def extract_tar(archive, target_dir) -> Path:
     with tarfile.open(archive, "r:xz") as tar:
-        tar.extractall(target)
+        # Get name of file or folder that will be placed into target
+        extracted = target_dir / tar.getnames()[0].split(os.sep)[0]
+        tar.extractall(target_dir)
+    return extracted
 
 
 def get_xtb(url, install_dir):
     # Download archive to specified directory, then extract there
     archive = download(url, install_dir)
     if archive.suffix == ".zip":
-        extract_zip(archive, install_dir)
+        xtb_folder = extract_zip(archive, install_dir)
     else:
-        extract_tar(archive, install_dir)
-    xtb_folder = archive.with_name("-".join(archive.stem.split("-")[0:2]))
+        xtb_folder = extract_tar(archive, install_dir)
     # Rename unzipped folder to non-versioned so that config.py finds it
     xtb_folder.rename(xtb_folder.with_name("xtb"))
     # Remove archive
