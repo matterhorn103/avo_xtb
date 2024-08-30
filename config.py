@@ -109,6 +109,8 @@ def find_crest():
     """Return path to crest binary as Path object, or None"""
     if (plugin_dir / "crest").exists():
         crest_bin = plugin_dir / "crest"
+    elif (plugin_dir / "xtb" / "bin" / "crest" / "crest").exists():
+        crest_bin = plugin_dir / "xtb" / "bin" / "crest" / "crest"
     elif (plugin_dir / "xtb" / "bin" / "crest").exists():
         crest_bin = plugin_dir / "xtb" / "bin" / "crest"
     # Currently there is no Windows binary for crest but let's assume there will be one day

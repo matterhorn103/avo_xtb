@@ -25,14 +25,14 @@ if xtb_bin is not None:
 
 # For now just hard code the URLs of xtb and crest
 if platform.system() == "Windows":
-    xtb_url = "https://github.com/grimme-lab/xtb/releases/download/v6.7.0/xtb-6.7.0-Windows-x86_64.zip"
+    xtb_url = "https://github.com/grimme-lab/xtb/releases/download/v6.7.1/xtb-6.7.1pre-Windows-x86_64.zip"
     crest_url = "Not available for Windows!"
 elif platform.system() == "Darwin":
     xtb_url = "Not available for macOS!"
     crest_url = "Not available for macOS!"
 elif platform.system() == "Linux":
-    xtb_url = "https://github.com/grimme-lab/xtb/releases/download/v6.7.0/xtb-6.7.0-linux-x86_64.tar.xz"
-    crest_url = "https://github.com/crest-lab/crest/releases/download/v3.0.1/crest-latest.tar.xz"
+    xtb_url = "https://github.com/grimme-lab/xtb/releases/download/v6.7.1/xtb-6.7.1-linux-x86_64.tar.xz"
+    crest_url = "https://github.com/crest-lab/crest/releases/download/v3.0.2/crest-gnu-12-ubuntu-latest.tar.xz"
 
 
 def download(url, parent_dir) -> Path:

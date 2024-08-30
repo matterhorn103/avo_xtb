@@ -194,13 +194,19 @@ if __name__ == "__main__":
             ewin_kcal = avo_input["ewin"] / 4.184
         else:
             ewin_kcal = avo_input["ewin"]
+        
+        # Convert "none" string to Python None
+        if avo_input["solvent"] == "none":
+            solvation = None
+        else:
+            solvation = avo_input["solvent"]
 
         # Run calculation using xyz file
         conformers_path = conformers(
             xyz_path,
             charge=avo_input["charge"],
             multiplicity=avo_input["spin"],
-            solvation=avo_input["solvent"],
+            solvation=solvation,
             ewin=ewin_kcal,
             hess=avo_input["hess"],
         )
