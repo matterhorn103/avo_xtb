@@ -1,5 +1,5 @@
 # Copyright (c) 2023-2024, Matthew J. Milner
-# This file is part of avo_xtb which is released under the BSD 3-Clause License.
+# This file is part of py-xtb which is released under the BSD 3-Clause License.
 # See LICENSE or go to https://opensource.org/license/BSD-3-clause for full details.
 
 """Provide backend functions to run any calculation on the command line, used by all calculation options."""
@@ -8,30 +8,25 @@ import os
 import subprocess
 from pathlib import Path
 
-from config import xtb_bin, crest_bin
-
-
-# All xtb and crest commands rely on the functionality in this module
-# This thus effectively disables the menu command if executing would be impossible
-if xtb_bin is None:
-    raise FileNotFoundError("xtb binary not found.")
-    quit()
+from .config import xtb_bin, crest_bin, calc_dir
+from .geometry import Geometry
 
 
 def run_xtb(
-    command: str, geom_file: Path
+    command: list[str], input: Geometry
 ) -> tuple[subprocess.CompletedProcess, Path, float]:
     """Run provided command with xtb on the command line, then return the process, the output file, and the parsed energy."""
+    # Save geometry to file
+    geom_file = input.write_xyz(calc_dir)
     # Change working dir to that of geometry file to run xtb correctly
     os.chdir(geom_file.parent)
     out_file = geom_file.with_name("output.out")
 
-    # Replace xtb with xtb path
+    # Replace xtb string with xtb path
     if command[0] == "xtb":
         command[0] = xtb_bin
-    # Replace <geometry file> string with geom_file
-    if "<geometry_file>" in command:
-        command[command.index("<geometry_file>")] = geom_file
+    # Add geom file to command string
+    command.extend(["--", geom_file])
 
     # Run xtb from command line
     calc = subprocess.run(command, capture_output=True, encoding="utf-8")
@@ -48,7 +43,7 @@ def run_xtb(
 
 # Similarly, provide a generic function to run any crest calculation
 def run_crest(
-    command: str, geom_file: Path
+    command: list[str], geom_file: Path
 ) -> tuple[subprocess.CompletedProcess, Path]:
     """Run provided command with crest on the command line, then return the process and the output file."""
     # Change working dir to that of geometry file to run crest correctly
