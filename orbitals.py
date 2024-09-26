@@ -9,7 +9,12 @@ from shutil import rmtree
 from pathlib import Path
 
 from config import config, calc_dir
+<<<<<<< Updated upstream
 from run import run_xtb
+=======
+from py_xtb import orbitals
+from py_xtb.run import run_xtb
+>>>>>>> Stashed changes
 
 
 def orbitals(
