@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 from shutil import rmtree
 
-from py_xtb import config, calc_dir, convert, calc
+from support import py_xtb
 import obabel_convert
 
 
@@ -32,8 +32,8 @@ if __name__ == "__main__":
 
     if args.run_command:
         # Remove results of last calculation
-        if calc_dir.exists():
-            for x in calc_dir.iterdir():
+        if py_xtb.calc_dir.exists():
+            for x in py_xtb.calc_dir.iterdir():
                 if x.is_file():
                     x.unlink()
                 elif x.is_dir():
@@ -43,18 +43,18 @@ if __name__ == "__main__":
         avo_input = json.loads(sys.stdin.read())
         # Extract the coords and write to file for use as xtb input
         geom = avo_input["xyz"]
-        xyz_path = Path(calc_dir) / "input.xyz"
+        xyz_path = Path(py_xtb.calc_dir) / "input.xyz"
         with open(xyz_path, "w", encoding="utf-8") as xyz_file:
             xyz_file.write(str(geom))
 
         # Run calculation; returns path to Gaussian file containing frequencies
-        out_geom, out_freq, energy = calc.opt_freq(
+        out_geom, out_freq, energy = py_xtb.calc.opt_freq(
             xyz_path,
             charge=avo_input["charge"],
             multiplicity=avo_input["spin"],
-            solvation=config["solvent"],
-            method=config["method"],
-            level=config["opt_lvl"],
+            solvation=py_xtb.config["solvent"],
+            method=py_xtb.config["method"],
+            level=py_xtb.config["opt_lvl"],
         )
 
         # Convert frequencies
@@ -75,7 +75,7 @@ if __name__ == "__main__":
         # Will need to look for "FAILED TO CONVERGE"
 
         # Convert energy for Avogadro
-        energies = convert.convert_energy(energy, "hartree")
+        energies = py_xtb.convert.convert_energy(energy, "hartree")
 
         # Format appropriately for Avogadro
         # Start by passing back the original cjson, then add changes
@@ -102,7 +102,7 @@ if __name__ == "__main__":
             )
 
         # Save result
-        with open(calc_dir / "result.cjson", "w", encoding="utf-8") as save_file:
+        with open(py_xtb.calc_dir / "result.cjson", "w", encoding="utf-8") as save_file:
             json.dump(result["cjson"], save_file, indent=2)
         # Pass back to Avogadro
         print(json.dumps(result))

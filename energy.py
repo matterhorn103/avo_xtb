@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 from shutil import rmtree
 
-from py_xtb import calc, convert, config, calc_dir
+from support import py_xtb
 
 
 if __name__ == "__main__":
@@ -31,8 +31,8 @@ if __name__ == "__main__":
 
     if args.run_command:
         # Remove results of last calculation
-        if calc_dir.exists():
-            for x in calc_dir.iterdir():
+        if py_xtb.calc_dir.exists():
+            for x in py_xtb.calc_dir.iterdir():
                 if x.is_file():
                     x.unlink()
                 elif x.is_dir():
@@ -42,26 +42,26 @@ if __name__ == "__main__":
         avo_input = json.loads(sys.stdin.read())
         # Extract the coords and write to file for use as xtb input
         geom = avo_input["xyz"]
-        xyz_path = Path(calc_dir) / "input.xyz"
+        xyz_path = Path(py_xtb.calc_dir) / "input.xyz"
         with open(xyz_path, "w", encoding="utf-8") as xyz_file:
             xyz_file.write(str(geom))
 
         # Run calculation; returns energy as float in hartree
-        energy_hartree = energy(
+        energy_hartree = py_xtb.calc.energy(
             xyz_path,
             charge=avo_input["charge"],
             multiplicity=avo_input["spin"],
-            solvation=config["solvent"],
-            method=config["method"],
+            solvation=py_xtb.config["solvent"],
+            method=py_xtb.config["method"],
         )
         # Convert energy to eV for Avogadro, other units for users
-        energies = convert.convert_energy(energy_hartree, "hartree")
+        energies = py_xtb.convert.convert_energy(energy_hartree, "hartree")
         # Format everything appropriately for Avogadro
         # Start by passing back the original cjson, then add changes
         result = {"moleculeFormat": "cjson", "cjson": avo_input["cjson"]}
         # Currently Avogadro ignores the energy result
         result["message"] = (
-            f"Energy from GFN{config['method']}-xTB:\n"
+            f"Energy from GFN{py_xtb.config['method']}-xTB:\n"
             + f"{str(round(energy_hartree, 7))} hartree\n"
             + f"{str(round(energies['eV'], 7))} eV\n"
             + f"{str(round(energies['kJ'], 7))} kJ/mol\n"

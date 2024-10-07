@@ -9,7 +9,7 @@ import json
 import sys
 from pathlib import Path
 
-from py_xtb import xtb_bin, obabel_bin, calc_dir, config, config_file
+from support import py_xtb
 
 
 # List of available methods
@@ -31,19 +31,19 @@ if __name__ == "__main__":
                 "xtb_bin": {
                     "type": "string",
                     "label": "Location of the xtb binary",
-                    "default": str(xtb_bin),
+                    "default": str(py_xtb.xtb_bin),
                     "order": 1.0,
                 },
                 "obabel_bin": {
                     "type": "string",
                     "label": "Location of the Open Babel binary",
-                    "default": str(obabel_bin),
+                    "default": str(py_xtb.obabel_bin),
                     "order": 2.0,
                 },
                 "user_dir": {
                     "type": "string",
                     "label": "Run calculations (in subfolder) in",
-                    "default": str(calc_dir.parent),
+                    "default": str(py_xtb.calc_dir.parent),
                     "order": 3.0,
                 },
                 "energy_units": {
@@ -119,8 +119,8 @@ if __name__ == "__main__":
         }
         # Set other options' defaults to match that found in user config
         for option in ["solvent", "energy_units", "method", "opt_lvl"]:
-            if config[option] is not None:
-                options["userOptions"][option]["default"] = config[option]
+            if py_xtb.config[option] is not None:
+                options["userOptions"][option]["default"] = py_xtb.config[option]
         print(json.dumps(options))
     if args.display_name:
         print("Configure…")
@@ -132,30 +132,30 @@ if __name__ == "__main__":
         avo_input = json.loads(sys.stdin.read())
 
         # Save change to user_dir if there has been one
-        if avo_input["user_dir"] != str(calc_dir.parent):
-            calc_dir = Path(avo_input["user_dir"]) / "last"
+        if avo_input["user_dir"] != str(py_xtb.calc_dir.parent):
+            py_xtb.calc_dir = Path(avo_input["user_dir"]) / "last"
             try:
-                calc_dir.mkdir(parents=True, exist_ok=True)
+                py_xtb.calc_dir.mkdir(parents=True, exist_ok=True)
             except PermissionError:
                 result = {
                     "message": "A folder could not be created at the path specified!"
                 }
                 # Pass back to Avogadro to display to user
                 print(json.dumps(result))
-            config["calc_dir"] = str(calc_dir)
+            py_xtb.config["calc_dir"] = str(py_xtb.calc_dir)
 
         # Save change to xtb_bin if there has been one
-        if avo_input["xtb_bin"] != str(xtb_bin):
-            xtb_bin = Path(avo_input["xtb_bin"])
-            config["xtb_bin"] = str(xtb_bin)
+        if avo_input["xtb_bin"] != str(py_xtb.xtb_bin):
+            py_xtb.xtb_bin = Path(avo_input["xtb_bin"])
+            py_xtb.config["xtb_bin"] = str(py_xtb.xtb_bin)
 
         # Save change to obabel_bin if there has been one
-        if avo_input["obabel_bin"] != str(obabel_bin):
-            obabel_bin = Path(avo_input["obabel_bin"])
-            config["obabel_bin"] = str(obabel_bin)
+        if avo_input["obabel_bin"] != str(py_xtb.obabel_bin):
+            py_xtb.obabel_bin = Path(avo_input["obabel_bin"])
+            py_xtb.config["obabel_bin"] = str(py_xtb.obabel_bin)
 
         # Update energy units
-        config["energy_units"] = avo_input["energy_units"]
+        py_xtb.config["energy_units"] = avo_input["energy_units"]
 
         # Convert "none" string to Python None
         if avo_input["solvent"] == "none":
@@ -164,13 +164,13 @@ if __name__ == "__main__":
             solvent_selected = avo_input["solvent"]
 
         # Update solvent
-        config["solvent"] = solvent_selected
+        py_xtb.config["solvent"] = solvent_selected
 
         # Update method
-        config["method"] = methods.index(avo_input["method"])
+        py_xtb.config["method"] = methods.index(avo_input["method"])
 
         # Update optimization level
-        config["opt_lvl"] = avo_input["opt_lvl"]
+        py_xtb.config["opt_lvl"] = avo_input["opt_lvl"]
 
-        with open(config_file, "w", encoding="utf-8") as config_path:
-            json.dump(config, config_path, indent=2)
+        with open(py_xtb.config_file, "w", encoding="utf-8") as config_path:
+            json.dump(py_xtb.config, config_path, indent=2)

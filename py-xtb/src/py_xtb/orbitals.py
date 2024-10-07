@@ -2,13 +2,8 @@
 # This file is part of py-xtb which is released under the BSD 3-Clause License.
 # See LICENSE or go to https://opensource.org/license/BSD-3-clause for full details.
 
-import argparse
-import json
-import sys
-from shutil import rmtree
 from pathlib import Path
 
-from config import config, calc_dir
 from .run import run_xtb
 
 

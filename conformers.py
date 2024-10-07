@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 from shutil import rmtree, copytree
 
-from py_xtb import config, calc_dir, xtb_bin, crest_bin, config_file, calc
+from support import py_xtb
 
 
 
@@ -23,7 +23,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Disable if xtb and crest missing
-    if xtb_bin is None or crest_bin is None:
+    if py_xtb.xtb_bin is None or py_xtb.crest_bin is None:
         quit()
 
     if args.print_options:
@@ -33,13 +33,13 @@ if __name__ == "__main__":
                 "crest_bin": {
                     "type": "string",
                     "label": "Location of the CREST binary",
-                    "default": str(crest_bin),
+                    "default": str(py_xtb.crest_bin),
                     "order": 1.0,
                 },
                 "save_dir": {
                     "type": "string",
                     "label": "Save results in",
-                    "default": str(calc_dir),
+                    "default": str(py_xtb.calc_dir),
                     "order": 2.0,
                 },
                 # "Number of threads": {
@@ -114,12 +114,12 @@ if __name__ == "__main__":
             },
         }
         # Display energy in kcal if user has insisted on it
-        if config["energy_units"] == "kcal/mol":
+        if py_xtb.config["energy_units"] == "kcal/mol":
             options["userOptions"]["ewin"]["default"] = 6
             options["userOptions"]["ewin"]["suffix"] = " kcal/mol"
         # Make solvation default if found in user config
-        if config["solvent"] is not None:
-            options["userOptions"]["solvent"]["default"] = config["solvent"]
+        if py_xtb.config["solvent"] is not None:
+            options["userOptions"]["solvent"]["default"] = py_xtb.config["solvent"]
         print(json.dumps(options))
     if args.display_name:
         print("Conformers…")
@@ -128,8 +128,8 @@ if __name__ == "__main__":
 
     if args.run_command:
         # Remove results of last calculation
-        if calc_dir.exists():
-            for x in calc_dir.iterdir():
+        if py_xtb.calc_dir.exists():
+            for x in py_xtb.calc_dir.iterdir():
                 if x.is_file():
                     x.unlink()
                 elif x.is_dir():
@@ -139,19 +139,19 @@ if __name__ == "__main__":
         avo_input = json.loads(sys.stdin.read())
         # Extract the coords and write to file for use as xtb input
         geom = avo_input["xyz"]
-        xyz_path = calc_dir / "input.xyz"
+        xyz_path = py_xtb.calc_dir / "input.xyz"
         with open(xyz_path, "w", encoding="utf-8") as xyz_file:
             xyz_file.write(str(geom))
 
         # If provided crest path different to that stored, use it and save it
-        if Path(avo_input["crest_bin"]) != crest_bin:
+        if Path(avo_input["crest_bin"]) != py_xtb.crest_bin:
             crest_bin = Path(avo_input["crest_bin"])
-            config["crest_bin"] = str(crest_bin)
-            with open(config_file, "w", encoding="utf-8") as config_path:
-                json.dump(config, config_path)
+            py_xtb.config["crest_bin"] = str(crest_bin)
+            with open(py_xtb.config_file, "w", encoding="utf-8") as config_path:
+                json.dump(py_xtb.config, config_path)
 
         # crest takes energies in kcal so convert if provided in kJ (default)
-        if config["energy_units"] == "kJ/mol":
+        if py_xtb.config["energy_units"] == "kJ/mol":
             ewin_kcal = avo_input["ewin"] / 4.184
         else:
             ewin_kcal = avo_input["ewin"]
@@ -163,7 +163,7 @@ if __name__ == "__main__":
             solvation = avo_input["solvent"]
 
         # Run calculation using xyz file
-        conformers_path = calc.conformers(
+        conformers_path = py_xtb.calc.conformers(
             xyz_path,
             charge=avo_input["charge"],
             multiplicity=avo_input["spin"],
@@ -214,15 +214,15 @@ if __name__ == "__main__":
                     ].extend(xyz)
 
         # Save result
-        with open(calc_dir / "result.cjson", "w", encoding="utf-8") as save_file:
+        with open(py_xtb.calc_dir / "result.cjson", "w", encoding="utf-8") as save_file:
             json.dump(result["cjson"], save_file, indent=2)
 
         # If user specified a save location, copy calculation directory to there
         if not (
             avo_input["save_dir"] in ["", None]
-            or Path(avo_input["save_dir"]) == calc_dir
+            or Path(avo_input["save_dir"]) == py_xtb.calc_dir
         ):
-            copytree(calc_dir, Path(avo_input["save_dir"]), dirs_exist_ok=True)
+            copytree(py_xtb.calc_dir, Path(avo_input["save_dir"]), dirs_exist_ok=True)
 
         # Pass back to Avogadro
         print(json.dumps(result))

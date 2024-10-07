@@ -53,9 +53,8 @@ def run_crest(
     # Replace crest with crest path
     if command[0] == "crest":
         command[0] = crest_bin
-    # Replace <geometry file> string with geom_file
-    if "<geometry_file>" in command:
-        command[command.index("<geometry_file>")] = geom_file
+    # Add geom file to command string
+    command.extend(["--", geom_file])
 
     # Run in parallel
     # os.environ["PATH"] += os.pathsep + path

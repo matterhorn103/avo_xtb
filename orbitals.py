@@ -7,7 +7,7 @@ import json
 import sys
 from shutil import rmtree
 
-from py_xtb import config, calc_dir, calc
+from support import py_xtb
 
 
 if __name__ == "__main__":
@@ -30,8 +30,8 @@ if __name__ == "__main__":
 
     if args.run_command:
         # Remove results of last calculation
-        if calc_dir.exists():
-            for x in calc_dir.iterdir():
+        if py_xtb.calc_dir.exists():
+            for x in py_xtb.calc_dir.iterdir():
                 if x.is_file():
                     x.unlink()
                 elif x.is_dir():
@@ -41,17 +41,17 @@ if __name__ == "__main__":
         avo_input = json.loads(sys.stdin.read())
         # Extract the coords and write to file for use as xtb input
         geom = avo_input["xyz"]
-        xyz_path = calc_dir / "input.xyz"
+        xyz_path =py_xtb.calc_dir / "input.xyz"
         with open(xyz_path, "w", encoding="utf-8") as xyz_file:
             xyz_file.write(str(geom))
 
         # Run calculation using xyz file
-        result_path = calc.orbitals(
+        result_path = py_xtb.calc.orbitals(
             xyz_path,
             charge=avo_input["charge"],
             multiplicity=avo_input["spin"],
-            solvation=config["solvent"],
-            method=config["method"],
+            solvation=py_xtb.config["solvent"],
+            method=py_xtb.config["method"],
         )
 
         # Get molden file as string

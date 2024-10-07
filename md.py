@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 from shutil import rmtree, copytree
 
-from py_xtb import config, calc_dir, calc
+from support import py_xtb
 
 
 if __name__ == "__main__":
@@ -87,7 +87,7 @@ if __name__ == "__main__":
                 "save_dir": {
                     "type": "string",
                     "label": "Save results in",
-                    "default": str(calc_dir),
+                    "default": str(py_xtb.calc_dir),
                 },
             },
         }
@@ -100,15 +100,15 @@ if __name__ == "__main__":
 
     if args.run_command:
         # Remove results of last calculation
-        if calc_dir.exists():
-            rmtree(calc_dir)
-        calc_dir.mkdir()
+        if py_xtb.calc_dir.exists():
+            rmtree(py_xtb.calc_dir)
+        py_xtb.calc_dir.mkdir()
 
         # Read input from Avogadro
         avo_input = json.loads(sys.stdin.read())
         # Extract the coords and write to file for use as xtb input
         geom = avo_input["xyz"]
-        xyz_path = calc_dir / "input.xyz"
+        xyz_path = py_xtb.calc_dir / "input.xyz"
         with open(xyz_path, "w", encoding="utf-8") as xyz_file:
             xyz_file.write(str(geom))
 
@@ -122,12 +122,12 @@ if __name__ == "__main__":
             input_file.write("$end")
 
         # Run calculation using xyz file and input file
-        trj_path = calc.md(
+        trj_path = py_xtb.calc.md(
             xyz_path,
             input_path,
             charge=avo_input["charge"],
             multiplicity=avo_input["spin"],
-            solvation=config["solvent"],
+            solvation=py_xtb.config["solvent"],
         )
 
         # Make sure that the calculation was successful before investing any more time
@@ -173,12 +173,12 @@ if __name__ == "__main__":
         # If user specified a save location, copy calculation directory to there
         if not (
             avo_input["save_dir"] in ["", None]
-            or Path(avo_input["save_dir"]) == calc_dir
+            or Path(avo_input["save_dir"]) == py_xtb.calc_dir
         ):
-            copytree(calc_dir, Path(avo_input["save_dir"]), dirs_exist_ok=True)
+            copytree(py_xtb.calc_dir, Path(avo_input["save_dir"]), dirs_exist_ok=True)
 
         # Save result
-        with open(calc_dir / "result.cjson", "w", encoding="utf-8") as save_file:
+        with open(py_xtb.calc_dir / "result.cjson", "w", encoding="utf-8") as save_file:
             json.dump(result["cjson"], save_file, indent=2)
         # Pass back to Avogadro
         print(json.dumps(result, indent=2))

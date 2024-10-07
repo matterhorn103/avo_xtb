@@ -15,7 +15,7 @@ import zipfile
 
 from pathlib import Path
 
-from py_xtb import config, config_file, calc_dir, xtb_bin
+from support import py_xtb
 
 
 
@@ -85,10 +85,10 @@ def set_xtb_bin(install_dir):
     # Set variable to binary at ./xtb/bin/xtb
     xtb_bin = Path(install_dir / "xtb" / "bin" / "xtb")
     # Add to config
-    config["xtb_bin"] = str(xtb_bin)
+    py_xtb.config["xtb_bin"] = str(xtb_bin)
     # Save config
-    with open(config_file, "w", encoding="utf-8") as config_path:
-        json.dump(config, config_path, indent=2)
+    with open(py_xtb.config_file, "w", encoding="utf-8") as config_path:
+        json.dump(py_xtb.config, config_path, indent=2)
 
 
 if __name__ == "__main__":
@@ -102,7 +102,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Disable this command if xtb has been found
-    if xtb_bin is not None:
+    if py_xtb.xtb_bin is not None:
         quit()
 
     if args.print_options:
@@ -129,7 +129,7 @@ if __name__ == "__main__":
                 "install_dir": {
                     "type": "string",
                     "label": "Install in",
-                    "default": str(calc_dir.parent),
+                    "default": str(py_xtb.calc_dir.parent),
                     "order": 5.0,
                 },
                 "notice": {

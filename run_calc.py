@@ -10,8 +10,7 @@ import sys
 from pathlib import Path
 from shutil import rmtree, copytree
 
-from py_xtb import config, calc_dir, convert
-from py_xtb.run import run_xtb, parse_energy
+from support import py_xtb
 
 import obabel_convert
 
@@ -34,7 +33,7 @@ if __name__ == "__main__":
                 "save_dir": {
                     "type": "string",
                     "label": "Save results in",
-                    "default": str(calc_dir),
+                    "default": str(py_xtb.calc_dir),
                     "order": 1.0,
                 },
                 # "Number of threads": {
@@ -55,7 +54,7 @@ if __name__ == "__main__":
                 "command": {
                     "type": "string",
                     "label": "Command to run",
-                    "default": f"xtb <geometry_file> --opt {config['opt_lvl']} --chrg 0 --uhf 0",
+                    "default": f"xtb <geometry_file> --opt {py_xtb.config['opt_lvl']} --chrg 0 --uhf 0",
                     "order": 10.0,
                 },
                 "help": {
@@ -73,13 +72,13 @@ if __name__ == "__main__":
             },
         }
         # Add solvation to default command if found in user config
-        if config["solvent"] is not None:
+        if py_xtb.config["solvent"] is not None:
             options["userOptions"]["command"]["default"] += (
-                f" --alpb {config['solvent']}"
+                f" --alpb {py_xtb.config['solvent']}"
             )
         # Add method to default command but only if not the default (currently GFN2-xTB)
-        if config["method"] != 2:
-            options["userOptions"]["command"]["default"] += f" --gfn {config['method']}"
+        if py_xtb.config["method"] != 2:
+            options["userOptions"]["command"]["default"] += f" --gfn {py_xtb.config['method']}"
         print(json.dumps(options))
     if args.display_name:
         print("Run…")
@@ -88,8 +87,8 @@ if __name__ == "__main__":
 
     if args.run_command:
         # Remove results of last calculation
-        if calc_dir.exists():
-            for x in calc_dir.iterdir():
+        if py_xtb.calc_dir.exists():
+            for x in py_xtb.calc_dir.iterdir():
                 if x.is_file():
                     x.unlink()
                 elif x.is_dir():
@@ -101,7 +100,7 @@ if __name__ == "__main__":
         # Extract the coords and write to file for use as xtb input
         # Select geometry to use on basis of user choice
         if avo_input["turbomole"]:
-            tmol_path = Path(calc_dir) / "input.tmol"
+            tmol_path = Path(py_xtb.calc_dir) / "input.tmol"
             with open(tmol_path, "w", encoding="utf-8") as tmol_file:
                 # Avogadro seems to pass tmol string with \r\n newlines on Windows
                 # Python writes \r\n as \r\r\n on Windows
@@ -112,15 +111,15 @@ if __name__ == "__main__":
             geom_path = tmol_path
         else:
             # Use xyz - first get xyz format (as list of lines) from cjson
-            xyz = convert.cjson_to_xyz(avo_input["cjson"], lines=True)
+            xyz = py_xtb.convert.cjson_to_xyz(avo_input["cjson"], lines=True)
             # Save to file, don't forget to add newlines
-            xyz_path = Path(calc_dir) / "input.xyz"
+            xyz_path = Path(py_xtb.calc_dir) / "input.xyz"
             with open(xyz_path, "w", encoding="utf-8") as xyz_file:
                 xyz_file.write("\n".join(xyz))
             geom_path = xyz_path
 
         # Run calculation; returns subprocess.CompletedProcess object and path to output.out
-        calc, result_path, energy = run_xtb(
+        calc, result_path, energy = py_xtb.run_xtb(
             avo_input["command"].split(),
             geom_path,
         )
@@ -159,7 +158,7 @@ if __name__ == "__main__":
                 ) as result_xyz:
                     xyz = result_xyz.read().split("\n")
                 # Convert geometry without Open Babel
-                geom_cjson = convert.xyz_to_cjson(xyz_lines=xyz)
+                geom_cjson = py_xtb.convert.xyz_to_cjson(xyz_lines=xyz)
             result["cjson"]["atoms"]["coords"] = geom_cjson["atoms"]["coords"]
 
         # Check if frequencies were requested
@@ -201,24 +200,24 @@ if __name__ == "__main__":
         # if "--molden" in command
 
         # Add energy from output
-        energy = parse_energy(calc.stdout)
+        energy = py_xtb.parse_energy(calc.stdout)
         # Convert energy to eV for Avogadro
-        energy_eV = convert.convert_energy(energy, "hartree")["eV"]
+        energy_eV = py_xtb.convert.convert_energy(energy, "hartree")["eV"]
         result["cjson"]["properties"]["totalEnergy"] = str(round(energy_eV, 7))
 
         # Add all the messages, separated by blank lines
         result["message"] = "\n\n".join(message)
 
         # Save result
-        with open(calc_dir / "result.cjson", "w", encoding="utf-8") as save_file:
+        with open(py_xtb.calc_dir / "result.cjson", "w", encoding="utf-8") as save_file:
             json.dump(result["cjson"], save_file, indent=2)
 
         # If user specified a save location, copy calculation directory to there
         if not (
             avo_input["save_dir"] in ["", None]
-            or Path(avo_input["save_dir"]) == calc_dir
+            or Path(avo_input["save_dir"]) ==py_xtb.calc_dir
         ):
-            copytree(calc_dir, Path(avo_input["save_dir"]), dirs_exist_ok=True)
+            copytree(py_xtb.calc_dir, Path(avo_input["save_dir"]), dirs_exist_ok=True)
 
         # Pass back to Avogadro
         print(json.dumps(result))
