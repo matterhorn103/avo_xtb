@@ -8,52 +8,8 @@ import sys
 from pathlib import Path
 from shutil import rmtree
 
-from config import config, calc_dir
-import convert
+from py_xtb import config, calc_dir, convert, calc
 import obabel_convert
-from run import run_xtb
-
-
-def opt_freq(
-    geom_file: Path,
-    charge: int = 0,
-    multiplicity: int = 1,
-    solvation: str | None = None,
-    method: int = 2,
-    level: str = "normal",
-) -> tuple[Path, Path, float]:
-    """Optimize geometry then calculate vibrational frequencies. Distort and reoptimize if negative frequency detected."""
-    spin = multiplicity - 1
-    command = [
-        "xtb",
-        geom_file,
-        "--ohess",
-        level,
-        "--chrg",
-        str(charge),
-        "--uhf",
-        str(spin),
-        "--gfn",
-        str(method),
-    ]
-    # Add solvation if requested
-    if solvation is not None:
-        command.extend(["--alpb", solvation])
-    # Run xtb from command line
-    calc, out_file, energy = run_xtb(command, geom_file)
-
-    # Make sure the first calculation has finished
-    # (How?)
-
-    # Check for distorted geometry
-    # (Generated automatically by xtb if result had negative frequency)
-    # If so, rerun
-    distorted_geom = geom_file.with_stem("xtbhess")
-    if distorted_geom.exists():
-        calc, out_file, energy = run_xtb(command, distorted_geom)
-
-    # Return the path of the Gaussian file generated
-    return geom_file.with_stem("xtbopt"), geom_file.with_name("g98.out"), energy
 
 
 if __name__ == "__main__":
@@ -92,7 +48,7 @@ if __name__ == "__main__":
             xyz_file.write(str(geom))
 
         # Run calculation; returns path to Gaussian file containing frequencies
-        out_geom, out_freq, energy = opt_freq(
+        out_geom, out_freq, energy = calc.opt_freq(
             xyz_path,
             charge=avo_input["charge"],
             multiplicity=avo_input["spin"],

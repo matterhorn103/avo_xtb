@@ -15,12 +15,8 @@ import zipfile
 
 from pathlib import Path
 
-from config import config, config_file, calc_dir, xtb_bin
+from py_xtb import config, config_file, calc_dir, xtb_bin
 
-
-# Disable this command if xtb has been found
-if xtb_bin is not None:
-    quit()
 
 
 # For now just hard code the URLs of xtb and crest
@@ -104,6 +100,10 @@ if __name__ == "__main__":
     parser.add_argument("--lang", nargs="?", default="en")
     parser.add_argument("--menu-path", action="store_true")
     args = parser.parse_args()
+
+    # Disable this command if xtb has been found
+    if xtb_bin is not None:
+        quit()
 
     if args.print_options:
         options = {

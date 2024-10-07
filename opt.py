@@ -8,41 +8,7 @@ import sys
 from shutil import rmtree
 from pathlib import Path
 
-from config import config, calc_dir
-import convert
-from run import run_xtb
-
-
-def optimize(
-    geom_file: Path,
-    charge: int = 0,
-    multiplicity: int = 1,
-    solvation: str | None = None,
-    method: int = 2,
-    level: str = "normal",
-) -> tuple[Path, float]:
-    """Return optimized geometry as file in same format as the input, along with the energy."""
-    unpaired_e = multiplicity - 1
-    command = [
-        "xtb",
-        geom_file,
-        "--opt",
-        level,
-        "--chrg",
-        str(charge),
-        "--uhf",
-        str(unpaired_e),
-        "--gfn",
-        str(method),
-    ]
-
-    # Add solvation if requested
-    if solvation is not None:
-        command.extend(["--alpb", solvation])
-    # Run xtb from command line
-    calc, out_file, energy = run_xtb(command, geom_file)
-    # Return path to geometry file with same suffix, along with energy
-    return geom_file.with_stem("xtbopt"), energy
+from py_xtb import config, calc_dir, calc, convert
 
 
 if __name__ == "__main__":
@@ -81,7 +47,7 @@ if __name__ == "__main__":
             xyz_file.write(str(geom))
 
         # Run calculation using xyz file
-        result_path, energy = optimize(
+        result_path, energy = calc.optimize(
             xyz_path,
             charge=avo_input["charge"],
             multiplicity=avo_input["spin"],

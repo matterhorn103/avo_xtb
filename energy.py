@@ -8,36 +8,7 @@ import sys
 from pathlib import Path
 from shutil import rmtree
 
-from config import config, calc_dir
-from run import run_xtb
-import convert
-
-
-def energy(
-    geom_file: Path,
-    charge: int = 0,
-    multiplicity: int = 1,
-    solvation: str | None = None,
-    method: int = 2,
-) -> float:
-    """Calculate energy in hartree for given geometry."""
-    unpaired_e = multiplicity - 1
-    command = [
-        "xtb",
-        geom_file,
-        "--chrg",
-        str(charge),
-        "--uhf",
-        str(unpaired_e),
-        "--gfn",
-        str(method),
-    ]
-    # Add solvation if requested
-    if solvation is not None:
-        command.extend(["--alpb", solvation])
-    # Run xtb from command line
-    calc, out_file, energy = run_xtb(command, geom_file)
-    return energy
+from py_xtb import calc, convert, config, calc_dir
 
 
 if __name__ == "__main__":

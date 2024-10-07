@@ -8,51 +8,8 @@ import sys
 from pathlib import Path
 from shutil import rmtree, copytree
 
-from config import config, calc_dir, xtb_bin, crest_bin, config_file
-from run import run_crest
+from py_xtb import config, calc_dir, xtb_bin, crest_bin, config_file, calc
 
-# Disable if xtb and crest missing
-if xtb_bin is None or crest_bin is None:
-    quit()
-
-
-def conformers(
-    geom_file: Path,
-    charge: int = 0,
-    multiplicity: int = 1,
-    solvation: str | None = None,
-    ewin: int | float = 6,
-    hess: bool = False,
-) -> Path:
-    """Simulate a conformer ensemble and return multi-geometry xyz file.
-
-    All conformers within <ewin> kcal/mol are kept.
-    If hess=True, vibrational frequencies are calculated and the conformers reordered by Gibbs energy.
-    """
-    unpaired_e = multiplicity - 1
-    command = [
-        crest_bin,
-        geom_file,
-        "--xnam",
-        xtb_bin,
-        "--chrg",
-        str(charge),
-        "--uhf",
-        str(unpaired_e),
-        "--ewin",
-        str(ewin),
-    ]
-    # Add solvation if requested
-    if solvation is not None:
-        command.append("--alpb")
-        command.append(solvation)
-    if hess:
-        command.extend(["--prop", "hess"])
-
-    # Run crest from command line
-    calc, out_file = run_crest(command, geom_file)
-
-    return geom_file.with_stem("crest_conformers")
 
 
 if __name__ == "__main__":
@@ -64,6 +21,10 @@ if __name__ == "__main__":
     parser.add_argument("--lang", nargs="?", default="en")
     parser.add_argument("--menu-path", action="store_true")
     args = parser.parse_args()
+
+    # Disable if xtb and crest missing
+    if xtb_bin is None or crest_bin is None:
+        quit()
 
     if args.print_options:
         options = {
@@ -202,7 +163,7 @@ if __name__ == "__main__":
             solvation = avo_input["solvent"]
 
         # Run calculation using xyz file
-        conformers_path = conformers(
+        conformers_path = calc.conformers(
             xyz_path,
             charge=avo_input["charge"],
             multiplicity=avo_input["spin"],

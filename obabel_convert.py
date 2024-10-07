@@ -7,11 +7,31 @@
 import os
 import subprocess
 from pathlib import Path
+from shutil import which
 
-from config import obabel_bin
+def find_obabel():
+    """Return path to obabel binary as Path object, or None"""
+    # Try to find the version of Open Babel bundled with Avogadro
+    # Current directory upon execution of script seems to be the avo "prefix" directory
+    # AS OF 12/02/2024 NO LONGER SEEMS TO BE THE CASE
+    # TODO: find new way to find Avo's install directory
+    # openbabel should be in the Avo bin directory
+    obabel_bin = None
+    if (Path.cwd() / "bin/obabel").exists():
+        obabel_bin = Path.cwd() / "bin/obabel"
+    # Or if on Windows
+    elif (Path.cwd() / "bin/obabel.exe").exists():
+        obabel_bin = Path.cwd() / "bin/obabel.exe"
+    else:
+        # Check PATH
+        obabel_bin = which("obabel")
+        if obabel_bin is not None:
+            obabel_bin = Path(obabel_bin)
+    return obabel_bin
 
-# Most commands rely on the functionality in this module
-# This thus effectively disables the menu command if executing would be impossible
+obabel_bin = find_obabel()
+# Many commands rely on the functionality in this module
+# This thus effectively disables many menu commands if executing would be impossible
 if obabel_bin is None:
     raise FileNotFoundError("Open Babel binary not found.")
     quit()
@@ -19,7 +39,6 @@ if obabel_bin is None:
 # For now all the conversion functions are separate to allow for flexibility
 # Obviously it would be possible to combine many into a single function with more arguments
 # Maybe at some point do these natively but for now seems easier to use openbabel
-
 
 # tmol is produced as xtb geometry output if input was also a tmol file
 def tmol_to_xyz(tmol_file: Path) -> Path:

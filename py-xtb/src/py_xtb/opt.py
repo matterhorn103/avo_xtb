@@ -10,7 +10,7 @@ from pathlib import Path
 
 from config import config, calc_dir
 import convert
-from run import run_xtb
+from .run import run_xtb
 
 
 def optimize(

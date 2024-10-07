@@ -10,10 +10,10 @@ import sys
 from pathlib import Path
 from shutil import rmtree, copytree
 
-from py_xtb.config import config, calc_dir
-import convert
-import obabel_convert
+from py_xtb import config, calc_dir, convert
 from py_xtb.run import run_xtb, parse_energy
+
+import obabel_convert
 
 
 # Define behaviour of Run menu command

@@ -9,7 +9,7 @@ import json
 import sys
 from pathlib import Path
 
-from py_xtb.config import xtb_bin, obabel_bin, calc_dir, config, config_file
+from py_xtb import xtb_bin, obabel_bin, calc_dir, config, config_file
 
 
 # List of available methods

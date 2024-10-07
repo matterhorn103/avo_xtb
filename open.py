@@ -9,7 +9,7 @@ import json
 import platform
 import subprocess
 
-from config import calc_dir
+from py_xtb import calc_dir
 
 
 if __name__ == "__main__":

@@ -6,12 +6,8 @@ import argparse
 import json
 import sys
 from shutil import rmtree
-from pathlib import Path
 
-from config import config, calc_dir
-from py_xtb.orbitals import orbitals
-from py_xtb.run import run_xtb
-
+from py_xtb import config, calc_dir, calc
 
 
 if __name__ == "__main__":
@@ -50,7 +46,7 @@ if __name__ == "__main__":
             xyz_file.write(str(geom))
 
         # Run calculation using xyz file
-        result_path = orbitals(
+        result_path = calc.orbitals(
             xyz_path,
             charge=avo_input["charge"],
             multiplicity=avo_input["spin"],

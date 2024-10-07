@@ -142,25 +142,6 @@ def find_crest():
     return crest_bin
 
 
-def find_obabel():
-    """Return path to obabel binary as Path object, or None"""
-    # Try to find the version of Open Babel bundled with Avogadro
-    # Current directory upon execution of script seems to be the avo "prefix" directory
-    # AS OF 12/02/2024 NO LONGER SEEMS TO BE THE CASE
-    # TODO: find new way to find Avo's install directory
-    # openbabel should be in the Avo bin directory
-    if (Path.cwd() / "bin/obabel").exists():
-        obabel_bin = Path.cwd() / "bin/obabel"
-    # Or if on Windows
-    elif (Path.cwd() / "bin/obabel.exe").exists():
-        obabel_bin = Path.cwd() / "bin/obabel.exe"
-    else:
-        # Check PATH
-        obabel_bin = which("obabel")
-        if obabel_bin is not None:
-            obabel_bin = Path(obabel_bin)
-    return obabel_bin
-
 
 # Initialize and find the various binaries
 # Confirm that those loaded from the config can be found
@@ -180,12 +161,6 @@ if "crest_bin" in config:
         crest_bin = find_crest()
 else:
     crest_bin = find_crest()
-if "obabel_bin" in config:
-    obabel_bin = Path(config["obabel_bin"])
-    if not obabel_bin.exists():
-        obabel_bin = find_obabel()
-else:
-    obabel_bin = find_obabel()
 
 
 # Have to set environment variable XTBPATH so that parameterization of GFN0-xTB is found

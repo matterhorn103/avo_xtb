@@ -8,7 +8,7 @@ import os
 import subprocess
 from pathlib import Path
 
-from .config import xtb_bin, crest_bin, calc_dir
+from .conf import xtb_bin, crest_bin, calc_dir
 from .geometry import Geometry
 
 
