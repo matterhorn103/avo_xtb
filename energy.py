@@ -40,15 +40,15 @@ if __name__ == "__main__":
 
         # Read input from Avogadro
         avo_input = json.loads(sys.stdin.read())
-        # Extract the coords and write to file for use as xtb input
-        geom = avo_input["xyz"]
-        xyz_path = Path(py_xtb.calc_dir) / "input.xyz"
-        with open(xyz_path, "w", encoding="utf-8") as xyz_file:
-            xyz_file.write(str(geom))
+        # Extract the coords
+        geom = py_xtb.Geometry.from_xyz(avo_input["xyz"].split("\n"))
+        #xyz_path = Path(py_xtb.calc_dir) / "input.xyz"
+        #with open(xyz_path, "w", encoding="utf-8") as xyz_file:
+        #    xyz_file.write(str(geom))
 
         # Run calculation; returns energy as float in hartree
         energy_hartree = py_xtb.calc.energy(
-            xyz_path,
+            geom,
             charge=avo_input["charge"],
             multiplicity=avo_input["spin"],
             solvation=py_xtb.config["solvent"],
