@@ -1,4 +1,4 @@
-from .conf import config, calc_dir, xtb_bin, crest_bin, config_file
+from .conf import config, config_file, CALC_DIR, XTB_BIN, CREST_BIN
 from .geometry import Atom, Geometry
-from . import calc, convert
-from .run import run_xtb, run_crest, parse_energy, Calculation
+from .run import Calculation, parse_energy
+from . import calc, conf, convert

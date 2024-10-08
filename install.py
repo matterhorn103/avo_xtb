@@ -12,11 +12,9 @@ import sys
 import tarfile
 import urllib.request
 import zipfile
-
 from pathlib import Path
 
 from support import py_xtb
-
 
 
 # For now just hard code the URLs of xtb and crest
@@ -74,21 +72,26 @@ def get_crest(url, install_dir):
     else:
         archive = download(url, install_dir)
         if archive.suffix == ".zip":
-            extract_zip(archive, install_dir / "xtb" / "bin")
+            extract_zip(archive, install_dir)
         else:
-            extract_tar(archive, install_dir / "xtb" / "bin")
+            extract_tar(archive, install_dir)
         # Remove archive
         archive.unlink()
 
 
-def set_xtb_bin(install_dir):
-    # Set variable to binary at ./xtb/bin/xtb
-    xtb_bin = Path(install_dir / "xtb" / "bin" / "xtb")
+def link_xtb_bin(install_dir):
+    # xtb binary will be in nested folder, we want it at top level as link
+    bin_path = Path(install_dir / "xtb-dist" / "bin" / "xtb")
+    # Check Windows
+    if bin_path.with_suffix(".exe").exists():
+        bin_path = bin_path.with_suffix(".exe")
+    # Link
+    py_xtb.XTB_BIN = py_xtb.BIN_DIR / bin_path.name
+    py_xtb.XTB_BIN.symlink_to(bin_path)
     # Add to config
-    py_xtb.config["xtb_bin"] = str(xtb_bin)
+    py_xtb.config["xtb_bin"] = str(py_xtb.XTB_BIN)
     # Save config
-    with open(py_xtb.config_file, "w", encoding="utf-8") as config_path:
-        json.dump(py_xtb.config, config_path, indent=2)
+    py_xtb.conf.save_config()
 
 
 if __name__ == "__main__":
@@ -129,7 +132,7 @@ if __name__ == "__main__":
                 "install_dir": {
                     "type": "string",
                     "label": "Install in",
-                    "default": str(py_xtb.calc_dir.parent),
+                    "default": str(py_xtb.conf.BIN_DIR),
                     "order": 5.0,
                 },
                 "notice": {
@@ -175,7 +178,7 @@ if __name__ == "__main__":
             else:
                 get_xtb(xtb_url, install_dir)
                 get_crest(crest_url, install_dir)
-                set_xtb_bin(install_dir)
+                link_xtb_bin(install_dir)
                 # Report success
                 result = {
                     "message": "xtb (and crest if requested) were successfully installed.\nPlease restart Avogadro."

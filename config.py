@@ -10,6 +10,7 @@ import sys
 from pathlib import Path
 
 from support import py_xtb
+from obabel_convert import OBABEL_BIN
 
 
 # List of available methods
@@ -37,13 +38,13 @@ if __name__ == "__main__":
                 "obabel_bin": {
                     "type": "string",
                     "label": "Location of the Open Babel binary",
-                    "default": str(py_xtb.obabel_bin),
+                    "default": str(OBABEL_BIN),
                     "order": 2.0,
                 },
                 "user_dir": {
                     "type": "string",
                     "label": "Run calculations (in subfolder) in",
-                    "default": str(py_xtb.calc_dir.parent),
+                    "default": str(py_xtb.CALC_DIR),
                     "order": 3.0,
                 },
                 "energy_units": {
@@ -132,27 +133,28 @@ if __name__ == "__main__":
         avo_input = json.loads(sys.stdin.read())
 
         # Save change to user_dir if there has been one
-        if avo_input["user_dir"] != str(py_xtb.calc_dir.parent):
-            py_xtb.calc_dir = Path(avo_input["user_dir"]) / "last"
+        if avo_input["user_dir"] != str(py_xtb.CALC_DIR):
+            py_xtb.CALC_DIR = Path(avo_input["user_dir"])
+            py_xtb.conf.TEMP_DIR = py_xtb.CALC_DIR / "last"
             try:
-                py_xtb.calc_dir.mkdir(parents=True, exist_ok=True)
+                py_xtb.TEMP_DIR.mkdir(parents=True, exist_ok=True)
             except PermissionError:
                 result = {
                     "message": "A folder could not be created at the path specified!"
                 }
                 # Pass back to Avogadro to display to user
                 print(json.dumps(result))
-            py_xtb.config["calc_dir"] = str(py_xtb.calc_dir)
+            py_xtb.config["calc_dir"] = str(py_xtb.CALC_DIR)
 
         # Save change to xtb_bin if there has been one
-        if avo_input["xtb_bin"] != str(py_xtb.xtb_bin):
-            py_xtb.xtb_bin = Path(avo_input["xtb_bin"])
-            py_xtb.config["xtb_bin"] = str(py_xtb.xtb_bin)
+        if avo_input["xtb_bin"] != str(py_xtb.XTB_BIN):
+            py_xtb.XTB_BIN = Path(avo_input["xtb_bin"])
+            py_xtb.config["xtb_bin"] = str(py_xtb.XTB_BIN)
 
         # Save change to obabel_bin if there has been one
-        if avo_input["obabel_bin"] != str(py_xtb.obabel_bin):
-            py_xtb.obabel_bin = Path(avo_input["obabel_bin"])
-            py_xtb.config["obabel_bin"] = str(py_xtb.obabel_bin)
+        if avo_input["obabel_bin"] != str(OBABEL_BIN):
+            OBABEL_BIN = Path(avo_input["obabel_bin"])
+            py_xtb.config["obabel_bin"] = str(OBABEL_BIN)
 
         # Update energy units
         py_xtb.config["energy_units"] = avo_input["energy_units"]
@@ -172,5 +174,4 @@ if __name__ == "__main__":
         # Update optimization level
         py_xtb.config["opt_lvl"] = avo_input["opt_lvl"]
 
-        with open(py_xtb.config_file, "w", encoding="utf-8") as config_path:
-            json.dump(py_xtb.config, config_path, indent=2)
+        py_xtb.conf.save_config()

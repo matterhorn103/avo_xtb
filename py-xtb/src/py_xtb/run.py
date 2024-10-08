@@ -10,8 +10,9 @@ Used by all calculation options.
 import os
 import subprocess
 from pathlib import Path
+from shutil import rmtree
 
-from .conf import xtb_bin, crest_bin, calc_dir
+from .conf import XTB_BIN, CREST_BIN, TEMP_DIR
 from .geometry import Geometry
 
 
@@ -24,7 +25,7 @@ class Calculation:
         options: dict | None = None,
         command: list[str] | None = None,
         input_geometry: Geometry | None = None,
-        calc_dir: os.PathLike | None = calc_dir,
+        calc_dir: os.PathLike | None = TEMP_DIR,
     ):
         """A convenience object to prepare, launch, and hold the results of
         calculations.
@@ -36,9 +37,9 @@ class Calculation:
         Flags with values of `False` or `None` will not be passed.
         """
         if program == "xtb":
-            self.program = xtb_bin
+            self.program = XTB_BIN
         elif program == "crest":
-            self.program = crest_bin
+            self.program = CREST_BIN
         else:
             self.program = Path(program)
 
@@ -54,11 +55,24 @@ class Calculation:
         """Run calculation with xtb or crest, storing the output, the saved output file,
         and the parsed energy, as well as the `subprocess` object."""
 
+        # Make sure calculation directory exists and is empty
+        if self.calc_dir.exists():
+            for x in self.calc_dir.iterdir():
+                if x.is_file():
+                    x.unlink()
+                elif x.is_dir():
+                    rmtree(x)
+        else:
+            self.calc_dir.mkdir(parents=True)
+
         # Save geometry to file
         geom_file = self.calc_dir / "input.xyz"
         self.input_geometry.write_xyz(geom_file)
-        # Change working dir to that of geometry file to run xtb correctly
-        os.chdir(geom_file.parent)
+        # We are using proper paths for pretty much everything so it shouldn't be
+        # necessary to change the working dir
+        # But we do anyway to be absolutely that xtb runs correctly and puts all the
+        # output here
+        os.chdir(self.calc_dir)
         self.output_file = geom_file.with_name("output.out")
         
         if self.command:
@@ -81,7 +95,7 @@ class Calculation:
                     command.extend([flag, str(value)])
         # Add geometry after a demarcating double minus
         command.extend(["--", geom_file])
-
+        
         # Run xtb from command line
         calc = subprocess.run(command, capture_output=True, encoding="utf-8")
 
@@ -90,70 +104,15 @@ class Calculation:
         # Save to file
         with open(self.output_file, "w", encoding="utf-8") as f:
             f.write(self.output)
-        # Extract energy from output
-        # If not found, returns 0.0
-        self.energy = parse_energy(self.output)
+        if self.program.stem == "xtb":
+            # Extract energy from output
+            # If not found, returns 0.0
+            self.energy = parse_energy(self.output)
+        else:
+            # Not yet implemented for crest
+            self.energy = None
         # Store the subprocess.CompletedProcess object too
         self.subproc = calc
-
-
-def run_xtb(
-    command: list[str], input_geom: Geometry
-) -> tuple[subprocess.CompletedProcess, Path, float]:
-    """Run provided command with xtb on the command line, then return the process, the
-    output file, and the parsed energy."""
-    # Save geometry to file
-    geom_file = input_geom.write_xyz(calc_dir)
-    # Change working dir to that of geometry file to run xtb correctly
-    os.chdir(geom_file.parent)
-    output_file = geom_file.with_name("output.out")
-
-    # Replace xtb string with xtb path
-    if command[0] == "xtb":
-        command[0] = xtb_bin
-    # Add geom file to command string
-    command.extend(["--", geom_file])
-
-    # Run xtb from command line
-    calc = subprocess.run(command, capture_output=True, encoding="utf-8")
-    with open(output_file, "w", encoding="utf-8") as output:
-        output.write(calc.stdout)
-
-    # Extract energy from output stream
-    # If not found, returns 0.0
-    energy = parse_energy(calc.stdout)
-
-    # Return everything as a tuple including subprocess.CompletedProcess object
-    return calc, output_file, energy
-
-
-# Similarly, provide a generic function to run any crest calculation
-def run_crest(
-    command: list[str], input_geom: Geometry
-) -> tuple[subprocess.CompletedProcess, Path]:
-    """Run provided command with crest on the command line, then return the process and
-    the output file."""
-    # Save geometry to file
-    geom_file = input_geom.write_xyz(calc_dir)
-    # Change working dir to that of geometry file to run crest correctly
-    os.chdir(geom_file.parent)
-    output_file = geom_file.with_name("output.out")
-
-    # Replace crest with crest path
-    if command[0] == "crest":
-        command[0] = crest_bin
-    # Add geom file to command string
-    command.extend(["--", geom_file])
-
-    # Run in parallel
-    # os.environ["PATH"] += os.pathsep + path
-    # Run crest from command line
-    calc = subprocess.run(command, capture_output=True, encoding="utf-8")
-    with open(output_file, "w", encoding="utf-8") as output:
-        output.write(calc.stdout)
-
-    # Return everything as a tuple including subprocess.CompletedProcess object
-    return calc, output_file
 
 
 def parse_energy(output_string: str) -> float:
@@ -174,3 +133,66 @@ def parse_energy(output_string: str) -> float:
         except ValueError:
             continue
     return energy
+
+
+### DEPRECATED ###
+# These are only kept here for now to avoid import errors while everything is
+# transferred to new interface
+
+def run_xtb(
+    command: list[str], input_geom: Geometry
+) -> tuple[subprocess.CompletedProcess, Path, float]:
+    """Run provided command with xtb on the command line, then return the process, the
+    output file, and the parsed energy."""
+    # Save geometry to file
+    geom_file = input_geom.write_xyz(TEMP_DIR)
+    # Change working dir to that of geometry file to run xtb correctly
+    os.chdir(geom_file.parent)
+    output_file = geom_file.with_name("output.out")
+
+    # Replace xtb string with xtb path
+    if command[0] == "xtb":
+        command[0] = XTB_BIN
+    # Add geom file to command string
+    command.extend(["--", geom_file])
+
+    # Run xtb from command line
+    calc = subprocess.run(command, capture_output=True, encoding="utf-8")
+    with open(output_file, "w", encoding="utf-8") as output:
+        output.write(calc.stdout)
+
+    # Extract energy from output stream
+    # If not found, returns 0.0
+    energy = parse_energy(calc.stdout)
+
+    # Return everything as a tuple including subprocess.CompletedProcess object
+    return calc, output_file, energy
+
+# Similarly, provide a generic function to run any crest calculation
+def run_crest(
+    command: list[str], input_geom: Geometry
+) -> tuple[subprocess.CompletedProcess, Path]:
+    """Run provided command with crest on the command line, then return the process and
+    the output file."""
+    # Save geometry to file
+    geom_file = input_geom.write_xyz(TEMP_DIR)
+    # Change working dir to that of geometry file to run crest correctly
+    os.chdir(geom_file.parent)
+    output_file = geom_file.with_name("output.out")
+
+    # Replace crest with crest path
+    if command[0] == "crest":
+        command[0] = CREST_BIN
+    # Add geom file to command string
+    command.extend(["--", geom_file])
+
+    # Run in parallel
+    # os.environ["PATH"] += os.pathsep + path
+    # Run crest from command line
+    calc = subprocess.run(command, capture_output=True, encoding="utf-8")
+    with open(output_file, "w", encoding="utf-8") as output:
+        output.write(calc.stdout)
+
+    # Return everything as a tuple including subprocess.CompletedProcess object
+    return calc, output_file
+

@@ -30,13 +30,6 @@ if __name__ == "__main__":
         print("Extensions|Semi-empirical (xtb){890}")
 
     if args.run_command:
-        # Remove results of last calculation
-        if py_xtb.calc_dir.exists():
-            for x in py_xtb.calc_dir.iterdir():
-                if x.is_file():
-                    x.unlink()
-                elif x.is_dir():
-                    rmtree(x)
 
         # Read input from Avogadro
         avo_input = json.loads(sys.stdin.read())

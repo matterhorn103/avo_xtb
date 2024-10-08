@@ -4,7 +4,7 @@
 
 from pathlib import Path
 
-from .conf import xtb_bin, crest_bin
+from .conf import XTB_BIN, CREST_BIN
 from .run import run_crest
 
 
@@ -23,10 +23,10 @@ def conformers(
     """
     unpaired_e = multiplicity - 1
     command = [
-        crest_bin,
+        CREST_BIN,
         geom_file,
         "--xnam",
-        xtb_bin,
+        XTB_BIN,
         "--chrg",
         str(charge),
         "--uhf",

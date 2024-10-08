@@ -215,7 +215,7 @@ if __name__ == "__main__":
         # If user specified a save location, copy calculation directory to there
         if not (
             avo_input["save_dir"] in ["", None]
-            or Path(avo_input["save_dir"]) ==py_xtb.calc_dir
+            or Path(avo_input["save_dir"]) == py_xtb.calc_dir
         ):
             copytree(py_xtb.calc_dir, Path(avo_input["save_dir"]), dirs_exist_ok=True)
 

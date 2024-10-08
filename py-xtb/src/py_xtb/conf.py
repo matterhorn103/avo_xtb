@@ -2,7 +2,7 @@
 # This file is part of py-xtb which is released under the BSD 3-Clause License.
 # See LICENSE or go to https://opensource.org/license/BSD-3-clause for full details.
 
-"""Setup plugin, load settings and detect binaries then expose them as variables."""
+"""Setup package, load settings and detect binaries, then expose them as variables."""
 
 import json
 import os
@@ -11,158 +11,179 @@ import sys
 from pathlib import Path
 from shutil import which
 
-# Temporary fix to make sure stdout stream is always Unicode, as Avogadro 1.99 expects
+# Make sure stdout stream is always Unicode, as Avogadro 1.99 expects
 sys.stdout.reconfigure(encoding="utf-8")
 
-# Use OS-appropriate data location to store everything related to the plugin
-# Could use platformdirs for this:
-# from platformdirs import user_data_dir
-# plugin_dir = Path(user_data_dir("py-xtb"))
-# ...but since we seem to be able to make do without any other dependencies,
-# let's just hard-code it for now
+# Use an OS-appropriate data location to store all data related to the package
+# Could use platformdirs for this, but since we seem to be able to make do without any
+# other dependencies, let's just hard-code it for now
 if os.environ.get("XDG_DATA_HOME") is not None:
-    plugin_dir = Path(os.environ.get("XDG_DATA_HOME")) / "py-xtb"
+    PLUGIN_DIR = Path(os.environ.get("XDG_DATA_HOME")) / "py-xtb"
 elif platform.system() == "Windows":
-    plugin_dir = Path.home() / "AppData/Local/py-xtb"
+    PLUGIN_DIR = Path.home() / "AppData/Local/py-xtb"
 elif platform.system() == "Darwin":
-    plugin_dir = Path.home() / "Library/Application Support/py-xtb"
+    PLUGIN_DIR = Path.home() / "Library/Application Support/py-xtb"
 else:
-    plugin_dir = Path.home() / ".local/share/py-xtb"
-
-# Create if it doesn't exist yet
-if not plugin_dir.exists():
-    plugin_dir.mkdir()
+    PLUGIN_DIR = Path.home() / ".local/share/py-xtb"
 
 # Look for config file in plugin directory
-if (plugin_dir / "config.json").exists():
-    config_file = plugin_dir / "config.json"
+if (PLUGIN_DIR / "config.json").exists():
+    config_file = PLUGIN_DIR / "config.json"
     init = False
-# Failing that, try in home directory
-elif (Path.home() / "xtb/config.json").exists():
-    config_file = Path.home() / "xtb/config.json"
-    init = False
-# If neither exist, must be first use, so load defaults from this directory
+# If doesn't exist, must be first use, so load defaults from this directory
 else:
     config_file = Path(__file__).with_name("default_config.json")
     init = True
 
 # Load configuration
-with open(config_file, encoding="utf-8") as configuration:
-    config = json.load(configuration)
+with open(config_file, encoding="utf-8") as f:
+    config = json.load(f)
 
-# Make sure that any config options added in later versions of the
-# plugin are in config even if they weren't in the config.json file
-for option, default in (
-    ("solvent", None),
-    ("energy_units", "kJ/mol"),
-    ("method", 2),
-    ("opt_lvl", "normal"),
-):
-    if option not in config:
-        config[option] = default
+# Current version of package
+# Hard code for now, obviously not ideal though
+PY_XTB_VERSION = "0.5.0"
 
+def save_config():
+    with open(config_file, "w", encoding="utf-8") as f:
+        json.dump(config, f, indent=2)
 
-# If this is first run, determine a suitable place for config and calculations
+def update_config():
+    """Ensure that any config options added in later versions of the package are in
+    config even if they weren't in the config.json file"""
+    for option, default in (
+        ("solvent", None),
+        ("energy_units", "kJ/mol"),
+        ("method", 2),
+        ("opt_lvl", "normal"),
+    ):
+        if option not in config:
+            config[option] = default
+    # Record which version was used last
+    config["version"] = PY_XTB_VERSION
+    save_config()
+
+if "version" not in config or config["version"] != PY_XTB_VERSION:
+    update_config()
+
+# Test if user has write permission to plugin directory
+try:
+    PLUGIN_DIR.mkdir(parents=True, exist_ok=True)
+    with open((PLUGIN_DIR / "probe.txt"), "w", encoding="utf-8") as probe_file:
+        probe_file.write(
+            "This file is created only to check everything works.\nIt will be deleted."
+        )
+    (PLUGIN_DIR / "probe.txt").unlink()
+except PermissionError:
+    error_msg = (
+        f"py-xtb was expecting to use {PLUGIN_DIR} to write and store calculation results, but you do not seem to have write permission for this.\n"
+        + f"Please choose a suitable data directory, and add its path to {PLUGIN_DIR / 'config.json'} under 'calc_dir'."
+    )
+    print(error_msg)
+    raise PermissionError(error_msg)
+
+# User can customize the directory used as temporary directory for the calculations
+# Don't use `tmp` or similar because it doesn't usually persist between reboots
+if "calc_dir" in config:
+    CALC_DIR = Path(config["calc_dir"])
+else:
+    CALC_DIR = PLUGIN_DIR
+
+# Use the same directory by default for each new calc, overwriting the old one, to avoid
+# build-up of lots of files
+TEMP_DIR = CALC_DIR / "last"
+# Create both the TEMP_DIR and the parent CALC_DIR at the same time if they don't exist
+TEMP_DIR.mkdir(parents=True, exist_ok=True)
+
+# If this is first run, check file writing works fine
 if init:
-    # Test if user has write permission to plugin directory
-    # If so we can use it
     try:
-        calc_dir = plugin_dir / "last"
-        calc_dir.mkdir(parents=True, exist_ok=True)
-        with open((calc_dir / "probe.txt"), "w", encoding="utf-8") as probe_file:
+        with open((CALC_DIR / "probe.txt"), "w", encoding="utf-8") as probe_file:
             probe_file.write(
                 "This file is created only to check everything works.\nIt will be deleted when the first calculation is run."
             )
-        config["calc_dir"] = str(calc_dir)
-    # If we don't have write permission, use user's home instead, in cross-platform way
-    except PermissionError:
-        calc_dir = Path.home() / "avo_xtb/last"
-        calc_dir.mkdir(parents=True, exist_ok=True)
-        config["calc_dir"] = str(calc_dir)
+        config["calc_dir"] = str(CALC_DIR)
+    except Exception as e:
+        print(e.message)
+        raise e
     # Save the initialized configuration to a new config file
-    with open(
-        (calc_dir.parent / "config.json"), "w", encoding="utf-8"
-    ) as new_config_path:
-        json.dump(config, new_config_path, indent=2)
-        config_file = new_config_path
+    save_config()
+
+# Most user options read by other modules should be stored in config; that way only the
+# config dictionary has to be loaded.
+# The locations of the directories and binaries are better as global variables, however,
+# because they are `Path` objects and would otherwise have to be converted from `str` to
+# `Path`s every time they are accessed.
+
+# Define functions used to find the binaries on system if their locations are not
+# provided by the user in config
+# As of 0.5.0, binaries should either be in the bin folder, or linked to from it, or
+# available in system PATH
+BIN_DIR = PLUGIN_DIR / "bin"
+BIN_DIR.mkdir(parents=True, exist_ok=True)
 
 
-# Most user options read by other modules should be stored in config;
-# that way only the config dictionary has to be loaded.
-# The locations of the directories and binaries are better as variables
-# because they are Path objects and would otherwise have to be converted
-# from strings to Paths every time they are accessed.
-
-# Get the calculation directory for non-new users
-if "calc_dir" in config:
-    calc_dir = Path(config["calc_dir"])
-# If this isn't the first run there really shouldn't be a need for an else
-# But just in case
-else:
-    calc_dir = Path(plugin_dir / "last")
-
-# Create calculation directory if it doesn't yet exist
-if not calc_dir.exists():
-    calc_dir.mkdir()
-
-
-# Define functions to find the binaries if not already specified
-def find_xtb():
-    """Return path to xtb binary as Path object, or None"""
-    if (plugin_dir / "xtb/bin").exists():
-        xtb_bin = plugin_dir / "xtb/bin/xtb"
+def find_xtb() -> Path | None:
+    """Return path to xtb binary as Path object, or None."""
+    if (BIN_DIR / "xtb").exists():
+        # Normal binary or symlink to it
+        xtb = BIN_DIR / "xtb"
+    elif (BIN_DIR / "xtb.exe").exists():
+        # Windows
+        xtb = BIN_DIR / "xtb.exe"
+    elif (BIN_DIR / "xtb-dist").exists():
+        # Whole xtb distribution folder with nested binary directory
+        xtb = BIN_DIR / "xtb-dist/bin/xtb"
+        # Or, on Windows
         if platform.system() == "Windows":
-            xtb_bin = xtb_bin.with_suffix(".exe")
-    else:
+            xtb = xtb.with_suffix(".exe")
+    elif which("xtb") is not None:
         # Check PATH
-        xtb_bin = which("xtb")
-        if xtb_bin is not None:
-            xtb_bin = Path(xtb_bin)
-    return xtb_bin
+        xtb = Path(which("xtb"))
+    else:
+        xtb = None
+    return xtb
 
 
-def find_crest():
+def find_crest() -> Path | None:
     """Return path to crest binary as Path object, or None"""
-    if (plugin_dir / "crest/crest").exists():
-        crest_bin = plugin_dir / "crest/crest"
-    elif (plugin_dir / "crest").exists():
-        crest_bin = plugin_dir / "crest"
-    elif (plugin_dir / "xtb/bin/crest/crest").exists():
-        crest_bin = plugin_dir / "xtb/bin/crest/crest"
-    elif (plugin_dir / "xtb/bin/crest").exists():
-        crest_bin = plugin_dir / "xtb/bin/crest"
-    # Currently there is no Windows binary for crest but let's assume there will be one day
-    elif (plugin_dir / "xtb/bin/crest.exe").exists():
-        crest_bin = plugin_dir / "xtb/bin/crest.exe"
-    else:
+    if (BIN_DIR / "crest").exists():
+        crest = BIN_DIR / "crest"
+    elif (BIN_DIR / "crest/crest").exists():
+        crest = BIN_DIR / "crest/crest"
+    # Currently there is no Windows binary for crest but let's assume there will be
+    elif (BIN_DIR / "crest.exe").exists():
+        crest = BIN_DIR / "crest.exe"
+    elif which("crest") is not None:
         # Check PATH
-        crest_bin = which("crest")
-        if crest_bin is not None:
-            crest_bin = Path(crest_bin)
-    return crest_bin
-
+        crest = Path(which("crest"))
+    else:
+        crest = None
+    return crest
 
 
 # Initialize and find the various binaries
 # Confirm that those loaded from the config can be found
-# If not, do the same search
-# Each bin will be set to None if nothing found anywhere
-# Note that the binary paths are not saved to the config unless they are
-# changed in the Configure... dialog
+# Each global variable will be set to None if nothing found anywhere
+# Note that the binary paths are not actually saved to the config unless they are
+# actively changed by the user in the Configure... dialog
 if "xtb_bin" in config:
-    xtb_bin = Path(config["xtb_bin"])
-    if not xtb_bin.exists():
-        xtb_bin = find_xtb()
+    XTB_BIN = Path(config["xtb_bin"])
+    if not XTB_BIN.exists():
+        XTB_BIN = find_xtb()
 else:
-    xtb_bin = find_xtb()
+    XTB_BIN = find_xtb()
 if "crest_bin" in config:
-    crest_bin = Path(config["crest_bin"])
-    if not crest_bin.exists():
-        crest_bin = find_crest()
+    CREST_BIN = Path(config["crest_bin"])
+    if not CREST_BIN.exists():
+        CREST_BIN = find_crest()
 else:
-    crest_bin = find_crest()
+    CREST_BIN = find_crest()
 
 
-# Have to set environment variable XTBPATH so that parameterization of GFN0-xTB is found
-if xtb_bin is not None:
-    os.environ["XTBPATH"] = str(xtb_bin.parent.parent / "share/xtb")
+if XTB_BIN is not None:
+    # Resolve any symlinks
+    if XTB_BIN.is_symlink():
+        XTB_BIN = XTB_BIN.readlink()
+    # Have to set environment variable XTBPATH so that parameterizations (e.g. of
+    # GFN0-xTB) are found
+    os.environ["XTBPATH"] = str(XTB_BIN.parent.parent / "share/xtb")
