@@ -23,7 +23,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Disable if xtb and crest missing
-    if py_xtb.xtb_bin is None or py_xtb.crest_bin is None:
+    if py_xtb.XTB_BIN is None or py_xtb.CREST_BIN is None:
         quit()
 
     if args.print_options:
@@ -33,7 +33,7 @@ if __name__ == "__main__":
                 "crest_bin": {
                     "type": "string",
                     "label": "Location of the CREST binary",
-                    "default": str(py_xtb.crest_bin),
+                    "default": str(py_xtb.CREST_BIN),
                     "order": 1.0,
                 },
                 "save_dir": {
@@ -144,7 +144,7 @@ if __name__ == "__main__":
             xyz_file.write(str(geom))
 
         # If provided crest path different to that stored, use it and save it
-        if Path(avo_input["crest_bin"]) != py_xtb.crest_bin:
+        if Path(avo_input["crest_bin"]) != py_xtb.CREST_BIN:
             crest_bin = Path(avo_input["crest_bin"])
             py_xtb.config["crest_bin"] = str(crest_bin)
             with open(py_xtb.config_file, "w", encoding="utf-8") as config_path:

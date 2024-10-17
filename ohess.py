@@ -23,7 +23,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Disable if xtb missing
-    if py_xtb.xtb_bin is None:
+    if py_xtb.XTB_BIN is None:
         quit()
 
     if args.print_options:

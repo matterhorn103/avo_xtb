@@ -105,7 +105,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Disable this command if xtb has been found
-    if py_xtb.xtb_bin is not None:
+    if py_xtb.XTB_BIN is not None:
         quit()
 
     if args.print_options:

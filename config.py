@@ -32,7 +32,7 @@ if __name__ == "__main__":
                 "xtb_bin": {
                     "type": "string",
                     "label": "Location of the xtb binary",
-                    "default": str(py_xtb.xtb_bin),
+                    "default": str(py_xtb.XTB_BIN),
                     "order": 1.0,
                 },
                 "obabel_bin": {

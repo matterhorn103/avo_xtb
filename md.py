@@ -22,7 +22,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Disable if xtb and crest missing
-    if py_xtb.xtb_bin is None or py_xtb.crest_bin is None:
+    if py_xtb.XTB_BIN is None or py_xtb.CREST_BIN is None:
         quit()
 
     if args.print_options:
