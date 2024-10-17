@@ -22,7 +22,7 @@ from shutil import rmtree
 
 from .conf import XTB_BIN, CREST_BIN, TEMP_DIR
 from .geometry import Geometry
-from .parse import parse_energy
+from .parse import parse_energy, parse_frequencies
 
 
 class Calculation:
@@ -128,6 +128,11 @@ class Calculation:
         else:
             # Assume geom was the same at end of calc as at beginning
             self.output_geometry = self.input_geometry
+        # If there's a Molden file with frequencies, read it
+        if geom_file.with_name("g98.out").exists():
+            self.frequencies = parse_frequencies(geom_file.with_name("g98.out"))
+        else:
+            self.frequencies = None
         # Store the subprocess.CompletedProcess object too
         self.subproc = subproc
 
@@ -193,7 +198,30 @@ def optimize(
         return calc.output_geometry
 
 
-from .freq import frequencies
+def frequencies(
+    input_geom: Geometry,
+    charge: int = 0,
+    multiplicity: int = 1,
+    solvation: str | None = None,
+    method: int = 2,
+) -> Path:
+    """Calculate vibrational frequencies and return Gaussian 98 format output file."""
+    unpaired_e = multiplicity - 1
+    calc = Calculation(
+        input_geometry=input_geom,
+        runtype="hess",
+        options={
+            "chrg": charge,
+            "uhf": unpaired_e,
+            "gfn": method,
+            "alpb": solvation,
+        },
+    )
+    calc.run()
+    # Return the path of the Gaussian file generated
+    return geom_file.with_name("g98.out")
+
+
 from .ohess import opt_freq
 from .orbitals import orbitals
 from .conformers import conformers
