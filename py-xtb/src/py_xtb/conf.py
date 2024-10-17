@@ -26,44 +26,22 @@ elif platform.system() == "Darwin":
 else:
     PLUGIN_DIR = Path.home() / ".local/share/py-xtb"
 
-# Look for config file in plugin directory
-if (PLUGIN_DIR / "config.json").exists():
-    config_file = PLUGIN_DIR / "config.json"
-    init = False
-# If doesn't exist, must be first use, so load defaults from this directory
-else:
-    config_file = Path(__file__).with_name("default_config.json")
-    init = True
-
-# Load configuration
-with open(config_file, encoding="utf-8") as f:
-    config = json.load(f)
-
-# Current version of package
-# Hard code for now, obviously not ideal though
-PY_XTB_VERSION = "0.5.0"
+config_file = PLUGIN_DIR / "config.json"
 
 def save_config():
     with open(config_file, "w", encoding="utf-8") as f:
         json.dump(config, f, indent=2)
 
-def update_config():
-    """Ensure that any config options added in later versions of the package are in
-    config even if they weren't in the config.json file"""
-    for option, default in (
-        ("solvent", None),
-        ("energy_units", "kJ/mol"),
-        ("method", 2),
-        ("opt_lvl", "normal"),
-    ):
-        if option not in config:
-            config[option] = default
-    # Record which version was used last
-    config["version"] = PY_XTB_VERSION
-    save_config()
-
-if "version" not in config or config["version"] != PY_XTB_VERSION:
-    update_config()
+# Look for config file in plugin directory
+if config_file.exists():
+    with open(config_file, encoding="utf-8") as f:
+        config = json.load(f)
+    init = False
+# If doesn't exist, must be first use, so load defaults from this directory
+else:
+    with open(Path(__file__).with_name("default_config.json"), encoding="utf-8") as f:
+        config = json.load(f)
+    init = True
 
 # Test if user has write permission to plugin directory
 try:
@@ -107,6 +85,28 @@ if init:
         raise e
     # Save the initialized configuration to a new config file
     save_config()
+
+# Current version of package
+# Hard code for now, obviously not ideal though
+PY_XTB_VERSION = "0.5.0"
+
+def update_config():
+    """Ensure that any config options added in later versions of the package are in
+    config even if they weren't in the config.json file"""
+    for option, default in (
+        ("solvent", None),
+        ("energy_units", "kJ/mol"),
+        ("method", 2),
+        ("opt_lvl", "normal"),
+    ):
+        if option not in config:
+            config[option] = default
+    # Record which version was used last
+    config["version"] = PY_XTB_VERSION
+    save_config()
+
+if "version" not in config or config["version"] != PY_XTB_VERSION:
+    update_config()
 
 # Most user options read by other modules should be stored in config; that way only the
 # config dictionary has to be loaded.

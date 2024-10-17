@@ -36,8 +36,8 @@ if __name__ == "__main__":
 
     if args.run_command:
         # Remove results of last calculation
-        if py_xtb.calc_dir.exists():
-            for x in py_xtb.calc_dir.iterdir():
+        if py_xtb.CALC_DIR.exists():
+            for x in py_xtb.CALC_DIR.iterdir():
                 if x.is_file():
                     x.unlink()
                 elif x.is_dir():
@@ -47,7 +47,7 @@ if __name__ == "__main__":
         avo_input = json.loads(sys.stdin.read())
         # Extract the coords and write to file for use as xtb input
         geom = avo_input["xyz"]
-        xyz_path = Path(py_xtb.calc_dir) / "input.xyz"
+        xyz_path = Path(py_xtb.CALC_DIR) / "input.xyz"
         with open(xyz_path, "w", encoding="utf-8") as xyz_file:
             xyz_file.write(str(geom))
 
@@ -106,7 +106,7 @@ if __name__ == "__main__":
             )
 
         # Save result
-        with open(py_xtb.calc_dir / "result.cjson", "w", encoding="utf-8") as save_file:
+        with open(py_xtb.CALC_DIR / "result.cjson", "w", encoding="utf-8") as save_file:
             json.dump(result["cjson"], save_file, indent=2)
         # Pass back to Avogadro
         print(json.dumps(result))

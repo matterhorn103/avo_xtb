@@ -91,7 +91,7 @@ if __name__ == "__main__":
                 "save_dir": {
                     "type": "string",
                     "label": "Save results in",
-                    "default": str(py_xtb.calc_dir),
+                    "default": str(py_xtb.CALC_DIR),
                 },
             },
         }
@@ -104,15 +104,15 @@ if __name__ == "__main__":
 
     if args.run_command:
         # Remove results of last calculation
-        if py_xtb.calc_dir.exists():
-            rmtree(py_xtb.calc_dir)
-        py_xtb.calc_dir.mkdir()
+        if py_xtb.CALC_DIR.exists():
+            rmtree(py_xtb.CALC_DIR)
+        py_xtb.CALC_DIR.mkdir()
 
         # Read input from Avogadro
         avo_input = json.loads(sys.stdin.read())
         # Extract the coords and write to file for use as xtb input
         geom = avo_input["xyz"]
-        xyz_path = py_xtb.calc_dir / "input.xyz"
+        xyz_path = py_xtb.CALC_DIR / "input.xyz"
         with open(xyz_path, "w", encoding="utf-8") as xyz_file:
             xyz_file.write(str(geom))
 
@@ -177,12 +177,12 @@ if __name__ == "__main__":
         # If user specified a save location, copy calculation directory to there
         if not (
             avo_input["save_dir"] in ["", None]
-            or Path(avo_input["save_dir"]) == py_xtb.calc_dir
+            or Path(avo_input["save_dir"]) == py_xtb.CALC_DIR
         ):
-            copytree(py_xtb.calc_dir, Path(avo_input["save_dir"]), dirs_exist_ok=True)
+            copytree(py_xtb.CALC_DIR, Path(avo_input["save_dir"]), dirs_exist_ok=True)
 
         # Save result
-        with open(py_xtb.calc_dir / "result.cjson", "w", encoding="utf-8") as save_file:
+        with open(py_xtb.CALC_DIR / "result.cjson", "w", encoding="utf-8") as save_file:
             json.dump(result["cjson"], save_file, indent=2)
         # Pass back to Avogadro
         print(json.dumps(result, indent=2))

@@ -39,9 +39,6 @@ if __name__ == "__main__":
         avo_input = json.loads(sys.stdin.read())
         # Extract the coords
         geom = py_xtb.Geometry.from_xyz(avo_input["xyz"].split("\n"))
-        #xyz_path = Path(py_xtb.calc_dir) / "input.xyz"
-        #with open(xyz_path, "w", encoding="utf-8") as xyz_file:
-        #    xyz_file.write(str(geom))
 
         # Run calculation; returns energy as float in hartree
         energy_hartree = py_xtb.calc.energy(

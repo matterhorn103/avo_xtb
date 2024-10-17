@@ -53,35 +53,42 @@ def extract_tar(archive, target_dir) -> Path:
 
 
 def get_xtb(url, install_dir):
+    # Don't install xtb if url not valid
+    if url[0:5] != "https":
+        return
     # Download archive to specified directory, then extract there
     archive = download(url, install_dir)
     if archive.suffix == ".zip":
         xtb_folder = extract_zip(archive, install_dir)
     else:
         xtb_folder = extract_tar(archive, install_dir)
-    # Rename unzipped folder to non-versioned so that config.py finds it
-    xtb_folder.rename(xtb_folder.with_name("xtb"))
+    # Rename unzipped folder to a non-versioned name we have chosen
+    xtb_folder = xtb_folder.rename(xtb_folder.with_name("xtb-dist"))
     # Remove archive
     archive.unlink()
+    return xtb_folder
 
 
 def get_crest(url, install_dir):
     # Don't install crest if url not valid
     if url[0:5] != "https":
         return
+    # Download archive to specified directory, then extract there
+    archive = download(url, install_dir)
+    if archive.suffix == ".zip":
+        crest_folder = extract_zip(archive, install_dir)
     else:
-        archive = download(url, install_dir)
-        if archive.suffix == ".zip":
-            extract_zip(archive, install_dir)
-        else:
-            extract_tar(archive, install_dir)
-        # Remove archive
-        archive.unlink()
+        crest_folder = extract_tar(archive, install_dir)
+    # Rename unzipped folder to a non-versioned name we have chosen
+    crest_folder = crest_folder.rename(crest_folder.with_name("crest-dist"))
+    # Remove archive
+    archive.unlink()
+    return crest_folder
 
 
-def link_xtb_bin(install_dir):
+def link_xtb_bin(xtb_folder):
     # xtb binary will be in nested folder, we want it at top level as link
-    bin_path = Path(install_dir / "xtb-dist" / "bin" / "xtb")
+    bin_path = Path(xtb_folder / "bin/xtb")
     # Check Windows
     if bin_path.with_suffix(".exe").exists():
         bin_path = bin_path.with_suffix(".exe")
@@ -90,6 +97,21 @@ def link_xtb_bin(install_dir):
     py_xtb.XTB_BIN.symlink_to(bin_path)
     # Add to config
     py_xtb.config["xtb_bin"] = str(py_xtb.XTB_BIN)
+    # Save config
+    py_xtb.conf.save_config()
+
+
+def link_crest_bin(crest_folder):
+    # crest binary will be in nested folder, we want it at top level as link
+    bin_path = Path(crest_folder / "crest")
+    # Check Windows
+    if bin_path.with_suffix(".exe").exists():
+        bin_path = bin_path.with_suffix(".exe")
+    # Link
+    py_xtb.CREST_BIN = py_xtb.BIN_DIR / bin_path.name
+    py_xtb.CREST_BIN.symlink_to(bin_path)
+    # Add to config
+    py_xtb.config["crest_bin"] = str(py_xtb.CREST_BIN)
     # Save config
     py_xtb.conf.save_config()
 
@@ -176,9 +198,12 @@ if __name__ == "__main__":
             except PermissionError:
                 result = {"message": "Install directory is not writeable"}
             else:
-                get_xtb(xtb_url, install_dir)
-                get_crest(crest_url, install_dir)
-                link_xtb_bin(install_dir)
+                xtb_folder = get_xtb(xtb_url, install_dir)
+                crest_folder = get_crest(crest_url, install_dir)
+                if xtb_folder:
+                    link_xtb_bin(xtb_folder)
+                if crest_folder:
+                    link_crest_bin(crest_folder)
                 # Report success
                 result = {
                     "message": "xtb (and crest if requested) were successfully installed.\nPlease restart Avogadro."

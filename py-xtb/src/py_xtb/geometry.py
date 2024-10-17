@@ -3,6 +3,8 @@ import os
 from collections import namedtuple
 from pathlib import Path
 
+from .convert import get_atomic_number
+
 
 Atom = namedtuple("Atom", ["element", "x", "y", "z"])
 
@@ -35,6 +37,23 @@ class Geometry:
             atom_line = atom_line.replace(" -", "-")
             xyz.append(atom_line)
         return xyz
+    
+    def to_cjson(self) -> dict:
+        all_coords = []
+        all_element_numbers = []
+        for atom in self.atoms:
+            element = atom[0]
+            all_element_numbers.append(get_atomic_number(element))
+            all_coords.extend([float(atom[1]), float(atom[2]), float(atom[3])])
+        cjson = {
+            "atoms": {
+                "coords": {
+                    "3d": all_coords,
+                },
+                "elements": all_element_numbers,
+            },
+        }
+        return cjson
 
     def write_xyz(self, dest: os.PathLike) -> os.PathLike:
         # Make sure it ends with a newline

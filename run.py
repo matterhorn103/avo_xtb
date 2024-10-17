@@ -37,7 +37,7 @@ if __name__ == "__main__":
                 "save_dir": {
                     "type": "string",
                     "label": "Save results in",
-                    "default": str(py_xtb.calc_dir),
+                    "default": str(py_xtb.CALC_DIR),
                     "order": 1.0,
                 },
                 # "Number of threads": {
@@ -91,8 +91,8 @@ if __name__ == "__main__":
 
     if args.run_command:
         # Remove results of last calculation
-        if py_xtb.calc_dir.exists():
-            for x in py_xtb.calc_dir.iterdir():
+        if py_xtb.CALC_DIR.exists():
+            for x in py_xtb.CALC_DIR.iterdir():
                 if x.is_file():
                     x.unlink()
                 elif x.is_dir():
@@ -104,7 +104,7 @@ if __name__ == "__main__":
         # Extract the coords and write to file for use as xtb input
         # Select geometry to use on basis of user choice
         if avo_input["turbomole"]:
-            tmol_path = Path(py_xtb.calc_dir) / "input.tmol"
+            tmol_path = Path(py_xtb.CALC_DIR) / "input.tmol"
             with open(tmol_path, "w", encoding="utf-8") as tmol_file:
                 # Avogadro seems to pass tmol string with \r\n newlines on Windows
                 # Python writes \r\n as \r\r\n on Windows
@@ -117,7 +117,7 @@ if __name__ == "__main__":
             # Use xyz - first get xyz format (as list of lines) from cjson
             xyz = py_xtb.convert.cjson_to_xyz(avo_input["cjson"], lines=True)
             # Save to file, don't forget to add newlines
-            xyz_path = Path(py_xtb.calc_dir) / "input.xyz"
+            xyz_path = Path(py_xtb.CALC_DIR) / "input.xyz"
             with open(xyz_path, "w", encoding="utf-8") as xyz_file:
                 xyz_file.write("\n".join(xyz))
             geom_path = xyz_path
@@ -213,15 +213,15 @@ if __name__ == "__main__":
         result["message"] = "\n\n".join(message)
 
         # Save result
-        with open(py_xtb.calc_dir / "result.cjson", "w", encoding="utf-8") as save_file:
+        with open(py_xtb.CALC_DIR / "result.cjson", "w", encoding="utf-8") as save_file:
             json.dump(result["cjson"], save_file, indent=2)
 
         # If user specified a save location, copy calculation directory to there
         if not (
             avo_input["save_dir"] in ["", None]
-            or Path(avo_input["save_dir"]) == py_xtb.calc_dir
+            or Path(avo_input["save_dir"]) == py_xtb.CALC_DIR
         ):
-            copytree(py_xtb.calc_dir, Path(avo_input["save_dir"]), dirs_exist_ok=True)
+            copytree(py_xtb.CALC_DIR, Path(avo_input["save_dir"]), dirs_exist_ok=True)
 
         # Pass back to Avogadro
         print(json.dumps(result))

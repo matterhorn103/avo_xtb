@@ -3,8 +3,8 @@ def parse_energy(output_string: str) -> float:
     
     Units vary depending on calculation type."""
     # but don't convert here as not all calculation types give in same units
-    end = output_string.split("\n")[-20:]
-    matched_lines = [line for line in end if "TOTAL ENERGY" in line]
+    lines = output_string.split("\n")
+    matched_lines = [line for line in lines if "TOTAL ENERGY" in line]
     if len(matched_lines) > 0:
         energy_line = matched_lines[-1]
     else:

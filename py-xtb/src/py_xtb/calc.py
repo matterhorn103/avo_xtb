@@ -106,7 +106,6 @@ class Calculation:
                     command.extend([flag, str(value)])
         # Add geometry after a demarcating double minus
         command.extend(["--", str(geom_file)])
-        print(command)
         
         # Run xtb from command line
         subproc = subprocess.run(command, capture_output=True, encoding="utf-8")
@@ -123,6 +122,12 @@ class Calculation:
         else:
             # Not yet implemented for crest
             self.energy = None
+        # If there's an output geometry, read it
+        if geom_file.with_name("xtbopt.xyz").exists():
+            self.output_geometry = Geometry.from_file(geom_file.with_name("xtbopt.xyz"))
+        else:
+            # Assume geom was the same at end of calc as at beginning
+            self.output_geometry = self.input_geometry
         # Store the subprocess.CompletedProcess object too
         self.subproc = subproc
 
@@ -134,7 +139,7 @@ def energy(
     solvation: str | None = None,
     method: int = 2,
     return_calc: bool = False,
-) -> float:
+) -> float | tuple[float, Calculation]:
     """Calculate energy in hartree for given geometry."""
 
     unpaired_e = multiplicity - 1
@@ -162,7 +167,7 @@ def optimize(
     method: int = 2,
     level: str = "normal",
     return_calc: bool = False,
-) -> Geometry:
+) -> Geometry | tuple[Geometry, Calculation]:
     """Optimize the geometry, starting from the provided initial geometry, and return
     the optimized geometry."""
 
@@ -179,10 +184,13 @@ def optimize(
         },
     )
     calc.run()
+    # Check for convergence
+    # TODO
+    # Will need to look for "FAILED TO CONVERGE"
     if return_calc:
-        return calc.energy, calc
+        return calc.output_geometry, calc
     else:
-        return calc.energy
+        return calc.output_geometry
 
 
 from .freq import frequencies
