@@ -8,8 +8,7 @@ def parse_energy(output_string: str) -> float:
     if len(matched_lines) > 0:
         energy_line = matched_lines[-1]
     else:
-        # Placeholder result so that something is always returned
-        energy_line = "0.0"
+        return None
     for section in energy_line.split():
         try:
             energy = float(section)

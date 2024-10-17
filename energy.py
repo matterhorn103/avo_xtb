@@ -47,6 +47,11 @@ if __name__ == "__main__":
             solvation=py_xtb.config["solvent"],
             method=py_xtb.config["method"],
         )
+        # If an energy couldn't be parsed, will return None, so have to allow for that
+        if energy_hartree is None:
+            # Seems like a reasonable placeholder that should be obviously incorrect to
+            # anyone
+            energy_hartree = 0.0
         # Convert energy to eV for Avogadro, other units for users
         energies = py_xtb.convert.convert_energy(energy_hartree, "hartree")
         # Format everything appropriately for Avogadro

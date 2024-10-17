@@ -31,6 +31,7 @@ class Calculation:
         self,
         program: str | os.PathLike = "xtb",
         runtype: str | None = None,
+        runtype_args: list[str] | None = None,
         options: dict | None = None,
         command: list[str] | None = None,
         input_geometry: Geometry | None = None,
@@ -53,7 +54,8 @@ class Calculation:
             self.program = Path(program)
 
         self.runtype = runtype if runtype else "scc"
-        self.options = options
+        self.runtype_args = runtype_args if runtype_args else []
+        self.options = options if options else {}
         self.command = command
         self.input_geometry = input_geometry
         if calc_dir:
@@ -89,7 +91,7 @@ class Calculation:
             command = self.command
         else:
             # Build command line args
-            command = [str(self.program), self.runtype]
+            command = [str(self.program), "--" + self.runtype, *self.runtype_args]
             for flag, value in self.options.items():
                 # Add appropriate number of minuses to flags
                 if len(flag) == 1:
@@ -103,25 +105,26 @@ class Calculation:
                 else:
                     command.extend([flag, str(value)])
         # Add geometry after a demarcating double minus
-        command.extend(["--", geom_file])
+        command.extend(["--", str(geom_file)])
+        print(command)
         
         # Run xtb from command line
-        calc = subprocess.run(command, capture_output=True, encoding="utf-8")
+        subproc = subprocess.run(command, capture_output=True, encoding="utf-8")
 
         # Store output
-        self.output = calc.stdout
+        self.output = subproc.stdout
         # Save to file
         with open(self.output_file, "w", encoding="utf-8") as f:
             f.write(self.output)
         if self.program.stem == "xtb":
             # Extract energy from output
-            # If not found, returns 0.0
+            # If not found, returns None
             self.energy = parse_energy(self.output)
         else:
             # Not yet implemented for crest
             self.energy = None
         # Store the subprocess.CompletedProcess object too
-        self.subproc = calc
+        self.subproc = subproc
 
 
 def energy(
@@ -142,7 +145,7 @@ def energy(
             "uhf": unpaired_e,
             "gfn": method,
             "alpb": solvation,
-        }
+        },
     )
     calc.run()
     if return_calc:
@@ -151,7 +154,37 @@ def energy(
         return calc.energy
 
 
-from .opt import optimize
+def optimize(
+    input_geom: Geometry,
+    charge: int = 0,
+    multiplicity: int = 1,
+    solvation: str | None = None,
+    method: int = 2,
+    level: str = "normal",
+    return_calc: bool = False,
+) -> Geometry:
+    """Optimize the geometry, starting from the provided initial geometry, and return
+    the optimized geometry."""
+
+    unpaired_e = multiplicity - 1
+    calc = Calculation(
+        input_geometry=input_geom,
+        runtype="opt",
+        runtype_args=[level],
+        options={
+            "chrg": charge,
+            "uhf": unpaired_e,
+            "gfn": method,
+            "alpb": solvation,
+        },
+    )
+    calc.run()
+    if return_calc:
+        return calc.energy, calc
+    else:
+        return calc.energy
+
+
 from .freq import frequencies
 from .ohess import opt_freq
 from .orbitals import orbitals
