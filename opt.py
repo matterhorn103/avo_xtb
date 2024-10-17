@@ -69,7 +69,7 @@ if __name__ == "__main__":
                 del result["cjson"][field]
 
         # Save result
-        with open(py_xtb.CALC_DIR / "result.cjson", "w", encoding="utf-8") as save_file:
+        with open(py_xtb.TEMP_DIR / "result.cjson", "w", encoding="utf-8") as save_file:
             json.dump(result["cjson"], save_file, indent=2)
         # Pass back to Avogadro
         print(json.dumps(result))

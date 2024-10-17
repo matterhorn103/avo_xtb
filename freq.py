@@ -5,10 +5,7 @@
 import argparse
 import json
 import sys
-from pathlib import Path
-from shutil import rmtree
 
-import obabel_convert
 from support import py_xtb
 
 
@@ -35,48 +32,46 @@ if __name__ == "__main__":
         print("Extensions|Semi-empirical (xtb){870}")
 
     if args.run_command:
-        # Remove results of last calculation
-        if py_xtb.CALC_DIR.exists():
-            for x in py_xtb.CALC_DIR.iterdir():
-                if x.is_file():
-                    x.unlink()
-                elif x.is_dir():
-                    rmtree(x)
 
         # Read input from Avogadro
         avo_input = json.loads(sys.stdin.read())
-        # Extract the coords and write to file for use as xtb input
-        geom = avo_input["xyz"]
-        xyz_path = Path(py_xtb.CALC_DIR) / "input.xyz"
-        with open(xyz_path, "w", encoding="utf-8") as xyz_file:
-            xyz_file.write(str(geom))
+        # Extract the coords
+        geom = py_xtb.Geometry.from_xyz(avo_input["xyz"].split("\n"))
 
-        # Run calculation; returns path to Gaussian file containing frequencies
-        result_path = py_xtb.calc.frequencies(
-            xyz_path,
+        # Run calculation; returns set of frequency data
+        freqs = py_xtb.calc.frequencies(
+            geom,
             charge=avo_input["charge"],
             multiplicity=avo_input["spin"],
             solvation=py_xtb.config["solvent"],
             method=py_xtb.config["method"],
         )
 
-        # Currently Avogadro fails to convert the g98 file to cjson itself
-        # So we have to convert output in g98 format to cjson ourselves
-        cjson_path = obabel_convert.g98_to_cjson(result_path)
-        # Open the cjson
-        with open(cjson_path, encoding="utf-8") as result_cjson:
-            freq_cjson = json.load(result_cjson)
-        # Format appropriately for Avogadro
+        # Frequency data is in the form of a dict of properties per frequency in a list
+        # This is the opposite of the structure used by CJSON, so have to rearrange
+        freq_cjson = {
+            "vibrations": {
+                "frequencies": [],
+                "modes": [],
+                "intensities": [],
+                "eigenVectors": [],
+            }
+        }
+        for f in freqs:
+            freq_cjson["vibrations"]["frequencies"].append(f["frequency"])
+            freq_cjson["vibrations"]["modes"].append(f["mode"])
+            freq_cjson["vibrations"]["intensities"].append(f["ir_intensity"])
+            flattened_eigenvectors = []
+            for atom in f["eigenvectors"]:
+                flattened_eigenvectors.extend(atom)
+            freq_cjson["vibrations"]["eigenVectors"].append(flattened_eigenvectors)
+
         # Start by passing back the original cjson, then add changes
         result = {"moleculeFormat": "cjson", "cjson": avo_input["cjson"]}
         result["cjson"]["vibrations"] = freq_cjson["vibrations"]
-        # xtb no longer gives Raman intensities but does write them as all 0
-        # If passed on to the user this is misleading so remove them
-        if "ramanIntensities" in result["cjson"]["vibrations"]:
-            del result["cjson"]["vibrations"]["ramanIntensities"]
 
         # Inform user if there are negative frequencies
-        if float(freq_cjson["vibrations"]["frequencies"][0]) < 0:
+        if freq_cjson["vibrations"]["frequencies"][0] < 0:
             result["message"] = (
                 "At least one negative frequency found!\n"
                 + "This is not a minimum on the potential energy surface.\n"
@@ -85,7 +80,7 @@ if __name__ == "__main__":
             )
 
         # Save result
-        with open(py_xtb.CALC_DIR / "result.cjson", "w", encoding="utf-8") as save_file:
+        with open(py_xtb.TEMP_DIR / "result.cjson", "w", encoding="utf-8") as save_file:
             json.dump(result["cjson"], save_file, indent=2)
         # Pass back to Avogadro
         print(json.dumps(result))

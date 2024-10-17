@@ -55,7 +55,8 @@ def parse_frequencies(output_string: str) -> list[dict]:
         frc_consts = block[4].split("--")[1].split()
         # IR intensities (km*mol⁻¹)
         ir_intensities = block[5].split("--")[1].split()
-        # Raman scattering activities (A**4/amu) - not calculated by xtb, written as all zeroes
+        # Raman scattering activities (A**4/amu) - seems to be written as all zeroes, even though
+        # they are also printed to the xtb output file
         raman_activities = block[6].split("--")[1].split()
         # Raman depolarization ratios - also seem to be written as all zeroes
         depolar = block[7].split("--")[1].split()
@@ -64,25 +65,20 @@ def parse_frequencies(output_string: str) -> list[dict]:
         # i is 0 to 2, n is the number of the frequency in the whole set
         for i, n in enumerate(modes):
             n = int(n)
+            # Leave out (commented out) the things that xtb doesn't even print to standard output
             freq_info = {
                 "mode": n,
+                "symmetry": symmetries[i],
                 "frequency": float(freqs[i]),
                 "reduced_mass": float(red_masses[i]),
-                "force_constant": float(frc_consts[i]),
+                #"force_constant": float(frc_consts[i]),
                 "ir_intensity": float(ir_intensities[i]),
                 "raman_scattering_activity": float(raman_activities[i]),
-                "raman_depolarization_ratio": float(depolar[i]),
+                #"raman_depolarization_ratio": float(depolar[i]),
                 "eigenvectors": [
-                    [float(atom[i]), float(atom[i+1]), float(atom[i+2])]
+                    [float(atom[3*i]), float(atom[3*i+1]), float(atom[3*i+2])]
                     for atom in coords
                 ],
             }
             frequencies.insert(n, freq_info)
     return frequencies
-
-
-if __name__ == "__main__":
-    with open("/home/matt/.local/share/py-xtb/last/g98.out") as f:
-        output_string = f.read()
-    for x in parse_frequencies(output_string):
-        print(x)

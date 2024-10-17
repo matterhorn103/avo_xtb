@@ -128,9 +128,11 @@ class Calculation:
         else:
             # Assume geom was the same at end of calc as at beginning
             self.output_geometry = self.input_geometry
-        # If there's a Molden file with frequencies, read it
+        # If there's a Gaussian output file with frequencies, read it
         if geom_file.with_name("g98.out").exists():
-            self.frequencies = parse_frequencies(geom_file.with_name("g98.out"))
+            with open(geom_file.with_name("g98.out"), encoding="utf-8") as f:
+                g98_string = f.read()
+            self.frequencies = parse_frequencies(g98_string)
         else:
             self.frequencies = None
         # Store the subprocess.CompletedProcess object too
@@ -204,8 +206,9 @@ def frequencies(
     multiplicity: int = 1,
     solvation: str | None = None,
     method: int = 2,
-) -> Path:
-    """Calculate vibrational frequencies and return Gaussian 98 format output file."""
+    return_calc: bool = False,
+) -> list[dict] | tuple[list[dict], Calculation]:
+    """Calculate vibrational frequencies and return results as a list of dicts."""
     unpaired_e = multiplicity - 1
     calc = Calculation(
         input_geometry=input_geom,
@@ -218,8 +221,10 @@ def frequencies(
         },
     )
     calc.run()
-    # Return the path of the Gaussian file generated
-    return geom_file.with_name("g98.out")
+    if return_calc:
+        return calc.frequencies, calc
+    else:
+        return calc.frequencies
 
 
 from .ohess import opt_freq
