@@ -21,6 +21,10 @@ if __name__ == "__main__":
     parser.add_argument("--menu-path", action="store_true")
     args = parser.parse_args()
 
+    # Disable if xtb missing
+    if py_xtb.xtb_bin is None:
+        quit()
+
     if args.print_options:
         options = {"inputMoleculeFormat": "xyz"}
         print(json.dumps(options))
