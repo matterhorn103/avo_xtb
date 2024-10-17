@@ -47,31 +47,14 @@ if __name__ == "__main__":
             method=py_xtb.config["method"],
         )
 
-        # Frequency data is in the form of a dict of properties per frequency in a list
-        # This is the opposite of the structure used by CJSON, so have to rearrange
-        freq_cjson = {
-            "vibrations": {
-                "frequencies": [],
-                "modes": [],
-                "intensities": [],
-                "eigenVectors": [],
-            }
-        }
-        for f in freqs:
-            freq_cjson["vibrations"]["frequencies"].append(f["frequency"])
-            freq_cjson["vibrations"]["modes"].append(f["mode"])
-            freq_cjson["vibrations"]["intensities"].append(f["ir_intensity"])
-            flattened_eigenvectors = []
-            for atom in f["eigenvectors"]:
-                flattened_eigenvectors.extend(atom)
-            freq_cjson["vibrations"]["eigenVectors"].append(flattened_eigenvectors)
+        freq_cjson = py_xtb.convert.freq_to_cjson(freqs)
 
         # Start by passing back the original cjson, then add changes
         result = {"moleculeFormat": "cjson", "cjson": avo_input["cjson"]}
         result["cjson"]["vibrations"] = freq_cjson["vibrations"]
 
         # Inform user if there are negative frequencies
-        if freq_cjson["vibrations"]["frequencies"][0] < 0:
+        if freqs[0]["frequency"] < 0:
             result["message"] = (
                 "At least one negative frequency found!\n"
                 + "This is not a minimum on the potential energy surface.\n"
@@ -82,5 +65,6 @@ if __name__ == "__main__":
         # Save result
         with open(py_xtb.TEMP_DIR / "result.cjson", "w", encoding="utf-8") as save_file:
             json.dump(result["cjson"], save_file, indent=2)
+        
         # Pass back to Avogadro
         print(json.dumps(result))

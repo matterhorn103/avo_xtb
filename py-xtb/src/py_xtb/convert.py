@@ -95,6 +95,31 @@ def xyz_to_cjson(
     return cjson
 
 
+def freq_to_cjson(frequencies: list[dict]) -> dict:
+    """Takes frequency data in the form of a dict of properties per frequency in a list,
+    as produced by a `hess` or `ohess` calculation, and returns the results as a CJSON."""
+
+    freq_cjson = {
+        "vibrations": {
+            "frequencies": [],
+            "modes": [],
+            "intensities": [],
+            "eigenVectors": [],
+        }
+    }
+    
+    for f in frequencies:
+        freq_cjson["vibrations"]["frequencies"].append(f["frequency"])
+        freq_cjson["vibrations"]["modes"].append(f["mode"])
+        freq_cjson["vibrations"]["intensities"].append(f["ir_intensity"])
+        flattened_eigenvectors = []
+        for atom in f["eigenvectors"]:
+            flattened_eigenvectors.extend(atom)
+        freq_cjson["vibrations"]["eigenVectors"].append(flattened_eigenvectors)
+    
+    return freq_cjson
+
+
 def get_element_symbol(num: int) -> str:
     """Return the element symbol for the provided atomic number."""
     element_dict = {

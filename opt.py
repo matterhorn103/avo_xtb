@@ -5,9 +5,20 @@
 import argparse
 import json
 import sys
-from shutil import rmtree
 
 from support import py_xtb
+
+
+def cleanup_after_opt(cjson: dict) -> dict:
+    """Makes sure that any data that is no longer meaningful after a geometry change is
+    removed from a CJSON structure."""
+
+    # For now removes just frequencies and orbitals
+    for field in ["vibrations", "basisSet", "orbitals", "cube"]:
+        if field in cjson:
+            del cjson[field]
+    
+    return cjson
 
 
 if __name__ == "__main__":
@@ -50,26 +61,30 @@ if __name__ == "__main__":
             return_calc=True,
         )
 
-        # Convert geometry
-        cjson_geom = opt_geom.to_cjson()
+        # Convert geometry to cjson
+        geom_cjson = opt_geom.to_cjson()
+
         # Check for convergence
         # TODO
         # Will need to look for "FAILED TO CONVERGE"
-        # Convert energy for Avogadro
-        energies = py_xtb.convert.convert_energy(calc.energy, "hartree")
-        # Format everything appropriately for Avogadro
-        # Start by passing back the original cjson, then add changes
-        result = {"moleculeFormat": "cjson", "cjson": avo_input["cjson"]}
-        result["cjson"]["atoms"]["coords"] = cjson_geom["atoms"]["coords"]
-        result["cjson"]["properties"]["totalEnergy"] = str(round(energies["eV"], 7))
 
-        # If the cjson contained frequencies or orbitals, remove them as they are no longer physical
-        for field in ["vibrations", "basisSet", "orbitals", "cube"]:
-            if field in result["cjson"]:
-                del result["cjson"][field]
+        # Get energy for Avogadro
+        energies = py_xtb.convert.convert_energy(calc.energy, "hartree")
+
+        # Format everything appropriately for Avogadro
+        # Start from the original cjson
+        result = {"moleculeFormat": "cjson", "cjson": avo_input["cjson"]}
+
+        # Remove anything that is now unphysical after the optimization
+        result["cjson"] = cleanup_after_opt(result["cjson"])
+        
+        # Add data from calculation
+        result["cjson"]["atoms"]["coords"] = geom_cjson["atoms"]["coords"]
+        result["cjson"]["properties"]["totalEnergy"] = str(round(energies["eV"], 7))
 
         # Save result
         with open(py_xtb.TEMP_DIR / "result.cjson", "w", encoding="utf-8") as save_file:
             json.dump(result["cjson"], save_file, indent=2)
+        
         # Pass back to Avogadro
         print(json.dumps(result))

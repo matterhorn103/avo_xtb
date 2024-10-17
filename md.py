@@ -177,12 +177,12 @@ if __name__ == "__main__":
         # If user specified a save location, copy calculation directory to there
         if not (
             avo_input["save_dir"] in ["", None]
-            or Path(avo_input["save_dir"]) == py_xtb.CALC_DIR
+            or Path(avo_input["save_dir"]) == py_xtb.TEMP_DIR
         ):
-            copytree(py_xtb.CALC_DIR, Path(avo_input["save_dir"]), dirs_exist_ok=True)
+            copytree(py_xtb.TEMP_DIR, Path(avo_input["save_dir"]), dirs_exist_ok=True)
 
         # Save result
-        with open(py_xtb.CALC_DIR / "result.cjson", "w", encoding="utf-8") as save_file:
+        with open(py_xtb.TEMP_DIR / "result.cjson", "w", encoding="utf-8") as save_file:
             json.dump(result["cjson"], save_file, indent=2)
         # Pass back to Avogadro
         print(json.dumps(result, indent=2))

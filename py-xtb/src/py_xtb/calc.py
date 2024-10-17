@@ -45,6 +45,9 @@ class Calculation:
         automatically.
         To use a flag that takes no argument, set the value to `True`.
         Flags with values of `False` or `None` will not be passed.
+
+        Note that any contents of `calc_dir` will be removed when the calculation
+        begins.
         """
         if program == "xtb":
             self.program = XTB_BIN
@@ -61,12 +64,11 @@ class Calculation:
         if calc_dir:
             self.calc_dir = Path(calc_dir)
     
-
     def run(self):
         """Run calculation with xtb or crest, storing the output, the saved output file,
         and the parsed energy, as well as the `subprocess` object."""
 
-        # Make sure calculation directory exists and is empty
+        # Make sure directory nominated for calculation exists and is empty
         if self.calc_dir.exists():
             for x in self.calc_dir.iterdir():
                 if x.is_file():
@@ -149,12 +151,11 @@ def energy(
 ) -> float | tuple[float, Calculation]:
     """Calculate energy in hartree for given geometry."""
 
-    unpaired_e = multiplicity - 1
     calc = Calculation(
         input_geometry=input_geom,
         options={
             "chrg": charge,
-            "uhf": unpaired_e,
+            "uhf": multiplicity - 1,
             "gfn": method,
             "alpb": solvation,
         },
@@ -178,14 +179,13 @@ def optimize(
     """Optimize the geometry, starting from the provided initial geometry, and return
     the optimized geometry."""
 
-    unpaired_e = multiplicity - 1
     calc = Calculation(
         input_geometry=input_geom,
         runtype="opt",
         runtype_args=[level],
         options={
             "chrg": charge,
-            "uhf": unpaired_e,
+            "uhf": multiplicity - 1,
             "gfn": method,
             "alpb": solvation,
         },
@@ -209,13 +209,13 @@ def frequencies(
     return_calc: bool = False,
 ) -> list[dict] | tuple[list[dict], Calculation]:
     """Calculate vibrational frequencies and return results as a list of dicts."""
-    unpaired_e = multiplicity - 1
+
     calc = Calculation(
         input_geometry=input_geom,
         runtype="hess",
         options={
             "chrg": charge,
-            "uhf": unpaired_e,
+            "uhf": multiplicity - 1,
             "gfn": method,
             "alpb": solvation,
         },
@@ -227,7 +227,59 @@ def frequencies(
         return calc.frequencies
 
 
-from .ohess import opt_freq
+def opt_freq(
+    input_geom: Geometry,
+    charge: int = 0,
+    multiplicity: int = 1,
+    solvation: str | None = None,
+    method: int = 2,
+    level: str = "normal",
+    return_calc: bool = False,
+) -> tuple[Geometry, list[dict]] | tuple[Geometry, list[dict], Calculation]:
+    """Optimize geometry then calculate vibrational frequencies.
+    
+    If a negative frequency is detected by xtb, it recommends to restart the calculation
+    from a distorted geometry that it provides, so this is done automatically if
+    applicable.
+    """
+
+    calc = Calculation(
+        input_geometry=input_geom,
+        runtype="ohess",
+        runtype_args=[level],
+        options={
+            "chrg": charge,
+            "uhf": multiplicity - 1,
+            "gfn": method,
+            "alpb": solvation,
+        },
+    )
+    calc.run()
+
+    # Check for distorted geometry
+    # (Generated automatically by xtb if result had negative frequency)
+    # If found, rerun
+    distorted_geom_file = calc.output_file.with_name("xtbhess.xyz")
+    while distorted_geom_file.exists():
+        calc = Calculation(
+            input_geometry=Geometry.from_file(distorted_geom_file),
+            runtype="ohess",
+            runtype_args=[level],
+            options={
+                "chrg": charge,
+                "uhf": multiplicity - 1,
+                "gfn": method,
+                "alpb": solvation,
+            },
+        )
+        calc.run()
+
+    if return_calc:
+        return calc.output_geometry, calc.frequencies, calc
+    else:
+        return calc.output_geometry, calc.frequencies
+
+
 from .orbitals import orbitals
 from .conformers import conformers
 from .md import md
