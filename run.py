@@ -12,8 +12,6 @@ from shutil import rmtree, copytree
 
 from support import py_xtb
 
-import obabel_convert
-
 
 # Define behaviour of Run menu command
 if __name__ == "__main__":
@@ -32,7 +30,7 @@ if __name__ == "__main__":
 
     if args.print_options:
         options = {
-            "inputMoleculeFormat": "tmol",
+            "inputMoleculeFormat": "xyz",
             "userOptions": {
                 "save_dir": {
                     "type": "string",
@@ -67,12 +65,12 @@ if __name__ == "__main__":
                     "default": "https://xtb-docs.readthedocs.io/",
                     "order": 9.0,
                 },
-                "turbomole": {
-                    "type": "boolean",
-                    "label": "Use Turbomole geometry\n(use for periodic systems)",
-                    "default": False,
-                    "order": 4.0,
-                },
+                # "turbomole": {
+                #     "type": "boolean",
+                #     "label": "Use Turbomole geometry\n(use for periodic systems)",
+                #     "default": False,
+                #     "order": 4.0,
+                # },
             },
         }
         # Add solvation to default command if found in user config
@@ -103,24 +101,24 @@ if __name__ == "__main__":
 
         # Extract the coords and write to file for use as xtb input
         # Select geometry to use on basis of user choice
-        if avo_input["turbomole"]:
-            tmol_path = Path(py_xtb.CALC_DIR) / "input.tmol"
-            with open(tmol_path, "w", encoding="utf-8") as tmol_file:
-                # Avogadro seems to pass tmol string with \r\n newlines on Windows
-                # Python writes \r\n as \r\r\n on Windows
-                # Open Babel then reads two new lines not one
-                # So make sure we only have Python newlines (\n) by removing any \r
-                tmol_str = str(avo_input["tmol"]).replace("\r", "")
-                tmol_file.write(tmol_str)
-            geom_path = tmol_path
-        else:
+        # if avo_input["turbomole"]:
+        #     tmol_path = Path(py_xtb.CALC_DIR) / "input.tmol"
+        #     with open(tmol_path, "w", encoding="utf-8") as tmol_file:
+        #         # Avogadro seems to pass tmol string with \r\n newlines on Windows
+        #         # Python writes \r\n as \r\r\n on Windows
+        #         # Open Babel then reads two new lines not one
+        #         # So make sure we only have Python newlines (\n) by removing any \r
+        #         tmol_str = str(avo_input["tmol"]).replace("\r", "")
+        #         tmol_file.write(tmol_str)
+        #     geom_path = tmol_path
+        # else:
             # Use xyz - first get xyz format (as list of lines) from cjson
-            xyz = py_xtb.convert.cjson_to_xyz(avo_input["cjson"], lines=True)
-            # Save to file, don't forget to add newlines
-            xyz_path = Path(py_xtb.CALC_DIR) / "input.xyz"
-            with open(xyz_path, "w", encoding="utf-8") as xyz_file:
-                xyz_file.write("\n".join(xyz))
-            geom_path = xyz_path
+        xyz = avo_input["xyz"]
+        # Save to file, don't forget to add newlines
+        xyz_path = Path(py_xtb.CALC_DIR) / "input.xyz"
+        with open(xyz_path, "w", encoding="utf-8") as xyz_file:
+            xyz_file.write("\n".join(xyz))
+        geom_path = xyz_path
 
         # Run calculation; returns subprocess.CompletedProcess object and path to output.out
         calc, result_path, energy = py_xtb.run_xtb(
@@ -147,22 +145,22 @@ if __name__ == "__main__":
 
         # Check if opt was requested
         if any(x in avo_input["command"] for x in ["--opt", "--ohess"]):
-            if geom_path.suffix == ".tmol":
-                # Convert geometry with Open Babel
-                geom_cjson_path = obabel_convert.tmol_to_cjson(
-                    result_path.with_name("xtbopt.tmol")
-                )
-                # Open the generated cjson
-                with open(geom_cjson_path, encoding="utf-8") as result_cjson:
-                    geom_cjson = json.load(result_cjson)
-            else:
-                # Read the xyz file
-                with open(
-                    result_path.with_name("xtbopt.xyz"), encoding="utf-8"
-                ) as result_xyz:
-                    xyz = result_xyz.read().split("\n")
-                # Convert geometry without Open Babel
-                geom_cjson = py_xtb.convert.xyz_to_cjson(xyz_lines=xyz)
+            # if geom_path.suffix == ".tmol":
+            #     # Convert geometry with Open Babel
+            #     geom_cjson_path = obabel_convert.tmol_to_cjson(
+            #         result_path.with_name("xtbopt.tmol")
+            #     )
+            #     # Open the generated cjson
+            #     with open(geom_cjson_path, encoding="utf-8") as result_cjson:
+            #         geom_cjson = json.load(result_cjson)
+            # else:
+            # Read the xyz file
+            with open(
+                result_path.with_name("xtbopt.xyz"), encoding="utf-8"
+            ) as result_xyz:
+                xyz = result_xyz.read().split("\n")
+            # Convert geometry without Open Babel
+            geom_cjson = py_xtb.convert.xyz_to_cjson(xyz_lines=xyz)
             result["cjson"]["atoms"]["coords"] = geom_cjson["atoms"]["coords"]
 
         # Check if frequencies were requested

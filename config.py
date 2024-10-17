@@ -10,7 +10,6 @@ import sys
 from pathlib import Path
 
 from support import py_xtb
-from obabel_convert import OBABEL_BIN
 
 
 # List of available methods
@@ -34,12 +33,6 @@ if __name__ == "__main__":
                     "label": "Location of the xtb binary",
                     "default": str(py_xtb.XTB_BIN),
                     "order": 1.0,
-                },
-                "obabel_bin": {
-                    "type": "string",
-                    "label": "Location of the Open Babel binary",
-                    "default": str(OBABEL_BIN),
-                    "order": 2.0,
                 },
                 "user_dir": {
                     "type": "string",
@@ -150,11 +143,6 @@ if __name__ == "__main__":
         if avo_input["xtb_bin"] != str(py_xtb.XTB_BIN):
             py_xtb.XTB_BIN = Path(avo_input["xtb_bin"])
             py_xtb.config["xtb_bin"] = str(py_xtb.XTB_BIN)
-
-        # Save change to obabel_bin if there has been one
-        if avo_input["obabel_bin"] != str(OBABEL_BIN):
-            OBABEL_BIN = Path(avo_input["obabel_bin"])
-            py_xtb.config["obabel_bin"] = str(OBABEL_BIN)
 
         # Update energy units
         py_xtb.config["energy_units"] = avo_input["energy_units"]
