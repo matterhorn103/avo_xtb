@@ -22,7 +22,7 @@ from shutil import rmtree
 
 from .conf import XTB_BIN, CREST_BIN, TEMP_DIR
 from .geometry import Geometry
-from .parse import parse_energy, parse_frequencies
+from .parse import parse_energy, parse_g98_frequencies
 
 
 class Calculation:
@@ -123,38 +123,50 @@ class Calculation:
 
         # Store output
         self.output = subproc.stdout
-        # Save to file
+        # Also save it to file
         with open(self.output_file, "w", encoding="utf-8") as f:
             f.write(self.output)
-        if self.program.stem == "xtb":
-            # Extract energy from output
-            # If not found, returns None
-            self.energy = parse_energy(self.output)
+        
+        # Store the subprocess.CompletedProcess object too
+        self.subproc = subproc
+
+        # Do all post-calculation processing according to which program was run
+        if self.program.stem == "crest":
+            self.process_crest()
         else:
-            # Not yet implemented for crest
-            self.energy = None
+            self.process_xtb()
+
+    def process_xtb(self):
+
+        # First do generic operations that apply to many calculation types
+        # Extract energy from output (if not found, returns None)
+        self.energy = parse_energy(self.output)
         # If there's an output geometry, read it
-        if geom_file.with_name("xtbopt.xyz").exists():
-            self.output_geometry = Geometry.from_file(geom_file.with_name("xtbopt.xyz"))
+        if self.output_file.with_name("xtbopt.xyz").exists():
+            self.output_geometry = Geometry.from_file(self.output_file.with_name("xtbopt.xyz"))
         else:
             # Assume geom was the same at end of calc as at beginning
             self.output_geometry = self.input_geometry
-        # If there's a Gaussian output file with frequencies, read it
-        if geom_file.with_name("g98.out").exists():
-            with open(geom_file.with_name("g98.out"), encoding="utf-8") as f:
-                g98_string = f.read()
-            self.frequencies = parse_frequencies(g98_string)
-        else:
-            self.frequencies = None
-        # If there's a Molden output file with orbitals, read it
-        if geom_file.with_name("molden.input").exists():
-            with open(geom_file.with_name("molden.input"), encoding="utf-8") as f:
+        # Orbital info
+        # If Molden output was requested, read the file
+        if self.options.get("molden", False):
+            with open(self.output_file.with_name("molden.input"), encoding="utf-8") as f:
                 molden_string = f.read()
             self.output_molden = molden_string
-        else:
-            self.output_molden = None
-        # Store the subprocess.CompletedProcess object too
-        self.subproc = subproc
+        
+        # Now do more specific operations based on calculation type
+        match self.runtype:
+            case "hess" | "ohess":
+                # Read the Gaussian output file with frequencies
+                with open(self.output_file.with_name("g98.out"), encoding="utf-8") as f:
+                    g98_string = f.read()
+                self.frequencies = parse_g98_frequencies(g98_string)
+            case _:
+                pass
+
+    def process_crest(self):
+        # Energy parsing not yet implemented for crest
+        self.energy = None
 
 
 def energy(

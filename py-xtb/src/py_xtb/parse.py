@@ -22,6 +22,18 @@ def parse_energy(output_string: str) -> float:
 
 
 def parse_frequencies(output_string: str) -> list[dict]:
+    """Read the vibrational frequency information from an xtb output file.
+
+    The results are returned as a list of the frequencies, with each entry a dict of
+    information for the frequency.
+    The eigenvectors for the frequencies are not contained in the xtb output file – if
+    they are required, use `parse_g98_frequencies()` on the `g98.out` file instead.
+    """
+    # TODO
+    pass
+
+
+def parse_g98_frequencies(gaussian_output_string: str) -> list[dict]:
     """Read the vibrational frequency information from a Gaussian 98 format output file.
 
     The results are returned as a list of the frequencies, with each entry a dict of
@@ -30,7 +42,7 @@ def parse_frequencies(output_string: str) -> list[dict]:
     for each atom.
     """
     frequencies = []
-    freq_table = output_string.split(
+    freq_table = gaussian_output_string.split(
         "reduced masses (AMU), force constants (mDyne/A) and normal coordinates:\n"
     )[1].split("\n")
     # Work out how many frequencies we have, how many blocks of 3 there are, and how
@@ -82,3 +94,16 @@ def parse_frequencies(output_string: str) -> list[dict]:
             }
             frequencies.insert(n, freq_info)
     return frequencies
+
+
+def parse_orbitals(output_string: str) -> list[dict]:
+    """Read the molecular orbital energy and occupancies from an xtb output file.
+
+    The results are returned as a list of the MOs, with each entry a dict of information
+    for the MO.
+    Details on the GTO basis set and the coefficients for each MO are not contained in
+    the xtb output file, so for the data needed to visualize the molecular orbitals see 
+    the `molden.input` file instead.
+    """
+    # TODO
+    pass
