@@ -56,7 +56,7 @@ class Calculation:
         else:
             self.program = Path(program)
 
-        self.runtype = runtype if runtype else "scc"
+        self.runtype = runtype if runtype else None
         self.runtype_args = runtype_args if runtype_args else []
         self.options = options if options else {}
         self.command = command
@@ -93,7 +93,16 @@ class Calculation:
             command = self.command
         else:
             # Build command line args
-            command = [str(self.program), "--" + self.runtype, *self.runtype_args]
+            if self.runtype is None:
+                # Simple single point
+                command = [str(self.program)]
+            else:
+                command = [
+                    str(self.program),
+                    "--" + self.runtype,
+                    *self.runtype_args,
+                    "--",
+                ]
             for flag, value in self.options.items():
                 # Add appropriate number of minuses to flags
                 if len(flag) == 1:
@@ -137,6 +146,13 @@ class Calculation:
             self.frequencies = parse_frequencies(g98_string)
         else:
             self.frequencies = None
+        # If there's a Molden output file with orbitals, read it
+        if geom_file.with_name("molden.input").exists():
+            with open(geom_file.with_name("molden.input"), encoding="utf-8") as f:
+                molden_string = f.read()
+            self.output_molden = molden_string
+        else:
+            self.output_molden = None
         # Store the subprocess.CompletedProcess object too
         self.subproc = subproc
 
@@ -280,6 +296,36 @@ def opt_freq(
         return calc.output_geometry, calc.frequencies
 
 
-from .orbitals import orbitals
+def orbitals(
+    input_geom: Geometry,
+    charge: int = 0,
+    multiplicity: int = 1,
+    solvation: str | None = None,
+    method: int = 2,
+    return_calc: bool = False,
+) -> str | tuple[str, Calculation]:
+    """Calculate molecular orbitals for given geometry.
+    
+    Returns a string of the Molden-format output file, which contains principally the
+    GTO and MO information.
+    """
+
+    calc = Calculation(
+        input_geometry=input_geom,
+        options={
+            "molden": True,
+            "chrg": charge,
+            "uhf": multiplicity - 1,
+            "gfn": method,
+            "alpb": solvation,
+        },
+    )
+    calc.run()
+    if return_calc:
+        return calc.output_molden, calc
+    else:
+        return calc.output_molden
+
+
 from .conformers import conformers
 from .md import md
