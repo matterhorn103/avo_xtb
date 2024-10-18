@@ -12,7 +12,7 @@ import webbrowser
 logger = logging.getLogger(__name__)
 
 
-xtb_docs_url = "https://xtb-docs.readthedocs.io/en/latest/commandline.html"
+crest_docs_url = "https://crest-lab.github.io/crest-docs/"
 
 
 if __name__ == "__main__":
@@ -29,19 +29,19 @@ if __name__ == "__main__":
         options = {}
         print(json.dumps(options))
     if args.display_name:
-        print("xtb Help")
+        print("CREST Help")
     if args.menu_path:
-        print("Extensions|Semi-empirical (xtb){800}")
+        print("Extensions|Semi-empirical (xtb){700}")
 
     if args.run_command:
         # Still have to read input from Avogadro and pass cjson back
         # Otherwise molecule disappears
         avo_input = json.loads(sys.stdin.read())
         
-        logger.debug(f"Opening the xtb docs website at {xtb_docs_url}")
-        webbrowser.open(xtb_docs_url)
+        logger.debug(f"Opening the crest docs website at {crest_docs_url}")
+        webbrowser.open(crest_docs_url)
         result = {
-            "message": "The xtb documentation should have opened in your browser.",
+            "message": "The CREST documentation should have opened in your browser.",
             "moleculeFormat": "cjson",
             "cjson": avo_input["cjson"],
         }
