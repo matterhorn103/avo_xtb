@@ -308,7 +308,7 @@ def opt_freq(
         return calc.output_geometry, calc.frequencies
 
 
-def orbitals(
+def molden_orbitals(
     input_geom: Geometry,
     charge: int = 0,
     multiplicity: int = 1,
@@ -339,5 +339,39 @@ def orbitals(
         return calc.output_molden
 
 
-from .conformers import conformers
-from .md import md
+def conformers(
+    input_geom: Geometry,
+    charge: int = 0,
+    multiplicity: int = 1,
+    solvation: str | None = None,
+    method: int = 2,
+    ewin: int | float = 6,
+    hess: bool = False,
+    return_calc: bool = False,
+) -> list[dict]:
+    """Simulate a conformer ensemble and return set of conformer Geometries and energies.
+
+    All conformers within <ewin> kcal/mol are kept.
+    If hess=True, vibrational frequencies are calculated and the conformers reordered by Gibbs energy.
+    """
+    method_flag = f"gfn{method}"
+    calc = Calculation(
+        program="crest",
+        input_geometry=input_geom,
+        runtype="v3",
+        options={
+            "xnam": XTB_BIN,
+            method_flag: True,
+            "chrg": charge,
+            "uhf": multiplicity - 1,
+            "alpb": solvation,
+            "ewin": ewin,
+        },
+    )
+    if hess:
+        calc.options["--prop"] = "hess"
+    calc.run()
+    if return_calc:
+        return calc.conformers, calc
+    else:
+        return calc.conformers

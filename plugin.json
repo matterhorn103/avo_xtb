@@ -13,7 +13,6 @@
     { "name": "opt-freq", "command": "ohess.py"},
     { "name": "orbitals", "command": "orbitals.py" },
     { "name": "conformers", "command": "conformers.py" },
-    { "name": "md", "command": "md.py" },
     { "name": "run-calc", "command": "run_calc.py" },
     { "name": "open", "command": "open.py" },
     { "name": "install", "command": "install.py" },
