@@ -37,7 +37,7 @@ There is also the option to submit a custom command to `xtb`, permitting any cal
 Currently, the plugin does not download the `xtb` binary automatically, and it is not bundled with Avogadro. Instead, it must be obtained separately. There are five options that will make `xtb` visible to the extension:
 1. Install xtb with `conda` from conda-forge and use Avogadro with the `conda` environment, either by setting it in the Python settings or by starting Avogadro with the environment activated
 2. Manually download the `xtb` binary and put it into the system PATH
-3. Manually download `xtb` and place it entirely within the `<user data>/py-xtb/bin/` directory
+3. Manually download `xtb` and place it, or a link to it, entirely within the plugin's binary directory `<user data location>/py-xtb/bin/` (see  for more information on where this is on your system) 
 4. Manually download `xtb` and manually specify its location in the `Configure...` menu
 5. Use the "Get xtb..." function within Avogadro after installing this extension
 
