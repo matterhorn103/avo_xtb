@@ -2,7 +2,7 @@
 # This file is part of py-xtb which is released under the BSD 3-Clause License.
 # See LICENSE or go to https://opensource.org/license/BSD-3-clause for full details.
 
-"""Provides conversions that do not rely on external dependencies such as Open Babel."""
+"""Functions for various conversions without relying on external dependencies such as Open Babel."""
 
 
 # Convert an energy in the specified unit to a dictionary of all useful units

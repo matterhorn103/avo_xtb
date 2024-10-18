@@ -2,6 +2,8 @@
 # This file is part of py-xtb which is released under the BSD 3-Clause License.
 # See LICENSE or go to https://opensource.org/license/BSD-3-clause for full details.
 
+"""Functions to parse specific data from output files."""
+
 def parse_energy(output_string: str) -> float:
     """Find the final energy in an xtb output file and return as a float.
     

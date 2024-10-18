@@ -1,9 +1,9 @@
 [project]
 name = "py-xtb"
 version = "0.5.0"
-description = "Add your description here"
+description = "A Python API for xtb (and CREST)."
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.10"
 dependencies = []
 
 [build-system]
