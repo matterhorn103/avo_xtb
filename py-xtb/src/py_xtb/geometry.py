@@ -3,11 +3,15 @@
 # See LICENSE or go to https://opensource.org/license/BSD-3-clause for full details.
 
 import json
+import logging
 import os
 from collections import namedtuple
 from pathlib import Path
 
 from .convert import get_atomic_number
+
+
+logger = logging.getLogger(__name__)
 
 
 Atom = namedtuple("Atom", ["element", "x", "y", "z"])
@@ -34,6 +38,7 @@ class Geometry:
         return iter(self.atoms)
     
     def to_xyz(self, comment: str | None = None) -> list[str]:
+        logger.debug("Generating an xyz, as a list of lines, for the geometry")
         if comment is None:
             comment = self._comment if self._comment else "xyz prepared by py-xtb"
         xyz = [str(len(self.atoms)), comment]
@@ -51,6 +56,7 @@ class Geometry:
         return xyz
     
     def to_cjson(self) -> dict:
+        logger.debug("Generating a cjson, as a Python dict, for the geometry")
         all_coords = []
         all_element_numbers = []
         for atom in self.atoms:
@@ -68,6 +74,7 @@ class Geometry:
         return cjson
 
     def write_xyz(self, dest: os.PathLike) -> os.PathLike:
+        logger.debug(f"Saving the geometry as an xyz file to {dest}")
         # Make sure it ends with a newline
         lines = self.to_xyz() + [""]
         with open(dest, "w", encoding="utf-8") as f:
@@ -79,6 +86,7 @@ class Geometry:
 
     @classmethod
     def from_xyz(cls, xyz_lines: list[str]):
+        logger.debug("Instantiating a geometry from an xyz")
         n_atoms = int(xyz_lines[0])
         atoms = []
         for atom_line in xyz_lines[2:]:
@@ -93,6 +101,7 @@ class Geometry:
     
     @classmethod
     def from_multi_xyz(cls, xyz_lines: list[str]):
+        logger.debug("Instantiating a set of geometries from a multi-structure xyz")
         atom_count_line = xyz_lines[0]
         geometries = []
         current_xyz = []
@@ -105,6 +114,7 @@ class Geometry:
 
     @classmethod
     def from_file(cls, file, format=None, multi=False):
+        logger.debug(f"Loading a geometry from {file}")
         filepath = Path(file)
         # Autodetect format of file
         if format is None:

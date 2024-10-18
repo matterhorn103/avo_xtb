@@ -4,8 +4,16 @@
 
 import argparse
 import json
+import logging
 import sys
 import webbrowser
+
+
+logger = logging.getLogger(__name__)
+
+
+xtb_docs_url = "https://xtb-docs.readthedocs.io/en/latest/commandline.html"
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -30,7 +38,8 @@ if __name__ == "__main__":
         # Otherwise molecule disappears
         avo_input = json.loads(sys.stdin.read())
         
-        webbrowser.open("https://xtb-docs.readthedocs.io/en/latest/commandline.html")
+        logger.debug(f"Opening the xtb docs website at {xtb_docs_url}")
+        webbrowser.open(xtb_docs_url)
         result = {
             "message": "The xtb documentation should have opened in your browser.",
             "moleculeFormat": "cjson",
@@ -38,3 +47,4 @@ if __name__ == "__main__":
         }
         # Pass back to Avogadro
         print(json.dumps(result))
+        logger.debug(f"The following dictionary was passed back to Avogadro: {result}")
