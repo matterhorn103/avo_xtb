@@ -16,6 +16,7 @@
     { "name": "run-calc", "command": "run_calc.py" },
     { "name": "open", "command": "open.py" },
     { "name": "install", "command": "install.py" },
-    { "name": "go-to-docs", "command": "docs.py" }
+    { "name": "go-to-docs", "command": "docs.py" },
+    { "name": "go-to-crest-docs", "command": "crest_docs.py" }
   ]
 }
