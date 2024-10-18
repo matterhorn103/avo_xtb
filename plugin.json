@@ -1,8 +1,8 @@
 {
   "author": "Matthew J. Milner",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "url": "https://github.com/matterhorn103/avo_xtb",
-  "name": "avogadro-xtb",
+  "name": "avo_xtb",
   "description": "Access the full power of xtb through the Avogadro interface.",
   "type": "commands",
   "commands": [
@@ -13,7 +13,6 @@
     { "name": "opt-freq", "command": "ohess.py"},
     { "name": "orbitals", "command": "orbitals.py" },
     { "name": "conformers", "command": "conformers.py" },
-    { "name": "md", "command": "md.py" },
     { "name": "run-calc", "command": "run_calc.py" },
     { "name": "open", "command": "open.py" },
     { "name": "install", "command": "install.py" },

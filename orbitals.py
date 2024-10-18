@@ -5,42 +5,8 @@
 import argparse
 import json
 import sys
-from shutil import rmtree
-from pathlib import Path
 
-from config import config, calc_dir
-from run import run_xtb
-
-
-def orbitals(
-    geom_file: Path,
-    charge: int = 0,
-    multiplicity: int = 1,
-    solvation: str | None = None,
-    method: int = 2,
-) -> Path:
-    """Calculate molecular orbitals for given geometry, return file in Molden format."""
-    spin = multiplicity - 1
-    # Just do a single point calculation but pass molden option to get orbital printout
-    command = [
-        "xtb",
-        geom_file,
-        "--molden",
-        "--chrg",
-        str(charge),
-        "--uhf",
-        str(spin),
-        "--gfn",
-        str(method),
-    ]
-    # Add solvation if requested
-    if solvation is not None:
-        command.extend(["--alpb", solvation])
-    # Run xtb from command line
-    calc, out_file, energy = run_xtb(command, geom_file)
-
-    # Return path to molden file
-    return geom_file.with_name("molden.input")
+from support import py_xtb
 
 
 if __name__ == "__main__":
@@ -53,6 +19,10 @@ if __name__ == "__main__":
     parser.add_argument("--menu-path", action="store_true")
     args = parser.parse_args()
 
+    # Disable if xtb missing
+    if py_xtb.XTB_BIN is None:
+        quit()
+
     if args.print_options:
         options = {"inputMoleculeFormat": "xyz"}
         print(json.dumps(options))
@@ -62,34 +32,21 @@ if __name__ == "__main__":
         print("Extensions|Semi-empirical (xtb){830}")
 
     if args.run_command:
-        # Remove results of last calculation
-        if calc_dir.exists():
-            for x in calc_dir.iterdir():
-                if x.is_file():
-                    x.unlink()
-                elif x.is_dir():
-                    rmtree(x)
 
         # Read input from Avogadro
         avo_input = json.loads(sys.stdin.read())
-        # Extract the coords and write to file for use as xtb input
-        geom = avo_input["xyz"]
-        xyz_path = calc_dir / "input.xyz"
-        with open(xyz_path, "w", encoding="utf-8") as xyz_file:
-            xyz_file.write(str(geom))
+        # Extract the coords
+        geom = py_xtb.Geometry.from_xyz(avo_input["xyz"].split("\n"))
 
-        # Run calculation using xyz file
-        result_path = orbitals(
-            xyz_path,
+        # Run calculation; returns Molden output file as string
+        molden_string = py_xtb.calc.orbitals(
+            geom,
             charge=avo_input["charge"],
             multiplicity=avo_input["spin"],
-            solvation=config["solvent"],
-            method=config["method"],
+            solvation=py_xtb.config["solvent"],
+            method=py_xtb.config["method"],
         )
 
-        # Get molden file as string
-        with open(result_path, encoding="utf-8") as molden_file:
-            molden_string = molden_file.read()
         # Format everything appropriately for Avogadro
         # Just pass orbitals file with instruction to read only properties
         result = {
@@ -107,6 +64,10 @@ if __name__ == "__main__":
             )
         else:
             result["message"] = "Calculation complete!"
+
+        # Save result
+        with open(py_xtb.TEMP_DIR / "result.molden", "w", encoding="utf-8") as save_file:
+            json.dump(result, save_file, indent=2)
 
         # Pass back to Avogadro
         print(json.dumps(result))

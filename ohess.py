@@ -5,55 +5,9 @@
 import argparse
 import json
 import sys
-from pathlib import Path
-from shutil import rmtree
 
-from config import config, calc_dir
-import convert
-import obabel_convert
-from run import run_xtb
-
-
-def opt_freq(
-    geom_file: Path,
-    charge: int = 0,
-    multiplicity: int = 1,
-    solvation: str | None = None,
-    method: int = 2,
-    level: str = "normal",
-) -> tuple[Path, Path, float]:
-    """Optimize geometry then calculate vibrational frequencies. Distort and reoptimize if negative frequency detected."""
-    spin = multiplicity - 1
-    command = [
-        "xtb",
-        geom_file,
-        "--ohess",
-        level,
-        "--chrg",
-        str(charge),
-        "--uhf",
-        str(spin),
-        "--gfn",
-        str(method),
-    ]
-    # Add solvation if requested
-    if solvation is not None:
-        command.extend(["--alpb", solvation])
-    # Run xtb from command line
-    calc, out_file, energy = run_xtb(command, geom_file)
-
-    # Make sure the first calculation has finished
-    # (How?)
-
-    # Check for distorted geometry
-    # (Generated automatically by xtb if result had negative frequency)
-    # If so, rerun
-    distorted_geom = geom_file.with_stem("xtbhess")
-    if distorted_geom.exists():
-        calc, out_file, energy = run_xtb(command, distorted_geom)
-
-    # Return the path of the Gaussian file generated
-    return geom_file.with_stem("xtbopt"), geom_file.with_name("g98.out"), energy
+from support import py_xtb
+from opt import cleanup_after_opt
 
 
 if __name__ == "__main__":
@@ -66,6 +20,10 @@ if __name__ == "__main__":
     parser.add_argument("--menu-path", action="store_true")
     args = parser.parse_args()
 
+    # Disable if xtb missing
+    if py_xtb.XTB_BIN is None:
+        quit()
+
     if args.print_options:
         options = {"inputMoleculeFormat": "xyz"}
         print(json.dumps(options))
@@ -75,70 +33,48 @@ if __name__ == "__main__":
         print("Extensions|Semi-empirical (xtb){860}")
 
     if args.run_command:
-        # Remove results of last calculation
-        if calc_dir.exists():
-            for x in calc_dir.iterdir():
-                if x.is_file():
-                    x.unlink()
-                elif x.is_dir():
-                    rmtree(x)
 
         # Read input from Avogadro
         avo_input = json.loads(sys.stdin.read())
-        # Extract the coords and write to file for use as xtb input
-        geom = avo_input["xyz"]
-        xyz_path = Path(calc_dir) / "input.xyz"
-        with open(xyz_path, "w", encoding="utf-8") as xyz_file:
-            xyz_file.write(str(geom))
+        # Extract the coords
+        geom = py_xtb.Geometry.from_xyz(avo_input["xyz"].split("\n"))
 
         # Run calculation; returns path to Gaussian file containing frequencies
-        out_geom, out_freq, energy = opt_freq(
-            xyz_path,
+        opt_geom, freqs, calc = py_xtb.calc.opt_freq(
+            geom,
             charge=avo_input["charge"],
             multiplicity=avo_input["spin"],
-            solvation=config["solvent"],
-            method=config["method"],
-            level=config["opt_lvl"],
+            solvation=py_xtb.config["solvent"],
+            method=py_xtb.config["method"],
+            level=py_xtb.config["opt_lvl"],
+            return_calc=True,
         )
 
-        # Convert frequencies
-        # Currently Avogadro fails to convert the g98 file to cjson itself
-        # So we have to convert output in g98 format to cjson ourselves
-        freq_cjson_path = obabel_convert.g98_to_cjson(out_freq)
-        # Open the cjson
-        with open(freq_cjson_path, encoding="utf-8") as result_cjson:
-            freq_cjson = json.load(result_cjson)
+        # Convert geometry and frequencies to cjson
+        geom_cjson = opt_geom.to_cjson()
+        freq_cjson = py_xtb.convert.freq_to_cjson(freqs)
 
-        # Convert geometry
-        geom_cjson_path = obabel_convert.xyz_to_cjson(out_geom)
-        # Open the cjson
-        with open(geom_cjson_path, encoding="utf-8") as result_cjson:
-            geom_cjson = json.load(result_cjson)
         # Check for convergence
         # TODO
         # Will need to look for "FAILED TO CONVERGE"
 
-        # Convert energy for Avogadro
-        energies = convert.convert_energy(energy, "hartree")
+        # Get energy for Avogadro
+        energies = py_xtb.convert.convert_energy(calc.energy, "hartree")
 
-        # Format appropriately for Avogadro
-        # Start by passing back the original cjson, then add changes
+        # Format everything appropriately for Avogadro
+        # Start from the original cjson
         result = {"moleculeFormat": "cjson", "cjson": avo_input["cjson"]}
+
+        # Remove anything that is now unphysical after the optimization
+        result["cjson"] = cleanup_after_opt(result["cjson"])
+
         # Add data from calculation
         result["cjson"]["vibrations"] = freq_cjson["vibrations"]
         result["cjson"]["atoms"]["coords"] = geom_cjson["atoms"]["coords"]
         result["cjson"]["properties"]["totalEnergy"] = str(round(energies["eV"], 7))
-        # xtb no longer gives Raman intensities but does write them as all 0
-        # If passed on to the user this is misleading so remove them
-        if "ramanIntensities" in result["cjson"]["vibrations"]:
-            del result["cjson"]["vibrations"]["ramanIntensities"]
-        # If the cjson contained orbitals, remove them as they are no longer physical
-        for field in ["basisSet", "orbitals", "cube"]:
-            if field in result["cjson"]:
-                del result["cjson"][field]
 
         # Inform user if there are negative frequencies
-        if float(freq_cjson["vibrations"]["frequencies"][0]) < 0:
+        if freqs[0]["frequency"] < 0:
             result["message"] = (
                 "At least one negative frequency found!\n"
                 + "This is not a minimum on the potential energy surface.\n"
@@ -146,7 +82,8 @@ if __name__ == "__main__":
             )
 
         # Save result
-        with open(calc_dir / "result.cjson", "w", encoding="utf-8") as save_file:
+        with open(py_xtb.TEMP_DIR / "result.cjson", "w", encoding="utf-8") as save_file:
             json.dump(result["cjson"], save_file, indent=2)
+        
         # Pass back to Avogadro
         print(json.dumps(result))

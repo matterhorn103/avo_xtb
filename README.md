@@ -1,5 +1,5 @@
 # avo_xtb
-This plugin adds an interface to the xtb program in Avogadro 2, as well as the CREST program for extended functionality.
+`avo_xtb` is a plugin for Avogadro 2 that provides an in-app interface to the xtb program for quick and accurate calculations, as well as the CREST program for extended functionality.
 
 [`xtb`](https://github.com/grimme-lab/xtb) is developed by the Grimme group in Bonn and carries out semi-empirical quantum mechanical calculations using the group's e**x**tended **T**ight-**B**inding methods, referred to as "GFNn-xTB".
 
@@ -7,7 +7,14 @@ These methods provide fast and reasonably accurate calculation of **G**eometries
 
 [`crest`](https://github.com/crest-lab/crest) (Conformer–Rotamer Ensemble Sampling Tool) adds a variety of sampling procedures for several interesting applications including conformer searches, thermochemistry, and solvation.
 
-# Capabilities
+## py-xtb
+
+The Avogadro plugin is itself only a layer on top of the `py-xtb` Python package, which is written and maintained as part of this project.
+`py-xtb` is published on the `PyPI` repository and can be used independently of the plugin from Python as an interface to `xtb` and `crest`.
+
+For more details on the Python API, see `py-xtb/README.md`.
+
+## Capabilities
 
 This plugin currently provides functionality to run the following calculation types and view the results directly in Avogadro:
 
@@ -23,14 +30,14 @@ There is also the option to submit a custom command to `xtb`, permitting any cal
 ### CREST
 * conformer searches
 
-# Requirements
+## Requirements
 
 ### xtb
 
 Currently, the plugin does not download the `xtb` binary automatically, and it is not bundled with Avogadro. Instead, it must be obtained separately. There are five options that will make `xtb` visible to the extension:
 1. Install xtb with `conda` from conda-forge and use Avogadro with the `conda` environment, either by setting it in the Python settings or by starting Avogadro with the environment activated
 2. Manually download the `xtb` binary and put it into the system PATH
-3. Manually download `xtb` and place it entirely within the plugin directory `<user data location>/OpenChemistry/Avogadro/commands/avo_xtb/` (see https://two.avogadro.cc/develop/scripts/install.html#directories for more information on where this is on your system) 
+3. Manually download `xtb` and place it, or a link to it, entirely within the plugin's binary directory `<user data location>/py-xtb/bin/` (see  for more information on where this is on your system) 
 4. Manually download `xtb` and manually specify its location in the `Configure...` menu
 5. Use the "Get xtb..." function within Avogadro after installing this extension
 
@@ -38,7 +45,7 @@ Currently, the plugin does not download the `xtb` binary automatically, and it i
 
 While `xtb` is cross-platform, `crest` is distributed only for Linux/UNIX systems. As a result, Windows and macOS users of the plugin will not have the calculations that rely on CREST available to them in the Avogadro interface.
 
-`crest` can be made visible to the plugin in the same ways as for `xtb` listed above. If method 3 is used, `crest` should be located at `Avogadro/commands/avo_xtb/bin/crest`. The "Get xtb..." option within Avogadro will also download `crest` on supported operating systems.
+`crest` can be made visible to the plugin in the same ways as for `xtb` listed above. If method 3 is used, `crest` should be located at `<user data>/py-xtb/bin/crest`. The "Get xtb..." option within Avogadro will also download `crest` on supported operating systems.
 
 ### Open Babel
 
@@ -46,11 +53,11 @@ The plugin also relies on Open Babel for conversion of output files to Avogadro'
 * If you use Avogadro on Windows, macOS, or the AppImage or Flatpak on Linux, you have a recent build of `obabel` with CJSON support in the same folder as the Avogadro executable, and you should use that. The plugin should hopefully find it automatically.
 * If you have obtained it from a distro's repositories, your version of `obabel` ***does not*** have the necessary CJSON support, and you will unfortunately have to compile it yourself from the [latest code](https://github.com/openbabel/openbabel).
 
-# Disclaimer
+## Disclaimer
 
 `xtb` and `crest` are distributed by the Grimme group under the LGPL license v3. The authors of Avogadro and avo_xtb bear no responsibility for xtb or CREST or the contents of the respective repositories. Source code for the programs is available at the repositories linked above.
 
-# Cite
+## Cite
 
 General reference to `xtb` and the implemented GFN methods:
 * C. Bannwarth, E. Caldeweyher, S. Ehlert, A. Hansen, P. Pracht, J. Seibert, S. Spicher, S. Grimme

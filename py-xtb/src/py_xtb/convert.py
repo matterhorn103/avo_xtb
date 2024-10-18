@@ -1,8 +1,8 @@
 # Copyright (c) 2023-2024, Matthew J. Milner
-# This file is part of avo_xtb which is released under the BSD 3-Clause License.
+# This file is part of py-xtb which is released under the BSD 3-Clause License.
 # See LICENSE or go to https://opensource.org/license/BSD-3-clause for full details.
 
-"""Provides conversions in memory that do not rely on Open Babel."""
+"""Functions for various conversions without relying on external dependencies such as Open Babel."""
 
 
 # Convert an energy in the specified unit to a dictionary of all useful units
@@ -93,6 +93,56 @@ def xyz_to_cjson(
         all_coords.extend([float(atom[1]), float(atom[2]), float(atom[3])])
     cjson = {"atoms": {"coords": {"3d": all_coords}, "elements": all_element_numbers}}
     return cjson
+
+
+def freq_to_cjson(frequencies: list[dict]) -> dict:
+    """Takes frequency data in the form of a dict of properties per frequency in a list,
+    as produced by a `hess` or `ohess` calculation, and returns the results as a CJSON."""
+
+    freq_cjson = {
+        "vibrations": {
+            "frequencies": [],
+            "modes": [],
+            "intensities": [],
+            "eigenVectors": [],
+        }
+    }
+    
+    for f in frequencies:
+        freq_cjson["vibrations"]["frequencies"].append(f["frequency"])
+        freq_cjson["vibrations"]["modes"].append(f["mode"])
+        freq_cjson["vibrations"]["intensities"].append(f["ir_intensity"])
+        flattened_eigenvectors = []
+        for atom in f["eigenvectors"]:
+            flattened_eigenvectors.extend(atom)
+        freq_cjson["vibrations"]["eigenVectors"].append(flattened_eigenvectors)
+    
+    return freq_cjson
+
+
+def conf_to_cjson(conformers: list[dict]) -> dict:
+    """Takes conformer data in the form of a dict of properties per conformer in a list,
+    as produced by a calculation with CREST, and returns the results as a CJSON."""
+
+    conf_cjson = {
+        "atoms": {
+            "coords": {
+                "3dSets": [],
+            },
+        },
+        "properties": {
+            "energies": [],
+        },
+    }
+
+    for c in conformers:
+        conf_cjson["atoms"]["coords"]["3dSets"].append(
+            c["geometry"].to_cjson()["atoms"]["coords"]["3d"]
+        )
+        conf_cjson["properties"]["energies"].append(c["energy"])
+    
+    return conf_cjson
+
 
 
 def get_element_symbol(num: int) -> str:

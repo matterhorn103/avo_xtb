@@ -1,10 +1,14 @@
 [project]
-name = "avo_xtb"
+name = "py-xtb"
 version = "0.5.0"
-description = "A full-featured interface to xtb (and CREST) in Avogadro 2"
+description = "A Python API for xtb (and CREST)."
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = []
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [tool.ruff]
 line-length = 100
