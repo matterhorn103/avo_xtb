@@ -95,10 +95,11 @@ class Calculation:
             # Build command line args
             if self.runtype is None:
                 # Simple single point
-                command = [str(self.program)]
+                command = [str(self.program), str(geom_file)]
             else:
                 command = [
                     str(self.program),
+                    str(geom_file),
                     "--" + self.runtype,
                     *self.runtype_args,
                     "--",
@@ -115,10 +116,8 @@ class Calculation:
                     continue
                 else:
                     command.extend([flag, str(value)])
-        # Add geometry after a demarcating double minus
-        command.extend(["--", str(geom_file)])
         
-        # Run xtb from command line
+        # Run xtb or crest from command line
         subproc = subprocess.run(command, capture_output=True, encoding="utf-8")
 
         # Store output
@@ -165,8 +164,24 @@ class Calculation:
                 pass
 
     def process_crest(self):
-        # Energy parsing not yet implemented for crest
-        self.energy = None
+        match self.runtype:
+            case "v1" | "v2" | "v2i" | "v3" | "v4" | None:
+                # Conformer search
+                # Get energy and geom of lowest conformer
+                best = Geometry.from_file(self.output_file.with_name("crest_best.xyz"))
+                self.output_geometry = best
+                self.energy = float(best._comment)
+                # Get set of conformers
+                conformer_geoms = Geometry.from_file(
+                    self.output_file.with_name("crest_conformers.xyz"),
+                    multi=True,
+                )
+                self.conformers = [
+                    {"geometry": geom, "energy": float(geom._comment)}
+                    for geom in conformer_geoms
+                ]
+            case _:
+                pass
 
 
 def energy(
@@ -308,7 +323,7 @@ def opt_freq(
         return calc.output_geometry, calc.frequencies
 
 
-def molden_orbitals(
+def orbitals(
     input_geom: Geometry,
     charge: int = 0,
     multiplicity: int = 1,

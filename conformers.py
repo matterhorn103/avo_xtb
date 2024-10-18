@@ -6,10 +6,10 @@ import argparse
 import json
 import sys
 from pathlib import Path
-from shutil import rmtree, copytree
+from shutil import copytree
 
 from support import py_xtb
-
+from opt import cleanup_after_opt
 
 
 if __name__ == "__main__":
@@ -127,21 +127,11 @@ if __name__ == "__main__":
         print("Extensions|Semi-empirical (xtb){770}")
 
     if args.run_command:
-        # Remove results of last calculation
-        if py_xtb.CALC_DIR.exists():
-            for x in py_xtb.CALC_DIR.iterdir():
-                if x.is_file():
-                    x.unlink()
-                elif x.is_dir():
-                    rmtree(x)
 
         # Read input from Avogadro
         avo_input = json.loads(sys.stdin.read())
-        # Extract the coords and write to file for use as xtb input
-        geom = avo_input["xyz"]
-        xyz_path = py_xtb.CALC_DIR / "input.xyz"
-        with open(xyz_path, "w", encoding="utf-8") as xyz_file:
-            xyz_file.write(str(geom))
+        # Extract the coords
+        geom = py_xtb.Geometry.from_xyz(avo_input["xyz"].split("\n"))
 
         # If provided crest path different to that stored, use it and save it
         if Path(avo_input["crest_bin"]) != py_xtb.CREST_BIN:
@@ -162,15 +152,23 @@ if __name__ == "__main__":
         else:
             solvation = avo_input["solvent"]
 
-        # Run calculation using xyz file
-        conformers_path = py_xtb.calc.conformers(
-            xyz_path,
+        # Run calculation; returns set of conformers as well as Calculation object
+        conformers, calc = py_xtb.calc.conformers(
+            geom,
             charge=avo_input["charge"],
             multiplicity=avo_input["spin"],
             solvation=solvation,
+            method=2,
             ewin=ewin_kcal,
             hess=avo_input["hess"],
+            return_calc=True,
         )
+
+        best_cjson = calc.output_geometry.to_cjson()
+        conformer_cjson = py_xtb.convert.conf_to_cjson(conformers)
+
+        # Get energy for Avogadro
+        energies = py_xtb.convert.convert_energy(calc.energy, "hartree")
 
         # Format everything appropriately for Avogadro
         # Start by passing back the original cjson, then add changes
@@ -179,50 +177,25 @@ if __name__ == "__main__":
         # Catch errors in crest execution
         # TODO
 
-        # Make sure the list of lists is already in place in the cjson
-        result["cjson"]["atoms"]["coords"]["3dSets"] = []
-        # And the container for the conformer energies
-        result["cjson"]["properties"]["energies"] = []
+        # Remove anything that is now unphysical after the optimization
+        result["cjson"] = cleanup_after_opt(result["cjson"])
 
-        # The geometries are contained in a multi-structure file
-        # Read line by line and add manually to cjson style, splitting by conformer
-        n_atoms = int(avo_input["xyz"].split()[0])
-        with open(conformers_path, encoding="utf-8") as conf_file:
-            structure_number = -1
-            while True:
-                line = conf_file.readline().strip()
-                if line == "":
-                    # End of file
-                    break
-                elif line.split()[0] == str(n_atoms):
-                    # Move to next element of 3dSet
-                    structure_number += 1
-                    # Add an empty list to contain the coordinates
-                    result["cjson"]["atoms"]["coords"]["3dSets"].append([])
-                    continue
-                elif line.split()[0][0] == "-":
-                    # This is an energy
-                    E_conf = float(line.split()[0])
-                    # Add to list of energies
-                    result["cjson"]["properties"]["energies"].append(E_conf)
-                else:
-                    # This is an actual atom!
-                    xyz = [float(x) for x in line.split()[1:]]
-                    # Add to list of coordinates at appropriate index of 3dSets
-                    result["cjson"]["atoms"]["coords"]["3dSets"][
-                        structure_number
-                    ].extend(xyz)
+        # Add data from calculation
+        result["cjson"]["atoms"]["coords"] = best_cjson["atoms"]["coords"]
+        result["cjson"]["properties"]["totalEnergy"] = str(round(energies["eV"], 7))
+        result["cjson"]["atoms"]["coords"]["3dSets"] = conformer_cjson["atoms"]["coords"]["3dSets"]
+        result["cjson"]["properties"]["energies"] = conformer_cjson["properties"]["energies"]
 
         # Save result
-        with open(py_xtb.CALC_DIR / "result.cjson", "w", encoding="utf-8") as save_file:
+        with open(py_xtb.TEMP_DIR / "result.cjson", "w", encoding="utf-8") as save_file:
             json.dump(result["cjson"], save_file, indent=2)
 
         # If user specified a save location, copy calculation directory to there
         if not (
             avo_input["save_dir"] in ["", None]
-            or Path(avo_input["save_dir"]) == py_xtb.CALC_DIR
+            or Path(avo_input["save_dir"]) == py_xtb.TEMP_DIR
         ):
-            copytree(py_xtb.CALC_DIR, Path(avo_input["save_dir"]), dirs_exist_ok=True)
+            copytree(py_xtb.TEMP_DIR, Path(avo_input["save_dir"]), dirs_exist_ok=True)
 
         # Pass back to Avogadro
         print(json.dumps(result))

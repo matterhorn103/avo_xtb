@@ -38,7 +38,7 @@ if __name__ == "__main__":
         # Extract the coords
         geom = py_xtb.Geometry.from_xyz(avo_input["xyz"].split("\n"))
 
-        # Run calculation using xyz file
+        # Run calculation; returns Molden output file as string
         molden_string = py_xtb.calc.orbitals(
             geom,
             charge=avo_input["charge"],
@@ -66,7 +66,7 @@ if __name__ == "__main__":
             result["message"] = "Calculation complete!"
 
         # Save result
-        with open(py_xtb.TEMP_DIR / "result", "w", encoding="utf-8") as save_file:
+        with open(py_xtb.TEMP_DIR / "result.molden", "w", encoding="utf-8") as save_file:
             json.dump(result, save_file, indent=2)
 
         # Pass back to Avogadro

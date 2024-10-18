@@ -2,7 +2,7 @@
 # This file is part of py-xtb which is released under the BSD 3-Clause License.
 # See LICENSE or go to https://opensource.org/license/BSD-3-clause for full details.
 
-"""Provides conversions in memory that do not rely on Open Babel."""
+"""Provides conversions that do not rely on external dependencies such as Open Babel."""
 
 
 # Convert an energy in the specified unit to a dictionary of all useful units
@@ -118,6 +118,31 @@ def freq_to_cjson(frequencies: list[dict]) -> dict:
         freq_cjson["vibrations"]["eigenVectors"].append(flattened_eigenvectors)
     
     return freq_cjson
+
+
+def conf_to_cjson(conformers: list[dict]) -> dict:
+    """Takes conformer data in the form of a dict of properties per conformer in a list,
+    as produced by a calculation with CREST, and returns the results as a CJSON."""
+
+    conf_cjson = {
+        "atoms": {
+            "coords": {
+                "3dSets": [],
+            },
+        },
+        "properties": {
+            "energies": [],
+        },
+    }
+
+    for c in conformers:
+        conf_cjson["atoms"]["coords"]["3dSets"].append(
+            c["geometry"].to_cjson()["atoms"]["coords"]["3d"]
+        )
+        conf_cjson["properties"]["energies"].append(c["energy"])
+    
+    return conf_cjson
+
 
 
 def get_element_symbol(num: int) -> str:
