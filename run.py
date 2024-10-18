@@ -6,11 +6,15 @@
 
 import argparse
 import json
+import logging
 import sys
 from pathlib import Path
 from shutil import rmtree, copytree
 
 from support import py_xtb
+
+
+logger = logging.getLogger(__name__)
 
 
 # Define behaviour of Run menu command
@@ -141,6 +145,7 @@ if __name__ == "__main__":
         # result["message"] = "Error message"
         # Pass back to Avogadro
         # print(json.dumps(result))
+        logger.debug(f"The following dictionary was passed back to Avogadro: {result}")
         # break
 
         # Check if opt was requested
@@ -223,3 +228,4 @@ if __name__ == "__main__":
 
         # Pass back to Avogadro
         print(json.dumps(result))
+        logger.debug(f"The following dictionary was passed back to Avogadro: {result}")

@@ -4,12 +4,16 @@
 
 import argparse
 import json
+import logging
 import sys
 from pathlib import Path
 from shutil import copytree
 
 from support import py_xtb
 from opt import cleanup_after_opt
+
+
+logger = logging.getLogger(__name__)
 
 
 if __name__ == "__main__":
@@ -199,3 +203,4 @@ if __name__ == "__main__":
 
         # Pass back to Avogadro
         print(json.dumps(result))
+        logger.debug(f"The following dictionary was passed back to Avogadro: {result}")

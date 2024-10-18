@@ -2,14 +2,26 @@
 # This file is part of py-xtb which is released under the BSD 3-Clause License.
 # See LICENSE or go to https://opensource.org/license/BSD-3-clause for full details.
 
-"""Setup package, load settings and detect binaries, then expose them as variables."""
+"""Setup package, load settings and detect binaries, then expose them as variables.
+
+Most user options read by other modules are stored in `config`; that way only the
+`config` dict has to be loaded.
+The locations of the directories and binaries are made available as constants, however,
+because they are `Path` objects and would otherwise have to be converted from `str` to
+`Path`s every time they are accessed.
+"""
 
 import json
+import logging
 import os
 import platform
 import sys
 from pathlib import Path
 from shutil import which
+
+
+logger = logging.getLogger(__name__)
+
 
 # Make sure stdout stream is always Unicode, as Avogadro 1.99 expects
 sys.stdout.reconfigure(encoding="utf-8")
@@ -25,22 +37,27 @@ elif platform.system() == "Darwin":
     PLUGIN_DIR = Path.home() / "Library/Application Support/py-xtb"
 else:
     PLUGIN_DIR = Path.home() / ".local/share/py-xtb"
+logger.debug(f"{PLUGIN_DIR=}")
 
 config_file = PLUGIN_DIR / "config.json"
+default_config_file = Path(__file__).with_name("default_config.json")
 
 def save_config():
     with open(config_file, "w", encoding="utf-8") as f:
         json.dump(config, f, indent=2)
+    logger.debug(f"User config saved to {config_file}")
 
 # Look for config file in plugin directory
 if config_file.exists():
     with open(config_file, encoding="utf-8") as f:
         config = json.load(f)
+    logger.debug(f"Loaded config file from {config_file}")
     init = False
 # If doesn't exist, must be first use, so load defaults from this directory
 else:
-    with open(Path(__file__).with_name("default_config.json"), encoding="utf-8") as f:
+    with open(default_config_file, encoding="utf-8") as f:
         config = json.load(f)
+    logger.debug("No config file found so using default initial settings")
     init = True
 
 # Test if user has write permission to plugin directory
@@ -51,11 +68,13 @@ try:
             "This file is created only to check everything works.\nIt will be deleted."
         )
     (PLUGIN_DIR / "probe.txt").unlink()
+    logger.debug("Write permission for PLUGIN_DIR confirmed")
 except PermissionError:
     error_msg = (
         f"py-xtb was expecting to use {PLUGIN_DIR} to write and store calculation results, but you do not seem to have write permission for this.\n"
         + f"Please choose a suitable data directory, and add its path to {PLUGIN_DIR / 'config.json'} under 'calc_dir'."
     )
+    logger.error(error_msg)
     print(error_msg)
     raise PermissionError(error_msg)
 
@@ -63,14 +82,17 @@ except PermissionError:
 # Don't use `tmp` or similar because it doesn't usually persist between reboots
 if "calc_dir" in config:
     CALC_DIR = Path(config["calc_dir"])
+    logger.debug(f"Using custom calculation directory from user config")
 else:
     CALC_DIR = PLUGIN_DIR
+logger.debug(f"{CALC_DIR=}")
 
 # Use the same directory by default for each new calc, overwriting the old one, to avoid
 # build-up of lots of files
 TEMP_DIR = CALC_DIR / "last"
 # Create both the TEMP_DIR and the parent CALC_DIR at the same time if they don't exist
 TEMP_DIR.mkdir(parents=True, exist_ok=True)
+logger.debug(f"{TEMP_DIR=}")
 
 # If this is first run, check file writing works fine
 if init:
@@ -80,7 +102,9 @@ if init:
                 "This file is created only to check everything works.\nIt will be deleted when the first calculation is run."
             )
         config["calc_dir"] = str(CALC_DIR)
+        logger.debug("Write permission for CALC_DIR confirmed")
     except Exception as e:
+        logger.error(e.message)
         print(e.message)
         raise e
     # Save the initialized configuration to a new config file
@@ -92,15 +116,14 @@ PY_XTB_VERSION = "0.5.0"
 
 def update_config():
     """Ensure that any config options added in later versions of the package are in
-    config even if they weren't in the config.json file"""
-    for option, default in (
-        ("solvent", None),
-        ("energy_units", "kJ/mol"),
-        ("method", 2),
-        ("opt_lvl", "normal"),
-    ):
+    config even if they weren't in the config.json file."""
+    logger.debug("Making sure that user config is up-to-date with all necessary options")
+    with open(default_config_file, encoding="utf-8") as f:
+        default_config = json.load(f)
+    for option, default in default_config.items():
         if option not in config:
             config[option] = default
+            logger.debug(f"User config does not contain setting for {option}, so has been set to {default}")
     # Record which version was used last
     config["version"] = PY_XTB_VERSION
     save_config()
@@ -108,17 +131,13 @@ def update_config():
 if "version" not in config or config["version"] != PY_XTB_VERSION:
     update_config()
 
-# Most user options read by other modules should be stored in config; that way only the
-# config dictionary has to be loaded.
-# The locations of the directories and binaries are better as global variables, however,
-# because they are `Path` objects and would otherwise have to be converted from `str` to
-# `Path`s every time they are accessed.
 
 # Define functions used to find the binaries on system if their locations are not
 # provided by the user in config
 # As of 0.5.0, binaries should either be in the bin folder, or linked to from it, or
 # available in system PATH
 BIN_DIR = PLUGIN_DIR / "bin"
+logger.debug(f"{BIN_DIR=}")
 BIN_DIR.mkdir(parents=True, exist_ok=True)
 
 
@@ -141,6 +160,7 @@ def find_xtb() -> Path | None:
         xtb = Path(which("xtb"))
     else:
         xtb = None
+    logger.debug(f"xtb binary location determined to be: {xtb}")
     return xtb
 
 
@@ -158,6 +178,7 @@ def find_crest() -> Path | None:
         crest = Path(which("crest"))
     else:
         crest = None
+    logger.debug(f"crest binary location determined to be: {crest}")
     return crest
 
 
@@ -184,6 +205,13 @@ if XTB_BIN is not None:
     # Resolve any symlinks
     if XTB_BIN.is_symlink():
         XTB_BIN = XTB_BIN.readlink()
+    logger.debug(f"{XTB_BIN=}")
     # Have to set environment variable XTBPATH so that parameterizations (e.g. of
     # GFN0-xTB) are found
     os.environ["XTBPATH"] = str(XTB_BIN.parent.parent / "share/xtb")
+
+if CREST_BIN is not None:
+    # Resolve any symlinks
+    if CREST_BIN.is_symlink():
+        CREST_BIN = CREST_BIN.readlink()
+    logger.debug(f"{CREST_BIN=}")

@@ -4,10 +4,14 @@
 
 import argparse
 import json
+import logging
 import sys
 
 from support import py_xtb
 from opt import cleanup_after_opt
+
+
+logger = logging.getLogger(__name__)
 
 
 if __name__ == "__main__":
@@ -40,6 +44,7 @@ if __name__ == "__main__":
         geom = py_xtb.Geometry.from_xyz(avo_input["xyz"].split("\n"))
 
         # Run calculation; returns path to Gaussian file containing frequencies
+        logger.debug("avo_xtb is requesting an opt+freq calculation")
         opt_geom, freqs, calc = py_xtb.calc.opt_freq(
             geom,
             charge=avo_input["charge"],
@@ -87,3 +92,4 @@ if __name__ == "__main__":
         
         # Pass back to Avogadro
         print(json.dumps(result))
+        logger.debug(f"The following dictionary was passed back to Avogadro: {result}")

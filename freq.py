@@ -4,9 +4,13 @@
 
 import argparse
 import json
+import logging
 import sys
 
 from support import py_xtb
+
+
+logger = logging.getLogger(__name__)
 
 
 if __name__ == "__main__":
@@ -39,6 +43,7 @@ if __name__ == "__main__":
         geom = py_xtb.Geometry.from_xyz(avo_input["xyz"].split("\n"))
 
         # Run calculation; returns set of frequency data
+        logger.debug("avo_xtb is requesting a frequency calculation")
         freqs = py_xtb.calc.frequencies(
             geom,
             charge=avo_input["charge"],
@@ -68,3 +73,4 @@ if __name__ == "__main__":
         
         # Pass back to Avogadro
         print(json.dumps(result))
+        logger.debug(f"The following dictionary was passed back to Avogadro: {result}")

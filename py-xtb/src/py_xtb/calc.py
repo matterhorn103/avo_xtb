@@ -15,6 +15,7 @@ objects.
 Both are designed to be run on `Geometry` objects.
 """
 
+import logging
 import os
 import subprocess
 from pathlib import Path
@@ -23,6 +24,9 @@ from shutil import rmtree
 from .conf import XTB_BIN, CREST_BIN, TEMP_DIR
 from .geometry import Geometry
 from .parse import parse_energy, parse_g98_frequencies
+
+
+logger = logging.getLogger(__name__)
 
 
 class Calculation:
@@ -63,10 +67,14 @@ class Calculation:
         self.input_geometry = input_geometry
         if calc_dir:
             self.calc_dir = Path(calc_dir)
+        logger.info(f"New Calculation created for runtype {self.runtype} with {self.program.stem}")
     
     def run(self):
         """Run calculation with xtb or crest, storing the output, the saved output file,
         and the parsed energy, as well as the `subprocess` object."""
+
+        logger.debug(f"Calculation of runtype {self.runtype} has been asked to run")
+        logger.debug(f"The calculation will be run in the following directory: {self.calc_dir}")
 
         # Make sure directory nominated for calculation exists and is empty
         if self.calc_dir.exists():
@@ -80,12 +88,14 @@ class Calculation:
 
         # Save geometry to file
         geom_file = self.calc_dir / "input.xyz"
+        logger.debug(f"Saving input geometry to {geom_file}")
         self.input_geometry.write_xyz(geom_file)
         # We are using proper paths for pretty much everything so it shouldn't be
         # necessary to change the working dir
         # But we do anyway to be absolutely that xtb runs correctly and puts all the
         # output here
         os.chdir(self.calc_dir)
+        logger.debug(f"Working directory changed to {Path.cwd()}")
         self.output_file = geom_file.with_name("output.out")
         
         if self.command:
@@ -116,15 +126,19 @@ class Calculation:
                     continue
                 else:
                     command.extend([flag, str(value)])
+        logger.debug(f"Calculation will be run with the command: {' '.join(command)}")
         
         # Run xtb or crest from command line
+        logger.debug("Running calculation in new subprocess...")
         subproc = subprocess.run(command, capture_output=True, encoding="utf-8")
+        logger.debug("...calculation complete.")
 
         # Store output
         self.output = subproc.stdout
         # Also save it to file
         with open(self.output_file, "w", encoding="utf-8") as f:
             f.write(self.output)
+            logger.debug(f"Calculation output saved to {self.output_file}")
         
         # Store the subprocess.CompletedProcess object too
         self.subproc = subproc
@@ -140,22 +154,29 @@ class Calculation:
         # First do generic operations that apply to many calculation types
         # Extract energy from output (if not found, returns None)
         self.energy = parse_energy(self.output)
+        logger.debug(f"Final energy parsed from output file: {self.energy}")
         # If there's an output geometry, read it
         if self.output_file.with_name("xtbopt.xyz").exists():
+            logger.debug(f"Output geometry found at {self.output_file.with_name('xtbopt.xyz')}")
             self.output_geometry = Geometry.from_file(self.output_file.with_name("xtbopt.xyz"))
+            logger.debug("Read output geometry")
         else:
             # Assume geom was the same at end of calc as at beginning
+            logger.debug("No output geometry found - final geometry assumed to be same as initial")
             self.output_geometry = self.input_geometry
         # Orbital info
         # If Molden output was requested, read the file
         if self.options.get("molden", False):
+            logger.debug("Molden output was requested, so checking for file")
             with open(self.output_file.with_name("molden.input"), encoding="utf-8") as f:
                 molden_string = f.read()
             self.output_molden = molden_string
+            logger.debug("Molden output was found and read")
         
         # Now do more specific operations based on calculation type
         match self.runtype:
             case "hess" | "ohess":
+                logger.debug("Frequencies were requested, so checking for file")
                 # Read the Gaussian output file with frequencies
                 with open(self.output_file.with_name("g98.out"), encoding="utf-8") as f:
                     g98_string = f.read()
@@ -167,19 +188,24 @@ class Calculation:
         match self.runtype:
             case "v1" | "v2" | "v2i" | "v3" | "v4" | None:
                 # Conformer search
+                logger.debug("A conformer search was requested, so checking for files")
                 # Get energy and geom of lowest conformer
                 best = Geometry.from_file(self.output_file.with_name("crest_best.xyz"))
+                logger.debug(f"Geometry of lowest energy conformer read from {self.output_file.with_name('crest_best.xyz')}")
                 self.output_geometry = best
                 self.energy = float(best._comment)
+                logger.debug(f"Energy of lowest energy conformer: {self.energy}")
                 # Get set of conformers
                 conformer_geoms = Geometry.from_file(
                     self.output_file.with_name("crest_conformers.xyz"),
                     multi=True,
                 )
+                logger.debug(f"Geometries of conformers read from {self.output_file.with_name('crest_conformers.xyz')}")
                 self.conformers = [
                     {"geometry": geom, "energy": float(geom._comment)}
                     for geom in conformer_geoms
                 ]
+                logger.debug(f"Found {len(self.conformers)} conformers in the ensemble")
             case _:
                 pass
 

@@ -6,6 +6,7 @@
 
 import argparse
 import json
+import logging
 import os
 import platform
 import sys
@@ -15,6 +16,9 @@ import zipfile
 from pathlib import Path
 
 from support import py_xtb
+
+
+logger = logging.getLogger(__name__)
 
 
 # For now just hard code the URLs of xtb and crest
@@ -211,3 +215,4 @@ if __name__ == "__main__":
 
         # Pass result back to Avogadro to display to user
         print(json.dumps(result))
+        logger.debug(f"The following dictionary was passed back to Avogadro: {result}")
