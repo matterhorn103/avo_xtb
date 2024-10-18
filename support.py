@@ -6,3 +6,7 @@ sys.path.insert(0, str(Path(__file__).parent / "py-xtb/src"))
 
 # Make py-xtb available as to anything that imports support.py as if it was installed
 import py_xtb
+
+
+# Make sure stdout stream is always Unicode, as Avogadro 1.99 expects
+sys.stdout.reconfigure(encoding="utf-8")

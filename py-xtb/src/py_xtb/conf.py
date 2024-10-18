@@ -23,9 +23,6 @@ from shutil import which
 logger = logging.getLogger(__name__)
 
 
-# Make sure stdout stream is always Unicode, as Avogadro 1.99 expects
-sys.stdout.reconfigure(encoding="utf-8")
-
 # Use an OS-appropriate data location to store all data related to the package
 # Could use platformdirs for this, but since we seem to be able to make do without any
 # other dependencies, let's just hard-code it for now
@@ -38,6 +35,7 @@ elif platform.system() == "Darwin":
 else:
     PLUGIN_DIR = Path.home() / ".local/share/py-xtb"
 logger.debug(f"{PLUGIN_DIR=}")
+
 
 config_file = PLUGIN_DIR / "config.json"
 default_config_file = Path(__file__).with_name("default_config.json")
@@ -60,6 +58,7 @@ else:
     logger.debug("No config file found so using default initial settings")
     init = True
 
+
 # Test if user has write permission to plugin directory
 try:
     PLUGIN_DIR.mkdir(parents=True, exist_ok=True)
@@ -78,6 +77,7 @@ except PermissionError:
     print(error_msg)
     raise PermissionError(error_msg)
 
+
 # User can customize the directory used as temporary directory for the calculations
 # Don't use `tmp` or similar because it doesn't usually persist between reboots
 if "calc_dir" in config:
@@ -87,12 +87,14 @@ else:
     CALC_DIR = PLUGIN_DIR
 logger.debug(f"{CALC_DIR=}")
 
+
 # Use the same directory by default for each new calc, overwriting the old one, to avoid
 # build-up of lots of files
 TEMP_DIR = CALC_DIR / "last"
 # Create both the TEMP_DIR and the parent CALC_DIR at the same time if they don't exist
 TEMP_DIR.mkdir(parents=True, exist_ok=True)
 logger.debug(f"{TEMP_DIR=}")
+
 
 # If this is first run, check file writing works fine
 if init:
@@ -109,6 +111,7 @@ if init:
         raise e
     # Save the initialized configuration to a new config file
     save_config()
+
 
 # Current version of package
 # Hard code for now, obviously not ideal though
@@ -185,8 +188,8 @@ def find_crest() -> Path | None:
 # Initialize and find the various binaries
 # Confirm that those loaded from the config can be found
 # Each global variable will be set to None if nothing found anywhere
-# Note that the binary paths are not actually saved to the config unless they are
-# actively changed by the user in the Configure... dialog
+# Note that the binary paths are not actually saved to the config unless the user
+# actively does so
 if "xtb_bin" in config:
     XTB_BIN = Path(config["xtb_bin"])
     if not XTB_BIN.exists():
