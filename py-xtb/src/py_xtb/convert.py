@@ -1,6 +1,5 @@
-# Copyright (c) 2023-2024, Matthew J. Milner
-# This file is part of py-xtb which is released under the BSD 3-Clause License.
-# See LICENSE or go to https://opensource.org/license/BSD-3-clause for full details.
+# SPDX-FileCopyrightText: 2024 Matthew J. Milner <matterhorn103@proton.me>
+# SPDX-License-Identifier: BSD-3-Clause
 
 """Functions for various conversions without relying on external dependencies such as Open Babel."""
 
