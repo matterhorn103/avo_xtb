@@ -9,7 +9,7 @@ from . import calc, conf, convert
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(
-    filename="/home/matt/log.log",
+    filename=PLUGIN_DIR / "log.log",
     filemode="w",
     format="%(name)s:%(lineno)s: %(message)s",
     encoding="utf-8",
