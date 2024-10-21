@@ -50,8 +50,6 @@ class Geometry:
             comment = self._comment if self._comment else "xyz prepared by py-xtb"
         xyz = [str(len(self.atoms)), comment]
         for a in self.atoms:
-            logger.debug(a.element)
-            logger.debug(type(a.element))
             # Turn each atom (line of array) into a single string and add to xyz
             atom_line = "     ".join([
                 a.element + (" " * (5 - len(a.element))),
@@ -110,7 +108,6 @@ class Geometry:
             # an element symbol
             if len(atom_parts) >= 4 and atom_parts[0].isalpha():
                 coords = [float(n) for n in atom_parts[1:4]]
-                logger.debug(coords)
                 atoms.append(
                     Atom(atom_parts[0], *[float(n) for n in atom_parts[1:4]])
                 )
