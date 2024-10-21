@@ -17,6 +17,7 @@
     { "name": "open", "command": "open.py" },
     { "name": "install", "command": "install.py" },
     { "name": "go-to-docs", "command": "docs.py" },
-    { "name": "go-to-crest-docs", "command": "crest_docs.py" }
+    { "name": "go-to-crest-docs", "command": "crest_docs.py" },
+    { "name": "about-plugin", "command": "about.py" }
   ]
 }
