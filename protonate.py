@@ -4,7 +4,6 @@
 import argparse
 import json
 import logging
-import os
 import sys
 
 from support import easyxtb
@@ -25,10 +24,6 @@ def cleanup_after_taut(cjson: dict) -> dict:
     output["properties"]["totalSpinMultiplicity"] = cjson["properties"]["totalSpinMultiplicity"]
 
     return output
-
-
-def parse_topology(molfile: os.pathlike):
-    """Get the bonding information from a molfile produced by xtb."""
 
 
 if __name__ == "__main__":
