@@ -97,6 +97,24 @@ class Geometry:
         with open(dest, "w", encoding="utf-8") as f:
             json.dump(cjson, f)
         return dest
+    
+    def to_file(self, dest: os.PathLike, format: str = None) -> os.PathLike:
+        """Write geometry to an XYZ or CJSON file.
+        
+        The format can be specified by passing either ".xyz" or ".cjson" as the `format`
+        argument, or it can be left to automatically be detected based on the filename
+        ending.
+        """
+        filepath = Path(dest)
+        # Autodetect format of file
+        if format is None:
+            format = filepath.suffix
+
+        if format == ".xyz":
+            self.write_xyz(dest)
+
+        if format == ".cjson":
+            self.write_cjson(dest)
 
     @classmethod
     def from_xyz(cls, xyz_lines: list[str]):
