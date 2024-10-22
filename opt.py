@@ -13,15 +13,22 @@ logger = logging.getLogger(__name__)
 
 
 def cleanup_after_opt(cjson: dict) -> dict:
-    """Makes sure that any data that is no longer meaningful after a geometry change is
-    removed from a CJSON structure."""
+    """Returns a copy of a cjson dict minus any data that is no longer meaningful after
+    a geometry change."""
 
-    # For now removes just frequencies and orbitals
+    output = cjson.copy()
+
+    # Frequencies and orbitals
     for field in ["vibrations", "basisSet", "orbitals", "cube"]:
-        if field in cjson:
-            del cjson[field]
+        if field in output:
+            del output[field]
+    # Atomic charges
+    if "formalCharges" in output["atoms"]:
+        del output["atoms"]["formalCharges"]
+    if "partialCharges" in output["atoms"]:
+        del output["atoms"]["partialCharges"]
     
-    return cjson
+    return output
 
 
 if __name__ == "__main__":
@@ -47,7 +54,6 @@ if __name__ == "__main__":
         print("Extensions|Semi-empirical (xtb){880}")
 
     if args.run_command:
-
         # Read input from Avogadro
         avo_input = json.loads(sys.stdin.read())
         # Extract the coords
@@ -77,19 +83,19 @@ if __name__ == "__main__":
 
         # Format everything appropriately for Avogadro
         # Start from the original cjson
-        result = {"moleculeFormat": "cjson", "cjson": avo_input["cjson"]}
+        output = {"moleculeFormat": "cjson", "cjson": avo_input["cjson"].copy()}
 
         # Remove anything that is now unphysical after the optimization
-        result["cjson"] = cleanup_after_opt(result["cjson"])
+        output["cjson"] = cleanup_after_opt(output["cjson"])
         
         # Add data from calculation
-        result["cjson"]["atoms"]["coords"] = geom_cjson["atoms"]["coords"]
-        result["cjson"]["properties"]["totalEnergy"] = str(round(energies["eV"], 7))
+        output["cjson"]["atoms"]["coords"] = geom_cjson["atoms"]["coords"]
+        output["cjson"]["properties"]["totalEnergy"] = round(energies["eV"], 7)
 
         # Save result
         with open(py_xtb.TEMP_DIR / "result.cjson", "w", encoding="utf-8") as save_file:
-            json.dump(result["cjson"], save_file, indent=2)
+            json.dump(output["cjson"], save_file, indent=2)
         
         # Pass back to Avogadro
-        print(json.dumps(result))
-        logger.debug(f"The following dictionary was passed back to Avogadro: {result}")
+        print(json.dumps(output))
+        logger.debug(f"The following dictionary was passed back to Avogadro: {output}")
