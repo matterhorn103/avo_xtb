@@ -74,7 +74,9 @@ class Geometry:
                 "coords": {
                     "3d": all_coords,
                 },
-                "elements": all_element_numbers,
+                "elements": {
+                    "number": all_element_numbers,
+                },
             },
         }
         return cjson
