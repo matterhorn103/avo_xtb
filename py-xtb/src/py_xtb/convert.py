@@ -29,6 +29,35 @@ def convert_freq(freq=None, wavelength=None, wavenumber=None):
     return
 
 
+# Having this as a template is easier than constantly having to make sure that a cjson
+# already has the nested structure we need in order to avoid KeyErrors
+empty_cjson = {
+  "chemicalJson": 1,
+  "atoms": {
+    "coords": {
+      "3d": [],
+      "3dSets": [],
+    },
+    "elements": {
+      "number": [],
+    },
+    "formalCharges": [],
+    "layer": [],
+  },
+  "bonds": {
+    "connections": {
+      "index": [],
+    },
+    "order": [],
+  },
+  "properties": {
+    "totalCharge": 0,
+    "totalSpinMultiplicity": 1,
+    "energies": [],
+  },
+}
+
+
 def cjson_to_xyz(
     cjson: dict, lines: bool = False
 ) -> list[str] | tuple[int, list[list[str]]]:
@@ -142,6 +171,14 @@ def conf_to_cjson(conformers: list[dict]) -> dict:
     
     return conf_cjson
 
+
+def taut_to_cjson(tautomers: list[dict]) -> dict:
+    """Takes tautomer data in the form of a dict of properties per tautomer in a list,
+    as produced by a calculation with CREST, and returns the results as a CJSON.
+    
+    Currently works identically to `conf_to_cjson()` under the hood.
+    """
+    return conf_to_cjson(tautomers)
 
 
 def get_element_symbol(num: int) -> str:

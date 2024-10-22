@@ -28,6 +28,47 @@ from .parse import parse_energy, parse_g98_frequencies
 logger = logging.getLogger(__name__)
 
 
+available_runtypes = {
+    "xtb": [
+        "scc",
+        "grad",
+        "vip",
+        "vea",
+        "vipea",
+        "vomega",
+        "vfukui",
+        "dipro",
+        "esp",
+        "stm",
+        "opt",
+        "metaopt",
+        "path",
+        "modef",
+        "hess",
+        "ohess",
+        "metadyn",
+        "siman",
+    ],
+    "crest": [
+        "sp",
+        "opt",
+        "ancopt",
+        "v1",
+        "v2",
+        "v2i",
+        "v3",
+        "v4",
+        "entropy",
+        "protonate",
+        "deprotonate",
+        "tautomerize",
+        "cregen",
+        "qcg",
+        "msreact",
+    ],
+}
+
+
 class Calculation:
 
     def __init__(
@@ -43,7 +84,7 @@ class Calculation:
         """A convenience object to prepare, launch, and hold the results of
         calculations.
         
-        `options` are the flags passed to be `xtb` or `crest` and should be given
+        `options` are the flags passed to `xtb` or `crest` and should be given
         without preceding minuses, as the appropriate number will be added
         automatically.
         To use a flag that takes no argument, set the value to `True`.
@@ -53,20 +94,39 @@ class Calculation:
         begins.
         """
         if program == "xtb":
-            self.program = XTB_BIN
+            self.program_path = XTB_BIN
+            self.program = "xtb"
         elif program == "crest":
-            self.program = CREST_BIN
+            self.program_path = CREST_BIN
+            self.program = "crest"
         else:
-            self.program = Path(program)
+            self.program_path = Path(program)
+            if "xtb" in self.program_path.name:
+                self.program = "xtb"
+            elif "crest" in self.program_path.name:
+                self.program = "crest"
 
-        self.runtype = runtype if runtype else None
+        if runtype:
+            self.runtype = runtype
+        elif options:
+            # Runtype not specified but options were passed, so default runtype (single
+            # point) is being requested
+            self.runtype = None
+        elif command:
+            # User has passed full command themselves
+            first_flag = command.split()[0].lstrip("-")
+            if first_flag in available_runtypes[self.program]:
+                self.runtype = first_flag
+        else:
+            # Just a simple single point with no special options or flags or anything
+            self.runtype = None
         self.runtype_args = runtype_args if runtype_args else []
         self.options = options if options else {}
         self.command = command
         self.input_geometry = input_geometry
         if calc_dir:
             self.calc_dir = Path(calc_dir)
-        logger.info(f"New Calculation created for runtype {self.runtype} with {self.program.stem}")
+        logger.info(f"New Calculation created for runtype {self.runtype} with {self.program}")
     
     def run(self):
         """Run calculation with xtb or crest, storing the output, the saved output file,
@@ -104,10 +164,10 @@ class Calculation:
             # Build command line args
             if self.runtype is None:
                 # Simple single point
-                command = [str(self.program), str(geom_file)]
+                command = [str(self.program_path), str(geom_file)]
             else:
                 command = [
-                    str(self.program),
+                    str(self.program_path),
                     str(geom_file),
                     "--" + self.runtype,
                     *self.runtype_args,
@@ -143,7 +203,7 @@ class Calculation:
         self.subproc = subproc
 
         # Do all post-calculation processing according to which program was run
-        if self.program.stem == "crest":
+        if self.program == "crest":
             self.process_crest()
         else:
             self.process_xtb()
@@ -205,12 +265,56 @@ class Calculation:
                     for geom in conformer_geoms
                 ]
                 logger.debug(f"Found {len(self.conformers)} conformers in the ensemble")
+                # By convention the first in the file is the lowest but make sure anyway
+                self.conformers = sorted(self.conformers, key=lambda x: x["energy"])
+            case "protonate":
+                # Protonation site screening
+                logger.debug("A protonation site screening was requested, so checking for files")
+                # Get set of tautomers
+                tautomer_geoms = Geometry.from_file(
+                    self.output_file.with_name("protonated.xyz"),
+                    multi=True,
+                )
+                logger.debug(f"Geometries of tautomers read from {self.output_file.with_name('protonated.xyz')}")
+                self.tautomers = [
+                    {"geometry": geom, "energy": float(geom._comment)}
+                    for geom in tautomer_geoms
+                ]
+                logger.debug(f"Found {len(self.tautomers)} tautomers in the ensemble")
+                # By convention the first in the file is the lowest but make sure anyway
+                self.tautomers = sorted(self.tautomers, key=lambda x: x["energy"])
+                # Get energy and geom of lowest tautomer
+                best = self.tautomers[0]
+                self.output_geometry = best["geometry"]
+                self.energy = best["energy"]
+                logger.debug(f"Energy of lowest energy tautomer: {self.energy}")
+            case "deprotonate":
+                # Deprotonation site screening
+                logger.debug("A deprotonation site screening was requested, so checking for files")
+                # Get set of tautomers
+                tautomer_geoms = Geometry.from_file(
+                    self.output_file.with_name("deprotonated.xyz"),
+                    multi=True,
+                )
+                logger.debug(f"Geometries of tautomers read from {self.output_file.with_name('deprotonated.xyz')}")
+                self.tautomers = [
+                    {"geometry": geom, "energy": float(geom._comment)}
+                    for geom in tautomer_geoms
+                ]
+                logger.debug(f"Found {len(self.tautomers)} tautomers in the ensemble")
+                # By convention the first in the file is the lowest but make sure anyway
+                self.tautomers = sorted(self.tautomers, key=lambda x: x["energy"])
+                # Get energy and geom of lowest tautomer
+                best = self.tautomers[0]
+                self.output_geometry = best["geometry"]
+                self.energy = best["energy"]
+                logger.debug(f"Energy of lowest energy tautomer: {self.energy}")
             case _:
                 pass
 
 
 def energy(
-    input_geom: Geometry,
+    input_geometry: Geometry,
     charge: int = 0,
     multiplicity: int = 1,
     solvation: str | None = None,
@@ -220,7 +324,7 @@ def energy(
     """Calculate energy in hartree for given geometry."""
 
     calc = Calculation(
-        input_geometry=input_geom,
+        input_geometry=input_geometry,
         options={
             "chrg": charge,
             "uhf": multiplicity - 1,
@@ -236,7 +340,7 @@ def energy(
 
 
 def optimize(
-    input_geom: Geometry,
+    input_geometry: Geometry,
     charge: int = 0,
     multiplicity: int = 1,
     solvation: str | None = None,
@@ -248,7 +352,7 @@ def optimize(
     the optimized geometry."""
 
     calc = Calculation(
-        input_geometry=input_geom,
+        input_geometry=input_geometry,
         runtype="opt",
         runtype_args=[level],
         options={
@@ -269,7 +373,7 @@ def optimize(
 
 
 def frequencies(
-    input_geom: Geometry,
+    input_geometry: Geometry,
     charge: int = 0,
     multiplicity: int = 1,
     solvation: str | None = None,
@@ -279,7 +383,7 @@ def frequencies(
     """Calculate vibrational frequencies and return results as a list of dicts."""
 
     calc = Calculation(
-        input_geometry=input_geom,
+        input_geometry=input_geometry,
         runtype="hess",
         options={
             "chrg": charge,
@@ -296,7 +400,7 @@ def frequencies(
 
 
 def opt_freq(
-    input_geom: Geometry,
+    input_geometry: Geometry,
     charge: int = 0,
     multiplicity: int = 1,
     solvation: str | None = None,
@@ -312,7 +416,7 @@ def opt_freq(
     """
 
     calc = Calculation(
-        input_geometry=input_geom,
+        input_geometry=input_geometry,
         runtype="ohess",
         runtype_args=[level],
         options={
@@ -349,7 +453,7 @@ def opt_freq(
 
 
 def orbitals(
-    input_geom: Geometry,
+    input_geometry: Geometry,
     charge: int = 0,
     multiplicity: int = 1,
     solvation: str | None = None,
@@ -363,7 +467,7 @@ def orbitals(
     """
 
     calc = Calculation(
-        input_geometry=input_geom,
+        input_geometry=input_geometry,
         options={
             "molden": True,
             "chrg": charge,
@@ -380,7 +484,7 @@ def orbitals(
 
 
 def conformers(
-    input_geom: Geometry,
+    input_geometry: Geometry,
     charge: int = 0,
     multiplicity: int = 1,
     solvation: str | None = None,
@@ -391,13 +495,15 @@ def conformers(
 ) -> list[dict]:
     """Simulate a conformer ensemble and return set of conformer Geometries and energies.
 
+    The returned conformers are ordered from lowest to highest energy.
+
     All conformers within <ewin> kcal/mol are kept.
     If hess=True, vibrational frequencies are calculated and the conformers reordered by Gibbs energy.
     """
     method_flag = f"gfn{method}"
     calc = Calculation(
         program="crest",
-        input_geometry=input_geom,
+        input_geometry=input_geometry,
         runtype="v3",
         options={
             "xnam": XTB_BIN,
@@ -415,3 +521,71 @@ def conformers(
         return calc.conformers, calc
     else:
         return calc.conformers
+
+
+def protonate(
+    input_geometry: Geometry,
+    charge: int = 0,
+    multiplicity: int = 1,
+    solvation: str | None = None,
+    method: int = 2,
+    return_calc: bool = False,
+) -> list[dict]:
+    """Screen possible protonation sites and return set of tautomer Geometries and energies.
+
+    The returned tautomers are ordered from lowest to highest energy.
+    
+    Note that `charge` should be the charge on the molecule before protonation.
+    """
+    method_flag = f"gfn{method}"
+    calc = Calculation(
+        program="crest",
+        input_geometry=input_geometry,
+        runtype="protonate",
+        options={
+            "xnam": XTB_BIN,
+            method_flag: True,
+            "chrg": charge,
+            "uhf": multiplicity - 1,
+            "alpb": solvation,
+        },
+    )
+    calc.run()
+    if return_calc:
+        return calc.tautomers, calc
+    else:
+        return calc.tautomers
+
+
+def deprotonate(
+    input_geometry: Geometry,
+    charge: int = 0,
+    multiplicity: int = 1,
+    solvation: str | None = None,
+    method: int = 2,
+    return_calc: bool = False,
+) -> list[dict]:
+    """Screen possible deprotonation sites and return set of tautomer Geometries and energies.
+
+    The returned tautomers are ordered from lowest to highest energy.
+    
+    Note that `charge` should be the charge on the molecule before deprotonation.
+    """
+    method_flag = f"gfn{method}"
+    calc = Calculation(
+        program="crest",
+        input_geometry=input_geometry,
+        runtype="deprotonate",
+        options={
+            "xnam": XTB_BIN,
+            method_flag: True,
+            "chrg": charge,
+            "uhf": multiplicity - 1,
+            "alpb": solvation,
+        },
+    )
+    calc.run()
+    if return_calc:
+        return calc.tautomers, calc
+    else:
+        return calc.tautomers
