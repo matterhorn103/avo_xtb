@@ -3,7 +3,7 @@
   "version": "0.5.0",
   "url": "https://github.com/matterhorn103/avo_xtb",
   "name": "avo_xtb",
-  "description": "Access the full power of xtb through the Avogadro interface.",
+  "description": "Access the power of xtb through the Avogadro interface.",
   "type": "commands",
   "commands": [
     { "name": "configure", "command": "config.py" },
