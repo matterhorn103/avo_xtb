@@ -4,9 +4,10 @@
 import argparse
 import json
 import logging
+import os
 import sys
 
-from support import py_xtb
+from support import easyxtb
 
 
 logger = logging.getLogger(__name__)
@@ -19,11 +20,15 @@ def cleanup_after_taut(cjson: dict) -> dict:
     Essentially gives an empty cjson, with only the total charge and spin retained.
     """
 
-    output = py_xtb.convert.empty_cjson.copy()
+    output = easyxtb.convert.empty_cjson.copy()
     output["properties"]["totalCharge"] = cjson["properties"]["totalCharge"]
     output["properties"]["totalSpinMultiplicity"] = cjson["properties"]["totalSpinMultiplicity"]
 
     return output
+
+
+def parse_topology(molfile: os.pathlike):
+    """Get the bonding information from a molfile produced by xtb."""
 
 
 if __name__ == "__main__":
@@ -37,7 +42,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Disable if xtb or crest missing
-    if py_xtb.XTB_BIN is None or py_xtb.CREST_BIN is None:
+    if easyxtb.XTB_BIN is None or easyxtb.CREST_BIN is None:
         quit()
 
     if args.print_options:
@@ -52,23 +57,23 @@ if __name__ == "__main__":
         # Read input from Avogadro
         avo_input = json.loads(sys.stdin.read())
         # Extract the coords
-        geom = py_xtb.Geometry.from_xyz(avo_input["xyz"].split("\n"))
+        geom = easyxtb.Geometry.from_xyz(avo_input["xyz"].split("\n"))
 
         # Run calculation; returns set of tautomers as well as Calculation object
-        tautomers, calc = py_xtb.calc.protonate(
+        tautomers, calc = easyxtb.calc.protonate(
             geom,
             charge=avo_input["charge"],
             multiplicity=avo_input["spin"],
-            solvation=py_xtb.config["solvent"],
+            solvation=easyxtb.config["solvent"],
             method=2,
             return_calc=True,
         )
 
         best_cjson = calc.output_geometry.to_cjson()
-        tautomer_cjson = py_xtb.convert.taut_to_cjson(tautomers)
+        tautomer_cjson = easyxtb.convert.taut_to_cjson(tautomers)
 
         # Get energy for Avogadro
-        energies = py_xtb.convert.convert_energy(calc.energy, "hartree")
+        energies = easyxtb.convert.convert_energy(calc.energy, "hartree")
 
         # Format everything appropriately for Avogadro
         # Start by passing back a cleaned version of original cjson
@@ -88,7 +93,7 @@ if __name__ == "__main__":
         output["cjson"]["properties"]["totalCharge"] += 1
 
         # Save result
-        with open(py_xtb.TEMP_DIR / "result.cjson", "w", encoding="utf-8") as save_file:
+        with open(easyxtb.TEMP_DIR / "result.cjson", "w", encoding="utf-8") as save_file:
             json.dump(output["cjson"], save_file, indent=2)
 
         # Pass back to Avogadro

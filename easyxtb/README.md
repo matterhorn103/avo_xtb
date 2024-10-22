@@ -1,10 +1,10 @@
-# py-xtb
+# easyxtb
 
-`py-xtb` is an unofficial API for the xtb and CREST semi-empirical quantum chemistry programs.
+`easyxtb` is an unofficial API for the xtb and CREST semi-empirical quantum chemistry programs with an emphasis on intuitive and straightforward usage.
 
 It forms the basis for `avo_xtb`, a plugin for the 3D chemical visualization software [Avogadro 2](https://two.avogadro.cc) that provides an in-app interface to the xtb program for quick and accurate calculations, as well as the CREST program for extended functionality.
 
-The Python package `py-xtb` can be used independently of `avo_xtb` as an interface to launch calculations and process their results from Python.
+The Python package `easyxtb` can be used independently of `avo_xtb` as an interface to launch calculations and process their results from Python.
 
 [`xtb`](https://github.com/grimme-lab/xtb) is developed by the Grimme group in Bonn and carries out semi-empirical quantum mechanical calculations using the group's e**x**tended **T**ight-**B**inding methods, referred to as "GFNn-xTB".
 
@@ -89,38 +89,42 @@ The geometries can be converted back to XYZ or CJSON formats, or saved to file:
 
 ### xtb
 
+Only tested for `xtb >= 6.7`.
+
 The `xtb` binary is not bundled with the package.
 Instead, it must be obtained separately.
 
-The location of `xtb` can be set from Python code simply by setting `py-xtb.XTB_BIN` to an appropriate `pathlib.Path` object.
+The location of `xtb` can be set from Python code simply by setting `easyxtb.XTB_BIN` to an appropriate `pathlib.Path` object.
 
-An `xtb` binary will also be picked up automatically by `py-xtb` if located in one of the following locations:
+An `xtb` binary will also be picked up automatically by `easyxtb` if located in one of the following locations:
 1. The system or user PATH
-2. Within the `py-xtb` binary directory at `<user data>/py-xtb/bin/xtb` (see below for more information on where this is on your system)
-3. Within the folder it is distributed in under the `py-xtb` binary directory, which would thus currently be at `<user data>/py-xtb/bin/xtb-dist/bin/xtb`
-4. Any other location but with a link to it from `<user data>/py-xtb/bin/xtb`
+2. Within the `easyxtb` binary directory at `<user data>/easyxtb/bin/xtb` (see below for more information on where this is on your system)
+3. Within the folder it is distributed in under the `easyxtb` binary directory, which would thus currently be at `<user data>/easyxtb/bin/xtb-dist/bin/xtb`
+4. Any other location but with a link to it from `<user data>/easyxtb/bin/xtb`
 
 ### CREST
+
+Only tested for `crest >= 3.0`.
 
 While `xtb` is cross-platform, `crest` is currently distributed only for Linux/UNIX systems.
 
 `crest` can be made visible to the plugin in the same ways as for `xtb` listed above.
-If it is not in `$PATH`, the `crest` binary, or link to it, should be located at `<user data>/py-xtb/bin/crest`.
+If it is not in `$PATH`, the `crest` binary, or link to it, should be located at `<user data>/easyxtb/bin/crest`.
 
 ## Data location
 
-`py-xtb` uses a central location to run its calculations, store its configuration, and save its log file.
-This location is `<user data>/py-xtb`, where `<user data>` is OS-dependent:
+`easyxtb` uses a central location to run its calculations, store its configuration, and save its log file.
+This location is `<user data>/easyxtb`, where `<user data>` is OS-dependent:
 
-- Windows: `$USER_HOME\AppData\Local\py-xtb`
-- macOS: `~/Library/Application Support/py-xtb`
-- Linux: `~/.local/share/py-xtb`
+- Windows: `$USER_HOME\AppData\Local\easyxtb`
+- macOS: `~/Library/Application Support/easyxtb`
+- Linux: `~/.local/share/easyxtb`
 
 Additionally, if the environment variable `XDG_DATA_HOME` is set its value will be respected and takes precedence over the above paths (on all OSes).
 
 ## Disclaimer
 
-`xtb` and `crest` are distributed by the Grimme group under the LGPL license v3. The authors of `py-xtb`, `avo_xtb`, and Avogadro bear no responsibility for xtb or CREST or the contents of the respective repositories. Source code for the programs is available at the repositories linked above.
+`xtb` and `crest` are distributed by the Grimme group under the LGPL license v3. The authors of `easyxtb`, `avo_xtb`, and Avogadro bear no responsibility for xtb or CREST or the contents of the respective repositories. Source code for the programs is available at the repositories linked above.
 
 ## Cite
 

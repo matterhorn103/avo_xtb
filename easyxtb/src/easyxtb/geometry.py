@@ -46,7 +46,7 @@ class Geometry:
         "Generate an XYZ, as a list of lines, for the geometry."
         logger.debug("Generating an xyz, as a list of lines, for the geometry")
         if comment is None:
-            comment = self._comment if self._comment else "xyz prepared by py-xtb"
+            comment = self._comment if self._comment else "xyz prepared by easyxtb"
         xyz = [str(len(self.atoms)), comment]
         for a in self.atoms:
             # Turn each atom (line of array) into a single string and add to xyz

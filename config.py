@@ -8,7 +8,7 @@ import json
 import sys
 from pathlib import Path
 
-from support import py_xtb
+from support import easyxtb
 
 
 # List of available methods
@@ -30,13 +30,13 @@ if __name__ == "__main__":
                 "xtb_bin": {
                     "type": "string",
                     "label": "Location of the xtb binary",
-                    "default": str(py_xtb.XTB_BIN),
+                    "default": str(easyxtb.XTB_BIN),
                     "order": 1.0,
                 },
                 "user_dir": {
                     "type": "string",
                     "label": "Run calculations (in subfolder) in",
-                    "default": str(py_xtb.CALC_DIR),
+                    "default": str(easyxtb.CALC_DIR),
                     "order": 3.0,
                 },
                 "energy_units": {
@@ -112,8 +112,8 @@ if __name__ == "__main__":
         }
         # Set other options' defaults to match that found in user config
         for option in ["solvent", "energy_units", "method", "opt_lvl"]:
-            if py_xtb.config[option] is not None:
-                options["userOptions"][option]["default"] = py_xtb.config[option]
+            if easyxtb.config[option] is not None:
+                options["userOptions"][option]["default"] = easyxtb.config[option]
         print(json.dumps(options))
     if args.display_name:
         print("Configure…")
@@ -125,26 +125,26 @@ if __name__ == "__main__":
         avo_input = json.loads(sys.stdin.read())
 
         # Save change to user_dir if there has been one
-        if avo_input["user_dir"] != str(py_xtb.CALC_DIR):
-            py_xtb.CALC_DIR = Path(avo_input["user_dir"])
-            py_xtb.conf.TEMP_DIR = py_xtb.CALC_DIR / "last"
+        if avo_input["user_dir"] != str(easyxtb.CALC_DIR):
+            easyxtb.CALC_DIR = Path(avo_input["user_dir"])
+            easyxtb.conf.TEMP_DIR = easyxtb.CALC_DIR / "last"
             try:
-                py_xtb.TEMP_DIR.mkdir(parents=True, exist_ok=True)
+                easyxtb.TEMP_DIR.mkdir(parents=True, exist_ok=True)
             except PermissionError:
                 output = {
                     "message": "A folder could not be created at the path specified!"
                 }
                 # Pass back to Avogadro to display to user
                 print(json.dumps(output))
-            py_xtb.config["calc_dir"] = str(py_xtb.CALC_DIR)
+            easyxtb.config["calc_dir"] = str(easyxtb.CALC_DIR)
 
         # Save change to xtb_bin if there has been one
-        if avo_input["xtb_bin"] != str(py_xtb.XTB_BIN):
-            py_xtb.XTB_BIN = Path(avo_input["xtb_bin"])
-            py_xtb.config["xtb_bin"] = str(py_xtb.XTB_BIN)
+        if avo_input["xtb_bin"] != str(easyxtb.XTB_BIN):
+            easyxtb.XTB_BIN = Path(avo_input["xtb_bin"])
+            easyxtb.config["xtb_bin"] = str(easyxtb.XTB_BIN)
 
         # Update energy units
-        py_xtb.config["energy_units"] = avo_input["energy_units"]
+        easyxtb.config["energy_units"] = avo_input["energy_units"]
 
         # Convert "none" string to Python None
         if avo_input["solvent"] == "none":
@@ -153,12 +153,12 @@ if __name__ == "__main__":
             solvent_selected = avo_input["solvent"]
 
         # Update solvent
-        py_xtb.config["solvent"] = solvent_selected
+        easyxtb.config["solvent"] = solvent_selected
 
         # Update method
-        py_xtb.config["method"] = methods.index(avo_input["method"])
+        easyxtb.config["method"] = methods.index(avo_input["method"])
 
         # Update optimization level
-        py_xtb.config["opt_lvl"] = avo_input["opt_lvl"]
+        easyxtb.config["opt_lvl"] = avo_input["opt_lvl"]
 
-        py_xtb.conf.save_config()
+        easyxtb.conf.save_config()

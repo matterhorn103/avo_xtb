@@ -6,7 +6,7 @@ import json
 import logging
 import sys
 
-from support import py_xtb
+from support import easyxtb
 
 
 logger = logging.getLogger(__name__)
@@ -23,7 +23,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Disable if xtb missing
-    if py_xtb.XTB_BIN is None:
+    if easyxtb.XTB_BIN is None:
         quit()
 
     if args.print_options:
@@ -38,16 +38,16 @@ if __name__ == "__main__":
         # Read input from Avogadro
         avo_input = json.loads(sys.stdin.read())
         # Extract the coords
-        geom = py_xtb.Geometry.from_xyz(avo_input["xyz"].split("\n"))
+        geom = easyxtb.Geometry.from_xyz(avo_input["xyz"].split("\n"))
 
         # Run calculation; returns Molden output file as string
         logger.debug("avo_xtb is requesting a molecular orbitals calculation")
-        molden_string = py_xtb.calc.orbitals(
+        molden_string = easyxtb.calc.orbitals(
             geom,
             charge=avo_input["charge"],
             multiplicity=avo_input["spin"],
-            solvation=py_xtb.config["solvent"],
-            method=py_xtb.config["method"],
+            solvation=easyxtb.config["solvent"],
+            method=easyxtb.config["method"],
         )
 
         # Format everything appropriately for Avogadro
@@ -70,7 +70,7 @@ if __name__ == "__main__":
             output["message"] = "Calculation complete!"
 
         # Save result
-        with open(py_xtb.TEMP_DIR / "result.molden", "w", encoding="utf-8") as save_file:
+        with open(easyxtb.TEMP_DIR / "result.molden", "w", encoding="utf-8") as save_file:
             json.dump(output, save_file, indent=2)
 
         # Pass back to Avogadro

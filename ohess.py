@@ -6,7 +6,7 @@ import json
 import logging
 import sys
 
-from support import py_xtb
+from support import easyxtb
 from opt import cleanup_after_opt
 
 
@@ -24,7 +24,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Disable if xtb missing
-    if py_xtb.XTB_BIN is None:
+    if easyxtb.XTB_BIN is None:
         quit()
 
     if args.print_options:
@@ -39,30 +39,30 @@ if __name__ == "__main__":
         # Read input from Avogadro
         avo_input = json.loads(sys.stdin.read())
         # Extract the coords
-        geom = py_xtb.Geometry.from_xyz(avo_input["xyz"].split("\n"))
+        geom = easyxtb.Geometry.from_xyz(avo_input["xyz"].split("\n"))
 
         # Run calculation; returns path to Gaussian file containing frequencies
         logger.debug("avo_xtb is requesting an opt+freq calculation")
-        opt_geom, freqs, calc = py_xtb.calc.opt_freq(
+        opt_geom, freqs, calc = easyxtb.calc.opt_freq(
             geom,
             charge=avo_input["charge"],
             multiplicity=avo_input["spin"],
-            solvation=py_xtb.config["solvent"],
-            method=py_xtb.config["method"],
-            level=py_xtb.config["opt_lvl"],
+            solvation=easyxtb.config["solvent"],
+            method=easyxtb.config["method"],
+            level=easyxtb.config["opt_lvl"],
             return_calc=True,
         )
 
         # Convert geometry and frequencies to cjson
         geom_cjson = opt_geom.to_cjson()
-        freq_cjson = py_xtb.convert.freq_to_cjson(freqs)
+        freq_cjson = easyxtb.convert.freq_to_cjson(freqs)
 
         # Check for convergence
         # TODO
         # Will need to look for "FAILED TO CONVERGE"
 
         # Get energy for Avogadro
-        energies = py_xtb.convert.convert_energy(calc.energy, "hartree")
+        energies = easyxtb.convert.convert_energy(calc.energy, "hartree")
 
         # Format everything appropriately for Avogadro
         # Start from the original cjson
@@ -85,7 +85,7 @@ if __name__ == "__main__":
             )
 
         # Save result
-        with open(py_xtb.TEMP_DIR / "result.cjson", "w", encoding="utf-8") as save_file:
+        with open(easyxtb.TEMP_DIR / "result.cjson", "w", encoding="utf-8") as save_file:
             json.dump(output["cjson"], save_file, indent=2)
         
         # Pass back to Avogadro

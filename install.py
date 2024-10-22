@@ -14,7 +14,7 @@ import urllib.request
 import zipfile
 from pathlib import Path
 
-from support import py_xtb
+from support import easyxtb
 
 
 logger = logging.getLogger(__name__)
@@ -96,12 +96,12 @@ def link_xtb_bin(xtb_folder):
     if bin_path.with_suffix(".exe").exists():
         bin_path = bin_path.with_suffix(".exe")
     # Link
-    py_xtb.XTB_BIN = py_xtb.BIN_DIR / bin_path.name
-    py_xtb.XTB_BIN.symlink_to(bin_path)
+    easyxtb.XTB_BIN = easyxtb.BIN_DIR / bin_path.name
+    easyxtb.XTB_BIN.symlink_to(bin_path)
     # Add to config
-    py_xtb.config["xtb_bin"] = str(py_xtb.XTB_BIN)
+    easyxtb.config["xtb_bin"] = str(easyxtb.XTB_BIN)
     # Save config
-    py_xtb.conf.save_config()
+    easyxtb.conf.save_config()
 
 
 def link_crest_bin(crest_folder):
@@ -111,12 +111,12 @@ def link_crest_bin(crest_folder):
     if bin_path.with_suffix(".exe").exists():
         bin_path = bin_path.with_suffix(".exe")
     # Link
-    py_xtb.CREST_BIN = py_xtb.BIN_DIR / bin_path.name
-    py_xtb.CREST_BIN.symlink_to(bin_path)
+    easyxtb.CREST_BIN = easyxtb.BIN_DIR / bin_path.name
+    easyxtb.CREST_BIN.symlink_to(bin_path)
     # Add to config
-    py_xtb.config["crest_bin"] = str(py_xtb.CREST_BIN)
+    easyxtb.config["crest_bin"] = str(easyxtb.CREST_BIN)
     # Save config
-    py_xtb.conf.save_config()
+    easyxtb.conf.save_config()
 
 
 if __name__ == "__main__":
@@ -130,7 +130,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Disable this command if xtb has been found
-    if py_xtb.XTB_BIN is not None:
+    if easyxtb.XTB_BIN is not None:
         quit()
 
     if args.print_options:
@@ -157,7 +157,7 @@ if __name__ == "__main__":
                 "install_dir": {
                     "type": "string",
                     "label": "Install in",
-                    "default": str(py_xtb.conf.BIN_DIR),
+                    "default": str(easyxtb.conf.BIN_DIR),
                     "order": 5.0,
                 },
                 "notice": {

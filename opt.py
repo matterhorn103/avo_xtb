@@ -6,7 +6,7 @@ import json
 import logging
 import sys
 
-from support import py_xtb
+from support import easyxtb
 
 
 logger = logging.getLogger(__name__)
@@ -42,7 +42,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Disable if xtb missing
-    if py_xtb.XTB_BIN is None:
+    if easyxtb.XTB_BIN is None:
         quit()
 
     if args.print_options:
@@ -57,17 +57,17 @@ if __name__ == "__main__":
         # Read input from Avogadro
         avo_input = json.loads(sys.stdin.read())
         # Extract the coords
-        geom = py_xtb.Geometry.from_xyz(avo_input["xyz"].split("\n"))
+        geom = easyxtb.Geometry.from_xyz(avo_input["xyz"].split("\n"))
 
         # Run calculation; returns optimized geometry as well as Calculation object
         logger.debug("avo_xtb is requesting a geometry optimization")
-        opt_geom, calc = py_xtb.calc.optimize(
+        opt_geom, calc = easyxtb.calc.optimize(
             geom,
             charge=avo_input["charge"],
             multiplicity=avo_input["spin"],
-            solvation=py_xtb.config["solvent"],
-            method=py_xtb.config["method"],
-            level=py_xtb.config["opt_lvl"],
+            solvation=easyxtb.config["solvent"],
+            method=easyxtb.config["method"],
+            level=easyxtb.config["opt_lvl"],
             return_calc=True,
         )
 
@@ -79,7 +79,7 @@ if __name__ == "__main__":
         # Will need to look for "FAILED TO CONVERGE"
 
         # Get energy for Avogadro
-        energies = py_xtb.convert.convert_energy(calc.energy, "hartree")
+        energies = easyxtb.convert.convert_energy(calc.energy, "hartree")
 
         # Format everything appropriately for Avogadro
         # Start from the original cjson
@@ -93,7 +93,7 @@ if __name__ == "__main__":
         output["cjson"]["properties"]["totalEnergy"] = round(energies["eV"], 7)
 
         # Save result
-        with open(py_xtb.TEMP_DIR / "result.cjson", "w", encoding="utf-8") as save_file:
+        with open(easyxtb.TEMP_DIR / "result.cjson", "w", encoding="utf-8") as save_file:
             json.dump(output["cjson"], save_file, indent=2)
         
         # Pass back to Avogadro

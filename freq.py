@@ -6,7 +6,7 @@ import json
 import logging
 import sys
 
-from support import py_xtb
+from support import easyxtb
 
 
 logger = logging.getLogger(__name__)
@@ -23,7 +23,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Disable if xtb missing
-    if py_xtb.XTB_BIN is None:
+    if easyxtb.XTB_BIN is None:
         quit()
 
     if args.print_options:
@@ -38,19 +38,19 @@ if __name__ == "__main__":
         # Read input from Avogadro
         avo_input = json.loads(sys.stdin.read())
         # Extract the coords
-        geom = py_xtb.Geometry.from_xyz(avo_input["xyz"].split("\n"))
+        geom = easyxtb.Geometry.from_xyz(avo_input["xyz"].split("\n"))
 
         # Run calculation; returns set of frequency data
         logger.debug("avo_xtb is requesting a frequency calculation")
-        freqs = py_xtb.calc.frequencies(
+        freqs = easyxtb.calc.frequencies(
             geom,
             charge=avo_input["charge"],
             multiplicity=avo_input["spin"],
-            solvation=py_xtb.config["solvent"],
-            method=py_xtb.config["method"],
+            solvation=easyxtb.config["solvent"],
+            method=easyxtb.config["method"],
         )
 
-        freq_cjson = py_xtb.convert.freq_to_cjson(freqs)
+        freq_cjson = easyxtb.convert.freq_to_cjson(freqs)
 
         # Start by passing back the original cjson, then add changes
         output = {"moleculeFormat": "cjson", "cjson": avo_input["cjson"].copy()}
@@ -66,7 +66,7 @@ if __name__ == "__main__":
             )
 
         # Save result
-        with open(py_xtb.TEMP_DIR / "result.cjson", "w", encoding="utf-8") as save_file:
+        with open(easyxtb.TEMP_DIR / "result.cjson", "w", encoding="utf-8") as save_file:
             json.dump(output["cjson"], save_file, indent=2)
         
         # Pass back to Avogadro

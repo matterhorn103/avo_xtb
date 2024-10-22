@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 from shutil import copytree
 
-from support import py_xtb
+from support import easyxtb
 from opt import cleanup_after_opt
 
 
@@ -26,7 +26,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Disable if xtb and crest missing
-    if py_xtb.XTB_BIN is None or py_xtb.CREST_BIN is None:
+    if easyxtb.XTB_BIN is None or easyxtb.CREST_BIN is None:
         quit()
 
     if args.print_options:
@@ -36,13 +36,13 @@ if __name__ == "__main__":
                 "crest_bin": {
                     "type": "string",
                     "label": "Location of the CREST binary",
-                    "default": str(py_xtb.CREST_BIN),
+                    "default": str(easyxtb.CREST_BIN),
                     "order": 1.0,
                 },
                 "save_dir": {
                     "type": "string",
                     "label": "Save results in",
-                    "default": str(py_xtb.CALC_DIR),
+                    "default": str(easyxtb.CALC_DIR),
                     "order": 2.0,
                 },
                 # "Number of threads": {
@@ -117,12 +117,12 @@ if __name__ == "__main__":
             },
         }
         # Display energy in kcal if user has insisted on it
-        if py_xtb.config["energy_units"] == "kcal/mol":
+        if easyxtb.config["energy_units"] == "kcal/mol":
             options["userOptions"]["ewin"]["default"] = 6
             options["userOptions"]["ewin"]["suffix"] = " kcal/mol"
         # Make solvation default if found in user config
-        if py_xtb.config["solvent"] is not None:
-            options["userOptions"]["solvent"]["default"] = py_xtb.config["solvent"]
+        if easyxtb.config["solvent"] is not None:
+            options["userOptions"]["solvent"]["default"] = easyxtb.config["solvent"]
         print(json.dumps(options))
     if args.display_name:
         print("Conformers…")
@@ -133,17 +133,17 @@ if __name__ == "__main__":
         # Read input from Avogadro
         avo_input = json.loads(sys.stdin.read())
         # Extract the coords
-        geom = py_xtb.Geometry.from_xyz(avo_input["xyz"].split("\n"))
+        geom = easyxtb.Geometry.from_xyz(avo_input["xyz"].split("\n"))
 
         # If provided crest path different to that stored, use it and save it
-        if Path(avo_input["crest_bin"]) != py_xtb.CREST_BIN:
+        if Path(avo_input["crest_bin"]) != easyxtb.CREST_BIN:
             crest_bin = Path(avo_input["crest_bin"])
-            py_xtb.config["crest_bin"] = str(crest_bin)
-            with open(py_xtb.config_file, "w", encoding="utf-8") as config_path:
-                json.dump(py_xtb.config, config_path)
+            easyxtb.config["crest_bin"] = str(crest_bin)
+            with open(easyxtb.config_file, "w", encoding="utf-8") as config_path:
+                json.dump(easyxtb.config, config_path)
 
         # crest takes energies in kcal so convert if provided in kJ (default)
-        if py_xtb.config["energy_units"] == "kJ/mol":
+        if easyxtb.config["energy_units"] == "kJ/mol":
             ewin_kcal = avo_input["ewin"] / 4.184
         else:
             ewin_kcal = avo_input["ewin"]
@@ -155,7 +155,7 @@ if __name__ == "__main__":
             solvation = avo_input["solvent"]
 
         # Run calculation; returns set of conformers as well as Calculation object
-        conformers, calc = py_xtb.calc.conformers(
+        conformers, calc = easyxtb.calc.conformers(
             geom,
             charge=avo_input["charge"],
             multiplicity=avo_input["spin"],
@@ -167,10 +167,10 @@ if __name__ == "__main__":
         )
 
         best_cjson = calc.output_geometry.to_cjson()
-        conformer_cjson = py_xtb.convert.conf_to_cjson(conformers)
+        conformer_cjson = easyxtb.convert.conf_to_cjson(conformers)
 
         # Get energy for Avogadro
-        energies = py_xtb.convert.convert_energy(calc.energy, "hartree")
+        energies = easyxtb.convert.convert_energy(calc.energy, "hartree")
 
         # Format everything appropriately for Avogadro
         # Start by passing back the original cjson, then add changes
@@ -189,15 +189,15 @@ if __name__ == "__main__":
         output["cjson"]["properties"]["energies"] = conformer_cjson["properties"]["energies"]
 
         # Save result
-        with open(py_xtb.TEMP_DIR / "result.cjson", "w", encoding="utf-8") as save_file:
+        with open(easyxtb.TEMP_DIR / "result.cjson", "w", encoding="utf-8") as save_file:
             json.dump(output["cjson"], save_file, indent=2)
 
         # If user specified a save location, copy calculation directory to there
         if not (
             avo_input["save_dir"] in ["", None]
-            or Path(avo_input["save_dir"]) == py_xtb.TEMP_DIR
+            or Path(avo_input["save_dir"]) == easyxtb.TEMP_DIR
         ):
-            copytree(py_xtb.TEMP_DIR, Path(avo_input["save_dir"]), dirs_exist_ok=True)
+            copytree(easyxtb.TEMP_DIR, Path(avo_input["save_dir"]), dirs_exist_ok=True)
 
         # Pass back to Avogadro
         print(json.dumps(output))

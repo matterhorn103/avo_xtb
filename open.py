@@ -8,7 +8,7 @@ import json
 import platform
 import subprocess
 
-from support import py_xtb
+from support import easyxtb
 
 
 if __name__ == "__main__":
@@ -32,10 +32,10 @@ if __name__ == "__main__":
     if args.run_command:
         # Have to detect os
         if platform.system() == "Windows":
-            subprocess.run(["start", py_xtb.CALC_DIR])
+            subprocess.run(["start", easyxtb.CALC_DIR])
 
         elif platform.system() == "Darwin":
-            subprocess.run(["open", py_xtb.CALC_DIR])
+            subprocess.run(["open", easyxtb.CALC_DIR])
 
         else:
-            subprocess.run(["xdg-open", py_xtb.CALC_DIR])
+            subprocess.run(["xdg-open", easyxtb.CALC_DIR])

@@ -7,12 +7,12 @@ These methods provide fast and reasonably accurate calculation of **G**eometries
 
 [`crest`](https://github.com/crest-lab/crest) (Conformer–Rotamer Ensemble Sampling Tool) adds a variety of sampling procedures for several interesting applications including conformer searches, thermochemistry, and solvation.
 
-## py-xtb
+## easyxtb
 
-The Avogadro plugin is itself only a layer on top of the `py-xtb` Python package, which is written and maintained as part of this project.
-`py-xtb` is published on the `PyPI` repository and can be used independently of the plugin from Python as an interface to `xtb` and `crest`.
+The Avogadro plugin is itself only a layer on top of the `easyxtb` Python package, which is written and maintained as part of this project.
+`easyxtb` is published on the `PyPI` repository and can be used independently of the plugin from Python as an interface to `xtb` and `crest`.
 
-For more details on the Python API, see `py-xtb/README.md`.
+For more details on the Python API, see `easyxtb/README.md`.
 
 ## Capabilities
 
@@ -37,7 +37,7 @@ There is also the option to submit a custom command to `xtb`, permitting any cal
 Currently, the plugin does not download the `xtb` binary automatically, and it is not bundled with Avogadro. Instead, it must be obtained separately. There are five options that will make `xtb` visible to the extension:
 1. Install xtb with `conda` from conda-forge and use Avogadro with the `conda` environment, either by setting it in the Python settings or by starting Avogadro with the environment activated
 2. Manually download the `xtb` binary and put it into the system PATH
-3. Manually download `xtb` and place it, or a link to it, entirely within the plugin's binary directory `<user data>/py-xtb/bin/` (see below for more information on where this is on your system) 
+3. Manually download `xtb` and place it, or a link to it, entirely within the plugin's binary directory `<user data>/easyxtb/bin/` (see below for more information on where this is on your system) 
 4. Manually download `xtb` and manually specify its location in the `Configure...` menu
 5. Use the "Get xtb..." function within Avogadro after installing this extension
 
@@ -46,17 +46,17 @@ Currently, the plugin does not download the `xtb` binary automatically, and it i
 While `xtb` is cross-platform, `crest` is distributed only for Linux/UNIX systems. As a result, Windows and macOS users of the plugin will not have the calculations that rely on CREST available to them in the Avogadro interface.
 
 `crest` can be made visible to the plugin in the same ways as for `xtb` listed above.
-If it is not in `$PATH`, the `crest` binary, or link to it, should be located at `<user data>/py-xtb/bin/crest`.
+If it is not in `$PATH`, the `crest` binary, or link to it, should be located at `<user data>/easyxtb/bin/crest`.
 The "Get xtb..." option within Avogadro will also download `crest` on supported operating systems.
 
 ## Data location
 
 The core package that provides the calculation framework uses a central location to run its calculations, store its configuration, and save its log file.
-This location is `<user data>/py-xtb`, where `<user data>` is OS-dependent:
+This location is `<user data>/easyxtb`, where `<user data>` is OS-dependent:
 
-- Windows: `$USER_HOME\AppData\Local\py-xtb`
-- macOS: `~/Library/Application Support/py-xtb`
-- Linux: `~/.local/share/py-xtb`
+- Windows: `$USER_HOME\AppData\Local\easyxtb`
+- macOS: `~/Library/Application Support/easyxtb`
+- Linux: `~/.local/share/easyxtb`
 
 Additionally, if the environment variable `XDG_DATA_HOME` is set its value will be respected and takes precedence over the above paths (on all OSes).
 

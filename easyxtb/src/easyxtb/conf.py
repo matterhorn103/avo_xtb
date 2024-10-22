@@ -26,13 +26,13 @@ logger = logging.getLogger(__name__)
 # Could use platformdirs for this, but since we seem to be able to make do without any
 # other dependencies, let's just hard-code it for now
 if os.environ.get("XDG_DATA_HOME") is not None:
-    PLUGIN_DIR = Path(os.environ.get("XDG_DATA_HOME")) / "py-xtb"
+    PLUGIN_DIR = Path(os.environ.get("XDG_DATA_HOME")) / "easyxtb"
 elif platform.system() == "Windows":
-    PLUGIN_DIR = Path.home() / "AppData/Local/py-xtb"
+    PLUGIN_DIR = Path.home() / "AppData/Local/easyxtb"
 elif platform.system() == "Darwin":
-    PLUGIN_DIR = Path.home() / "Library/Application Support/py-xtb"
+    PLUGIN_DIR = Path.home() / "Library/Application Support/easyxtb"
 else:
-    PLUGIN_DIR = Path.home() / ".local/share/py-xtb"
+    PLUGIN_DIR = Path.home() / ".local/share/easyxtb"
 logger.debug(f"{PLUGIN_DIR=}")
 
 
@@ -69,7 +69,7 @@ try:
     logger.debug("Write permission for PLUGIN_DIR confirmed")
 except PermissionError:
     error_msg = (
-        f"py-xtb was expecting to use {PLUGIN_DIR} to write and store calculation results, but you do not seem to have write permission for this.\n"
+        f"easyxtb was expecting to use {PLUGIN_DIR} to write and store calculation results, but you do not seem to have write permission for this.\n"
         + f"Please choose a suitable data directory, and add its path to {PLUGIN_DIR / 'config.json'} under 'calc_dir'."
     )
     logger.error(error_msg)
@@ -114,7 +114,7 @@ if init:
 
 # Current version of package
 # Hard code for now, obviously not ideal though
-PY_XTB_VERSION = "0.5.0"
+easyxtb_VERSION = "0.5.0"
 
 def update_config():
     """Ensure that any config options added in later versions of the package are in
@@ -127,10 +127,10 @@ def update_config():
             config[option] = default
             logger.debug(f"User config does not contain setting for {option}, so has been set to {default}")
     # Record which version was used last
-    config["version"] = PY_XTB_VERSION
+    config["version"] = easyxtb_VERSION
     save_config()
 
-if "version" not in config or config["version"] != PY_XTB_VERSION:
+if "version" not in config or config["version"] != easyxtb_VERSION:
     update_config()
 
 

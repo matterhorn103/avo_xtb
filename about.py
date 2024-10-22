@@ -7,7 +7,7 @@ import logging
 import subprocess
 import sys
 
-from support import py_xtb
+from support import easyxtb
 
 
 logger = logging.getLogger(__name__)
@@ -37,17 +37,17 @@ if __name__ == "__main__":
         avo_input = json.loads(sys.stdin.read())
         output = avo_input.copy()
 
-        if py_xtb.XTB_BIN:
+        if easyxtb.XTB_BIN:
             xtb_version = subprocess.run(
-                [str(py_xtb.XTB_BIN), "--version"],
+                [str(easyxtb.XTB_BIN), "--version"],
                 encoding="utf-8",
                 capture_output=True,
             ).stdout.splitlines()[-2].strip()
         else:
             xtb_version = "No xtb binary found"
-        if py_xtb.CREST_BIN:
+        if easyxtb.CREST_BIN:
             crest_version = subprocess.run(
-                [str(py_xtb.CREST_BIN), "--version"],
+                [str(easyxtb.CREST_BIN), "--version"],
                 encoding="utf-8",
                 capture_output=True,
             ).stdout.splitlines()[-4].strip()
@@ -57,11 +57,11 @@ if __name__ == "__main__":
         # Do nothing to data other than add message with version and path info
         output["message"] = (
             "avo_xtb plugin\n"
-            + f"py-xtb version: {py_xtb.conf.PY_XTB_VERSION}\n"
+            + f"easyxtb version: {easyxtb.conf.easyxtb_VERSION}\n"
             + f"xtb version: {xtb_version}\n"
-            + f"xtb path: {py_xtb.XTB_BIN}\n"
+            + f"xtb path: {easyxtb.XTB_BIN}\n"
             + f"CREST version: {crest_version}\n"
-            + f"CREST path: {py_xtb.CREST_BIN}"
+            + f"CREST path: {easyxtb.CREST_BIN}"
         )
         
         # Pass back to Avogadro

@@ -6,7 +6,7 @@ import json
 import logging
 import sys
 
-from support import py_xtb
+from support import easyxtb
 
 
 logger = logging.getLogger(__name__)
@@ -23,7 +23,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Disable if xtb missing
-    if py_xtb.XTB_BIN is None:
+    if easyxtb.XTB_BIN is None:
         quit()
 
     if args.print_options:
@@ -38,16 +38,16 @@ if __name__ == "__main__":
         # Read input from Avogadro
         avo_input = json.loads(sys.stdin.read())
         # Extract the coords
-        geom = py_xtb.Geometry.from_xyz(avo_input["xyz"].split("\n"))
+        geom = easyxtb.Geometry.from_xyz(avo_input["xyz"].split("\n"))
 
         # Run calculation; returns energy as float in hartree
         logger.debug("avo_xtb is requesting a single point energy calculation")
-        energy_hartree = py_xtb.calc.energy(
+        energy_hartree = easyxtb.calc.energy(
             geom,
             charge=avo_input["charge"],
             multiplicity=avo_input["spin"],
-            solvation=py_xtb.config["solvent"],
-            method=py_xtb.config["method"],
+            solvation=easyxtb.config["solvent"],
+            method=easyxtb.config["method"],
         )
         # If an energy couldn't be parsed, will return None, so have to allow for that
         if energy_hartree is None:
@@ -55,13 +55,13 @@ if __name__ == "__main__":
             # anyone
             energy_hartree = 0.0
         # Convert energy to eV for Avogadro, other units for users
-        energies = py_xtb.convert.convert_energy(energy_hartree, "hartree")
+        energies = easyxtb.convert.convert_energy(energy_hartree, "hartree")
         # Format everything appropriately for Avogadro
         # Start by passing back the original cjson, then add changes
         output = {"cjson": avo_input["cjson"].copy()}
         # Currently Avogadro ignores the energy result
         output["message"] = (
-            f"Energy from GFN{py_xtb.config['method']}-xTB:\n"
+            f"Energy from GFN{easyxtb.config['method']}-xTB:\n"
             + f"{str(round(energy_hartree, 7))} hartree\n"
             + f"{str(round(energies['eV'], 7))} eV\n"
             + f"{str(round(energies['kJ'], 7))} kJ/mol\n"
@@ -70,7 +70,7 @@ if __name__ == "__main__":
         output["cjson"]["properties"]["totalEnergy"] = round(energies["eV"], 7)
 
         # Save result
-        with open(py_xtb.TEMP_DIR / "result.cjson", "w", encoding="utf-8") as save_file:
+        with open(easyxtb.TEMP_DIR / "result.cjson", "w", encoding="utf-8") as save_file:
             json.dump(output["cjson"], save_file, indent=2)
         
         # Pass back to Avogadro

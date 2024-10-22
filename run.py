@@ -10,7 +10,7 @@ import sys
 from pathlib import Path
 from shutil import copytree
 
-from support import py_xtb
+from support import easyxtb
 
 
 logger = logging.getLogger(__name__)
@@ -28,7 +28,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Disable if xtb missing
-    if py_xtb.XTB_BIN is None:
+    if easyxtb.XTB_BIN is None:
         quit()
 
     if args.print_options:
@@ -38,7 +38,7 @@ if __name__ == "__main__":
                 "save_dir": {
                     "type": "string",
                     "label": "Save results in",
-                    "default": str(py_xtb.CALC_DIR),
+                    "default": str(easyxtb.CALC_DIR),
                     "order": 1.0,
                 },
                 # "Number of threads": {
@@ -65,7 +65,7 @@ if __name__ == "__main__":
                 "command": {
                     "type": "string",
                     "label": "Command to run",
-                    "default": f"xtb <input_geometry> --opt {py_xtb.config['opt_lvl']} --chrg 0 --uhf 0",
+                    "default": f"xtb <input_geometry> --opt {easyxtb.config['opt_lvl']} --chrg 0 --uhf 0",
                     "order": 10.0,
                 },
                 # "turbomole": {
@@ -77,13 +77,13 @@ if __name__ == "__main__":
             },
         }
         # Add solvation to default command if found in user config
-        if py_xtb.config["solvent"] is not None:
+        if easyxtb.config["solvent"] is not None:
             options["userOptions"]["command"]["default"] += (
-                f" --alpb {py_xtb.config['solvent']}"
+                f" --alpb {easyxtb.config['solvent']}"
             )
         # Add method to default command but only if not the default (currently GFN2-xTB)
-        if py_xtb.config["method"] != 2:
-            options["userOptions"]["command"]["default"] += f" --gfn {py_xtb.config['method']}"
+        if easyxtb.config["method"] != 2:
+            options["userOptions"]["command"]["default"] += f" --gfn {easyxtb.config['method']}"
         print(json.dumps(options))
     if args.display_name:
         print("Run…")
@@ -94,7 +94,7 @@ if __name__ == "__main__":
         # Read input from Avogadro
         avo_input = json.loads(sys.stdin.read())
         # Extract the coords
-        geom = py_xtb.Geometry.from_xyz(avo_input["xyz"].split("\n"))
+        geom = easyxtb.Geometry.from_xyz(avo_input["xyz"].split("\n"))
 
         command = avo_input["command"].split()
         # Remove xtb and <input_geometry> placeholders
@@ -109,7 +109,7 @@ if __name__ == "__main__":
 
         # Construct Calculation object
         # Run calculation; returns subprocess.CompletedProcess object and path to output.out
-        calc = py_xtb.Calculation(
+        calc = easyxtb.Calculation(
             input_geom=geom,
             program="xtb",
             command=command,
@@ -120,7 +120,7 @@ if __name__ == "__main__":
         # Start by passing back an empty cjson, then add changes
         output = {
             "moleculeFormat": "cjson",
-            "cjson": py_xtb.convert.empty_cjson.copy(),
+            "cjson": easyxtb.convert.empty_cjson.copy(),
         }
 
         # TODO Catch errors in xtb execution
@@ -130,13 +130,13 @@ if __name__ == "__main__":
         message = []
 
         if hasattr(calc, "energy"):
-            energies = py_xtb.convert.convert_energy(calc.energy, "hartree")
+            energies = easyxtb.convert.convert_energy(calc.energy, "hartree")
             output["cjson"]["properties"]["totalEnergy"] = round(energies["eV"], 7)
         if hasattr(calc, "output_geometry"):
             geom_cjson = calc.output_geometry.to_cjson()
             output["cjson"]["atoms"]["coords"] = geom_cjson["atoms"]["coords"]
         if hasattr(calc, "frequencies"):
-            freq_cjson = py_xtb.convert.freq_to_cjson(calc.frequencies)
+            freq_cjson = easyxtb.convert.freq_to_cjson(calc.frequencies)
             output["cjson"]["vibrations"] = freq_cjson["vibrations"]
             # Inform user if there are negative frequencies
             if calc.frequencies[0]["frequency"] < 0:
@@ -158,15 +158,15 @@ if __name__ == "__main__":
         output["message"] = "\n\n".join(message)
 
         # Save result
-        with open(py_xtb.CALC_DIR / "result.cjson", "w", encoding="utf-8") as save_file:
+        with open(easyxtb.CALC_DIR / "result.cjson", "w", encoding="utf-8") as save_file:
             json.dump(output["cjson"], save_file, indent=2)
 
         # If user specified a save location, copy calculation directory to there
         if not (
             avo_input["save_dir"] in ["", None]
-            or Path(avo_input["save_dir"]) == py_xtb.CALC_DIR
+            or Path(avo_input["save_dir"]) == easyxtb.CALC_DIR
         ):
-            copytree(py_xtb.CALC_DIR, Path(avo_input["save_dir"]), dirs_exist_ok=True)
+            copytree(easyxtb.CALC_DIR, Path(avo_input["save_dir"]), dirs_exist_ok=True)
 
         # Pass back to Avogadro
         print(json.dumps(output))
