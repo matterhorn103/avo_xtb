@@ -187,7 +187,7 @@ if __name__ == "__main__":
         install_dir = Path(avo_input["install_dir"])
 
         if platform.system() == "Darwin":
-            result = {
+            output = {
                 "message": "The Grimme group does not supply binaries for macOS.\nYou will have to install xtb manually.\nSorry!"
             }
 
@@ -199,7 +199,7 @@ if __name__ == "__main__":
                 (install_dir / "probe_file.txt").touch()
                 (install_dir / "probe_file.txt").unlink()
             except PermissionError:
-                result = {"message": "Install directory is not writeable"}
+                output = {"message": "Install directory is not writeable"}
             else:
                 xtb_folder = get_xtb(xtb_url, install_dir)
                 crest_folder = get_crest(crest_url, install_dir)
@@ -208,10 +208,10 @@ if __name__ == "__main__":
                 if crest_folder:
                     link_crest_bin(crest_folder)
                 # Report success
-                result = {
+                output = {
                     "message": "xtb (and crest if requested) were successfully installed.\nPlease restart Avogadro."
                 }
 
         # Pass result back to Avogadro to display to user
-        print(json.dumps(result))
-        logger.debug(f"The following dictionary was passed back to Avogadro: {result}")
+        print(json.dumps(output))
+        logger.debug(f"The following dictionary was passed back to Avogadro: {output}")

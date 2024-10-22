@@ -39,11 +39,11 @@ if __name__ == "__main__":
         
         logger.debug(f"Opening the crest docs website at {crest_docs_url}")
         webbrowser.open(crest_docs_url)
-        result = {
+        output = {
             "message": "The CREST documentation should have opened in your browser.",
             "moleculeFormat": "cjson",
             "cjson": avo_input["cjson"],
         }
         # Pass back to Avogadro
-        print(json.dumps(result))
-        logger.debug(f"The following dictionary was passed back to Avogadro: {result}")
+        print(json.dumps(output))
+        logger.debug(f"The following dictionary was passed back to Avogadro: {output}")

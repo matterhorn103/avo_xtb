@@ -35,7 +35,6 @@ if __name__ == "__main__":
         print("Extensions|Semi-empirical (xtb){870}")
 
     if args.run_command:
-
         # Read input from Avogadro
         avo_input = json.loads(sys.stdin.read())
         # Extract the coords
@@ -54,12 +53,12 @@ if __name__ == "__main__":
         freq_cjson = py_xtb.convert.freq_to_cjson(freqs)
 
         # Start by passing back the original cjson, then add changes
-        result = {"moleculeFormat": "cjson", "cjson": avo_input["cjson"]}
-        result["cjson"]["vibrations"] = freq_cjson["vibrations"]
+        output = {"moleculeFormat": "cjson", "cjson": avo_input["cjson"].copy()}
+        output["cjson"]["vibrations"] = freq_cjson["vibrations"]
 
         # Inform user if there are negative frequencies
         if freqs[0]["frequency"] < 0:
-            result["message"] = (
+            output["message"] = (
                 "At least one negative frequency found!\n"
                 + "This is not a minimum on the potential energy surface.\n"
                 + "You should reoptimize the geometry.\n"
@@ -68,8 +67,8 @@ if __name__ == "__main__":
 
         # Save result
         with open(py_xtb.TEMP_DIR / "result.cjson", "w", encoding="utf-8") as save_file:
-            json.dump(result["cjson"], save_file, indent=2)
+            json.dump(output["cjson"], save_file, indent=2)
         
         # Pass back to Avogadro
-        print(json.dumps(result))
-        logger.debug(f"The following dictionary was passed back to Avogadro: {result}")
+        print(json.dumps(output))
+        logger.debug(f"The following dictionary was passed back to Avogadro: {output}")

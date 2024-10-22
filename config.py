@@ -131,11 +131,11 @@ if __name__ == "__main__":
             try:
                 py_xtb.TEMP_DIR.mkdir(parents=True, exist_ok=True)
             except PermissionError:
-                result = {
+                output = {
                     "message": "A folder could not be created at the path specified!"
                 }
                 # Pass back to Avogadro to display to user
-                print(json.dumps(result))
+                print(json.dumps(output))
             py_xtb.config["calc_dir"] = str(py_xtb.CALC_DIR)
 
         # Save change to xtb_bin if there has been one

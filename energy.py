@@ -35,7 +35,6 @@ if __name__ == "__main__":
         print("Extensions|Semi-empirical (xtb){890}")
 
     if args.run_command:
-
         # Read input from Avogadro
         avo_input = json.loads(sys.stdin.read())
         # Extract the coords
@@ -59,16 +58,21 @@ if __name__ == "__main__":
         energies = py_xtb.convert.convert_energy(energy_hartree, "hartree")
         # Format everything appropriately for Avogadro
         # Start by passing back the original cjson, then add changes
-        result = {"moleculeFormat": "cjson", "cjson": avo_input["cjson"]}
+        output = {"cjson": avo_input["cjson"].copy()}
         # Currently Avogadro ignores the energy result
-        result["message"] = (
+        output["message"] = (
             f"Energy from GFN{py_xtb.config['method']}-xTB:\n"
             + f"{str(round(energy_hartree, 7))} hartree\n"
             + f"{str(round(energies['eV'], 7))} eV\n"
             + f"{str(round(energies['kJ'], 7))} kJ/mol\n"
             + f"{str(round(energies['kcal'], 7))} kcal/mol\n"
         )
-        result["cjson"]["properties"]["totalEnergy"] = str(round(energies["eV"], 7))
+        output["cjson"]["properties"]["totalEnergy"] = round(energies["eV"], 7)
+
+        # Save result
+        with open(py_xtb.TEMP_DIR / "result.cjson", "w", encoding="utf-8") as save_file:
+            json.dump(output["cjson"], save_file, indent=2)
+        
         # Pass back to Avogadro
-        print(json.dumps(result))
-        logger.debug(f"The following dictionary was passed back to Avogadro: {result}")
+        print(json.dumps(output))
+        logger.debug(f"The following dictionary was passed back to Avogadro: {output}")

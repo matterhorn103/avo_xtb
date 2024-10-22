@@ -35,7 +35,7 @@ if __name__ == "__main__":
 
         # Read input from Avogadro
         avo_input = json.loads(sys.stdin.read())
-        result = avo_input.copy()
+        output = avo_input.copy()
 
         if py_xtb.XTB_BIN:
             xtb_version = subprocess.run(
@@ -55,7 +55,7 @@ if __name__ == "__main__":
             crest_version = "No CREST binary found"
 
         # Do nothing to data other than add message with version and path info
-        result["message"] = (
+        output["message"] = (
             "avo_xtb plugin\n"
             + f"py-xtb version: {py_xtb.conf.PY_XTB_VERSION}\n"
             + f"xtb version: {xtb_version}\n"
@@ -65,5 +65,5 @@ if __name__ == "__main__":
         )
         
         # Pass back to Avogadro
-        print(json.dumps(result))
-        logger.debug(f"The following dictionary was passed back to Avogadro: {result}")
+        print(json.dumps(output))
+        logger.debug(f"The following dictionary was passed back to Avogadro: {output}")

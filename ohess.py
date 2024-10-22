@@ -36,7 +36,6 @@ if __name__ == "__main__":
         print("Extensions|Semi-empirical (xtb){860}")
 
     if args.run_command:
-
         # Read input from Avogadro
         avo_input = json.loads(sys.stdin.read())
         # Extract the coords
@@ -67,19 +66,19 @@ if __name__ == "__main__":
 
         # Format everything appropriately for Avogadro
         # Start from the original cjson
-        result = {"moleculeFormat": "cjson", "cjson": avo_input["cjson"]}
+        output = {"moleculeFormat": "cjson", "cjson": avo_input["cjson"].copy()}
 
         # Remove anything that is now unphysical after the optimization
-        result["cjson"] = cleanup_after_opt(result["cjson"])
+        output["cjson"] = cleanup_after_opt(output["cjson"])
 
         # Add data from calculation
-        result["cjson"]["vibrations"] = freq_cjson["vibrations"]
-        result["cjson"]["atoms"]["coords"] = geom_cjson["atoms"]["coords"]
-        result["cjson"]["properties"]["totalEnergy"] = str(round(energies["eV"], 7))
+        output["cjson"]["vibrations"] = freq_cjson["vibrations"]
+        output["cjson"]["atoms"]["coords"] = geom_cjson["atoms"]["coords"]
+        output["cjson"]["properties"]["totalEnergy"] = round(energies["eV"], 7)
 
         # Inform user if there are negative frequencies
         if freqs[0]["frequency"] < 0:
-            result["message"] = (
+            output["message"] = (
                 "At least one negative frequency found!\n"
                 + "This is not a minimum on the potential energy surface.\n"
                 + "You should reoptimize the geometry."
@@ -87,8 +86,8 @@ if __name__ == "__main__":
 
         # Save result
         with open(py_xtb.TEMP_DIR / "result.cjson", "w", encoding="utf-8") as save_file:
-            json.dump(result["cjson"], save_file, indent=2)
+            json.dump(output["cjson"], save_file, indent=2)
         
         # Pass back to Avogadro
-        print(json.dumps(result))
-        logger.debug(f"The following dictionary was passed back to Avogadro: {result}")
+        print(json.dumps(output))
+        logger.debug(f"The following dictionary was passed back to Avogadro: {output}")

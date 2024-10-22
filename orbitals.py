@@ -35,7 +35,6 @@ if __name__ == "__main__":
         print("Extensions|Semi-empirical (xtb){830}")
 
     if args.run_command:
-
         # Read input from Avogadro
         avo_input = json.loads(sys.stdin.read())
         # Extract the coords
@@ -53,26 +52,27 @@ if __name__ == "__main__":
 
         # Format everything appropriately for Avogadro
         # Just pass orbitals file with instruction to read only properties
-        result = {
+        output = {
             "readProperties": True,
             "moleculeFormat": "molden",
             "molden": molden_string,
+            "cjson": avo_input["cjson"],
         }
         # As it stands, this means any other properties will be wiped
         # If there were e.g. frequencies in the original cjson, notify the user
         if "vibrations" in avo_input["cjson"]:
-            result["message"] = (
+            output["message"] = (
                 "Calculation complete!\n"
                 "The vibrational frequencies may have been lost in this process.\n"
                 "Please recalculate them if they are missing and still desired.\n"
             )
         else:
-            result["message"] = "Calculation complete!"
+            output["message"] = "Calculation complete!"
 
         # Save result
         with open(py_xtb.TEMP_DIR / "result.molden", "w", encoding="utf-8") as save_file:
-            json.dump(result, save_file, indent=2)
+            json.dump(output, save_file, indent=2)
 
         # Pass back to Avogadro
-        print(json.dumps(result))
-        logger.debug(f"The following dictionary was passed back to Avogadro: {result}")
+        print(json.dumps(output))
+        logger.debug(f"The following dictionary was passed back to Avogadro: {output}")

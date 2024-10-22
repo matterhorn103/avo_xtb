@@ -130,7 +130,6 @@ if __name__ == "__main__":
         print("Extensions|Semi-empirical (xtb){770}")
 
     if args.run_command:
-
         # Read input from Avogadro
         avo_input = json.loads(sys.stdin.read())
         # Extract the coords
@@ -175,23 +174,23 @@ if __name__ == "__main__":
 
         # Format everything appropriately for Avogadro
         # Start by passing back the original cjson, then add changes
-        result = {"moleculeFormat": "cjson", "cjson": avo_input["cjson"]}
+        output = {"moleculeFormat": "cjson", "cjson": avo_input["cjson"].copy()}
 
         # Catch errors in crest execution
         # TODO
 
         # Remove anything that is now unphysical after the optimization
-        result["cjson"] = cleanup_after_opt(result["cjson"])
+        output["cjson"] = cleanup_after_opt(output["cjson"])
 
         # Add data from calculation
-        result["cjson"]["atoms"]["coords"] = best_cjson["atoms"]["coords"]
-        result["cjson"]["properties"]["totalEnergy"] = str(round(energies["eV"], 7))
-        result["cjson"]["atoms"]["coords"]["3dSets"] = conformer_cjson["atoms"]["coords"]["3dSets"]
-        result["cjson"]["properties"]["energies"] = conformer_cjson["properties"]["energies"]
+        output["cjson"]["atoms"]["coords"] = best_cjson["atoms"]["coords"]
+        output["cjson"]["properties"]["totalEnergy"] = round(energies["eV"], 7)
+        output["cjson"]["atoms"]["coords"]["3dSets"] = conformer_cjson["atoms"]["coords"]["3dSets"]
+        output["cjson"]["properties"]["energies"] = conformer_cjson["properties"]["energies"]
 
         # Save result
         with open(py_xtb.TEMP_DIR / "result.cjson", "w", encoding="utf-8") as save_file:
-            json.dump(result["cjson"], save_file, indent=2)
+            json.dump(output["cjson"], save_file, indent=2)
 
         # If user specified a save location, copy calculation directory to there
         if not (
@@ -201,5 +200,5 @@ if __name__ == "__main__":
             copytree(py_xtb.TEMP_DIR, Path(avo_input["save_dir"]), dirs_exist_ok=True)
 
         # Pass back to Avogadro
-        print(json.dumps(result))
-        logger.debug(f"The following dictionary was passed back to Avogadro: {result}")
+        print(json.dumps(output))
+        logger.debug(f"The following dictionary was passed back to Avogadro: {output}")
