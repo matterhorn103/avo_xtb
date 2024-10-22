@@ -23,12 +23,12 @@ This plugin currently provides functionality to run the following calculation ty
 * geometry optimizations
 * vibrational frequencies
 * molecular orbitals
-* molecular dynamics
 
 There is also the option to submit a custom command to `xtb`, permitting any calculation to be run, though the output is in this case only parsed for results of the basic calculation types.
 
 ### CREST
 * conformer searches
+* protonation and deprotonation screening
 
 ## Requirements
 
@@ -37,7 +37,7 @@ There is also the option to submit a custom command to `xtb`, permitting any cal
 Currently, the plugin does not download the `xtb` binary automatically, and it is not bundled with Avogadro. Instead, it must be obtained separately. There are five options that will make `xtb` visible to the extension:
 1. Install xtb with `conda` from conda-forge and use Avogadro with the `conda` environment, either by setting it in the Python settings or by starting Avogadro with the environment activated
 2. Manually download the `xtb` binary and put it into the system PATH
-3. Manually download `xtb` and place it, or a link to it, entirely within the plugin's binary directory `<user data location>/py-xtb/bin/` (see  for more information on where this is on your system) 
+3. Manually download `xtb` and place it, or a link to it, entirely within the plugin's binary directory `<user data>/py-xtb/bin/` (see below for more information on where this is on your system) 
 4. Manually download `xtb` and manually specify its location in the `Configure...` menu
 5. Use the "Get xtb..." function within Avogadro after installing this extension
 
@@ -45,13 +45,20 @@ Currently, the plugin does not download the `xtb` binary automatically, and it i
 
 While `xtb` is cross-platform, `crest` is distributed only for Linux/UNIX systems. As a result, Windows and macOS users of the plugin will not have the calculations that rely on CREST available to them in the Avogadro interface.
 
-`crest` can be made visible to the plugin in the same ways as for `xtb` listed above. If method 3 is used, `crest` should be located at `<user data>/py-xtb/bin/crest`. The "Get xtb..." option within Avogadro will also download `crest` on supported operating systems.
+`crest` can be made visible to the plugin in the same ways as for `xtb` listed above.
+If it is not in `$PATH`, the `crest` binary, or link to it, should be located at `<user data>/py-xtb/bin/crest`.
+The "Get xtb..." option within Avogadro will also download `crest` on supported operating systems.
 
-### Open Babel
+## Data location
 
-The plugin also relies on Open Babel for conversion of output files to Avogadro's `cjson` format. The path to the `obabel` binary can be specified in the `Configure...` menu if it is not automatically detected.
-* If you use Avogadro on Windows, macOS, or the AppImage or Flatpak on Linux, you have a recent build of `obabel` with CJSON support in the same folder as the Avogadro executable, and you should use that. The plugin should hopefully find it automatically.
-* If you have obtained it from a distro's repositories, your version of `obabel` ***does not*** have the necessary CJSON support, and you will unfortunately have to compile it yourself from the [latest code](https://github.com/openbabel/openbabel).
+The core package that provides the calculation framework uses a central location to run its calculations, store its configuration, and save its log file.
+This location is `<user data>/py-xtb`, where `<user data>` is OS-dependent:
+
+- Windows: `$USER_HOME\AppData\Local\py-xtb`
+- macOS: `~/Library/Application Support/py-xtb`
+- Linux: `~/.local/share/py-xtb`
+
+Additionally, if the environment variable `XDG_DATA_HOME` is set its value will be respected and takes precedence over the above paths (on all OSes).
 
 ## Disclaimer
 

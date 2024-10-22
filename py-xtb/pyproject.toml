@@ -5,6 +5,16 @@ description = "A Python API for xtb (and CREST)."
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = []
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: BSD License",
+    "Development Status :: 4 - Beta",
+    "Topic :: Scientific/Engineering :: Chemistry",
+]
+
+[project.urls]
+Homepage = "https://github.com/matterhorn103/avo_xtb"
+Issues = "https://github.com/matterhorn103/avo_xtb/issues"
 
 [build-system]
 requires = ["hatchling"]
