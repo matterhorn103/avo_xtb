@@ -8,7 +8,7 @@ import json
 import logging
 import sys
 from pathlib import Path
-from shutil import rmtree, copytree
+from shutil import copytree
 
 from support import py_xtb
 
@@ -56,17 +56,17 @@ if __name__ == "__main__":
                 #    "suffix": " GB",
                 #    "order": 3.0,
                 #    },
-                "command": {
-                    "type": "string",
-                    "label": "Command to run",
-                    "default": f"xtb <geometry_file> --opt {py_xtb.config['opt_lvl']} --chrg 0 --uhf 0",
-                    "order": 10.0,
-                },
                 "help": {
                     "type": "text",
                     "label": "For help see",
                     "default": "https://xtb-docs.readthedocs.io/",
                     "order": 9.0,
+                },
+                "command": {
+                    "type": "string",
+                    "label": "Command to run",
+                    "default": f"xtb <input_geometry> --opt {py_xtb.config['opt_lvl']} --chrg 0 --uhf 0",
+                    "order": 10.0,
                 },
                 # "turbomole": {
                 #     "type": "boolean",
@@ -91,132 +91,75 @@ if __name__ == "__main__":
         print("Extensions|Semi-empirical (xtb){350}")
 
     if args.run_command:
-        # Remove results of last calculation
-        if py_xtb.CALC_DIR.exists():
-            for x in py_xtb.CALC_DIR.iterdir():
-                if x.is_file():
-                    x.unlink()
-                elif x.is_dir():
-                    rmtree(x)
-
         # Read input from Avogadro
         avo_input = json.loads(sys.stdin.read())
+        # Extract the coords
+        geom = py_xtb.Geometry.from_xyz(avo_input["xyz"].split("\n"))
 
-        # Extract the coords and write to file for use as xtb input
-        # Select geometry to use on basis of user choice
-        # if avo_input["turbomole"]:
-        #     tmol_path = Path(py_xtb.CALC_DIR) / "input.tmol"
-        #     with open(tmol_path, "w", encoding="utf-8") as tmol_file:
-        #         # Avogadro seems to pass tmol string with \r\n newlines on Windows
-        #         # Python writes \r\n as \r\r\n on Windows
-        #         # Open Babel then reads two new lines not one
-        #         # So make sure we only have Python newlines (\n) by removing any \r
-        #         tmol_str = str(avo_input["tmol"]).replace("\r", "")
-        #         tmol_file.write(tmol_str)
-        #     geom_path = tmol_path
-        # else:
-            # Use xyz - first get xyz format (as list of lines) from cjson
-        xyz = avo_input["xyz"]
-        # Save to file, don't forget to add newlines
-        xyz_path = Path(py_xtb.CALC_DIR) / "input.xyz"
-        with open(xyz_path, "w", encoding="utf-8") as xyz_file:
-            xyz_file.write("\n".join(xyz))
-        geom_path = xyz_path
+        command = avo_input["command"].split()
+        # Remove xtb and <input_geometry> placeholders
+        command = []
+        if command[0] == "xtb":
+            # Got to be careful that we don't remove some other reference to xtb
+            command = command[1:]
+        try:
+            command.remove("<input_geometry>")
+        except ValueError:
+            pass
 
+        # Construct Calculation object
         # Run calculation; returns subprocess.CompletedProcess object and path to output.out
-        calc, result_path, energy = py_xtb.run_xtb(
-            avo_input["command"].split(),
-            geom_path,
+        calc = py_xtb.Calculation(
+            input_geom=geom,
+            program="xtb",
+            command=command,
         )
+        calc.run()
 
         # Format everything appropriately for Avogadro
-        # Start by passing back the original cjson, then add changes
-        result = {"moleculeFormat": "cjson", "cjson": avo_input["cjson"]}
+        # Start by passing back an empty cjson, then add changes
+        output = {
+            "moleculeFormat": "cjson",
+            "cjson": py_xtb.convert.empty_cjson.copy(),
+        }
 
-        # Many different parts of the following may wish to report message
+        # TODO Catch errors in xtb execution
+
+        # Many different parts of the following may wish to report messages
         # Instantiate a message list and combine later
         message = []
 
-        # Catch errors in xtb execution (to do)
-        # except Exception as ex:
-        # print(str(ex))
-        # if (error condition):
-        # result["message"] = "Error message"
-        # Pass back to Avogadro
-        # print(json.dumps(result))
-        logger.debug(f"The following dictionary was passed back to Avogadro: {result}")
-        # break
-
-        # Check if opt was requested
-        if any(x in avo_input["command"] for x in ["--opt", "--ohess"]):
-            # if geom_path.suffix == ".tmol":
-            #     # Convert geometry with Open Babel
-            #     geom_cjson_path = obabel_convert.tmol_to_cjson(
-            #         result_path.with_name("xtbopt.tmol")
-            #     )
-            #     # Open the generated cjson
-            #     with open(geom_cjson_path, encoding="utf-8") as result_cjson:
-            #         geom_cjson = json.load(result_cjson)
-            # else:
-            # Read the xyz file
-            with open(
-                result_path.with_name("xtbopt.xyz"), encoding="utf-8"
-            ) as result_xyz:
-                xyz = result_xyz.read().split("\n")
-            # Convert geometry without Open Babel
-            geom_cjson = py_xtb.convert.xyz_to_cjson(xyz_lines=xyz)
-            result["cjson"]["atoms"]["coords"] = geom_cjson["atoms"]["coords"]
-
-        # Check if frequencies were requested
-        if any(x in avo_input["command"] for x in ["--hess", "--ohess"]):
-            freq_cjson_path = obabel_convert.g98_to_cjson(
-                result_path.with_name("g98.out")
-            )
-            # Open the cjson
-            with open(freq_cjson_path, encoding="utf-8") as result_cjson:
-                freq_cjson = json.load(result_cjson)
-            result["cjson"]["vibrations"] = freq_cjson["vibrations"]
-            # xtb no longer gives Raman intensities but does write them as all 0
-            # If passed on to the user this is misleading so remove them
-            if "ramanIntensities" in result["cjson"]["vibrations"]:
-                del result["cjson"]["vibrations"]["ramanIntensities"]
+        if hasattr(calc, "energy"):
+            energies = py_xtb.convert.convert_energy(calc.energy, "hartree")
+            output["cjson"]["properties"]["totalEnergy"] = round(energies["eV"], 7)
+        if hasattr(calc, "output_geometry"):
+            geom_cjson = calc.output_geometry.to_cjson()
+            output["cjson"]["atoms"]["coords"] = geom_cjson["atoms"]["coords"]
+        if hasattr(calc, "frequencies"):
+            freq_cjson = py_xtb.convert.freq_to_cjson(calc.frequencies)
+            output["cjson"]["vibrations"] = freq_cjson["vibrations"]
             # Inform user if there are negative frequencies
-            if float(freq_cjson["vibrations"]["frequencies"][0]) < 0:
-                # Check to see if xtb has produced a distorted geometry (ohess does this)
-                distorted_geom = geom_path.with_stem("xtbhess")
-                if distorted_geom.exists():
-                    message.append(
-                        "At least one negative frequency found!\n"
-                        + "This is not a minimum on the potential energy surface.\n"
-                        + "You should reoptimize the geometry starting from the\n"
-                        + "distorted geometry found in the calculation directory\n"
-                        + "with the filename 'xtbhess.xyz' or 'xtbhess.tmol'."
-                    )
-                else:
-                    message.append(
-                        "At least one negative frequency found!\n"
-                        + "This is not a minimum on the potential energy surface.\n"
-                        + "You should reoptimize the geometry."
-                    )
+            if calc.frequencies[0]["frequency"] < 0:
+                message.append(
+                    "At least one negative frequency found!\n"
+                    + "This is not a minimum on the potential energy surface.\n"
+                    + "You should reoptimize the geometry.\n"
+                    + "This can be avoided in future by using the Opt + Freq method."
+                )
+        if hasattr(calc, "output_molden"):
+            # Check if orbitals were requested
+            # Not sure how to keep orbital info at same time as any other calculation type
+            # Currently avo only accepts one file format being passed back
+            output["readProperties"] = True
+            output["moleculeFormat"] = "molden"
+            output["molden"] = calc.output_molden
 
-        # Check if orbitals were requested
-        # (to do)
-        # Not sure how this will be possible at the same time as any other calculation type
-        # Currently avo only accepts one file format being passed back
-        # if "--molden" in command
-
-        # Add energy from output
-        energy = py_xtb.parse_energy(calc.stdout)
-        # Convert energy to eV for Avogadro
-        energy_eV = py_xtb.convert.convert_energy(energy, "hartree")["eV"]
-        result["cjson"]["properties"]["totalEnergy"] = str(round(energy_eV, 7))
-
-        # Add all the messages, separated by blank lines
-        result["message"] = "\n\n".join(message)
+        # Add all the info messages, separated by blank lines
+        output["message"] = "\n\n".join(message)
 
         # Save result
         with open(py_xtb.CALC_DIR / "result.cjson", "w", encoding="utf-8") as save_file:
-            json.dump(result["cjson"], save_file, indent=2)
+            json.dump(output["cjson"], save_file, indent=2)
 
         # If user specified a save location, copy calculation directory to there
         if not (
@@ -226,5 +169,5 @@ if __name__ == "__main__":
             copytree(py_xtb.CALC_DIR, Path(avo_input["save_dir"]), dirs_exist_ok=True)
 
         # Pass back to Avogadro
-        print(json.dumps(result))
-        logger.debug(f"The following dictionary was passed back to Avogadro: {result}")
+        print(json.dumps(output))
+        logger.debug(f"The following dictionary was passed back to Avogadro: {output}")
