@@ -20,6 +20,12 @@ Issues = "https://github.com/matterhorn103/avo_xtb/issues"
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+[dependency-groups]
+dev = [
+    "pytest>=8.3.3",
+    "ruff>=0.7.2",
+]
+
 [tool.ruff]
 line-length = 100
 indent-width = 4
