@@ -37,8 +37,15 @@ if __name__ == "__main__":
                     "type": "string",
                     "label": "Run calculations (in subfolder) in",
                     "default": str(easyxtb.CALC_DIR),
-                    "order": 3.0,
+                    "order": 2.0,
                 },
+                "n_proc": {
+                    "type": "integer",
+                    "label": "Parallel processes to run",
+                    "minimum": 1,
+                    "default": 1,
+                    "order": 3.0
+                    },
                 "energy_units": {
                     "type": "stringList",
                     "label": "Preferred energy units",
@@ -111,7 +118,7 @@ if __name__ == "__main__":
             }
         }
         # Set other options' defaults to match that found in user config
-        for option in ["solvent", "energy_units", "method", "opt_lvl"]:
+        for option in ["solvent", "energy_units", "method", "opt_lvl", "n_proc"]:
             if easyxtb.config[option] is not None:
                 options["userOptions"][option]["default"] = easyxtb.config[option]
         print(json.dumps(options))
@@ -142,6 +149,9 @@ if __name__ == "__main__":
         if avo_input["xtb_bin"] != str(easyxtb.XTB_BIN):
             easyxtb.XTB_BIN = Path(avo_input["xtb_bin"])
             easyxtb.config["xtb_bin"] = str(easyxtb.XTB_BIN)
+
+        # Update number of threads
+        easyxtb.config["n_proc"] = avo_input["n_proc"]
 
         # Update energy units
         easyxtb.config["energy_units"] = avo_input["energy_units"]

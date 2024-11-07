@@ -14,7 +14,6 @@ import json
 import logging
 import os
 import platform
-import sys
 from pathlib import Path
 from shutil import which
 
@@ -81,7 +80,7 @@ except PermissionError:
 # Don't use `tmp` or similar because it doesn't usually persist between reboots
 if "calc_dir" in config:
     CALC_DIR = Path(config["calc_dir"])
-    logger.debug(f"Using custom calculation directory from user config")
+    logger.debug("Using custom calculation directory from user config")
 else:
     CALC_DIR = PLUGIN_DIR
 logger.debug(f"{CALC_DIR=}")
@@ -114,7 +113,7 @@ if init:
 
 # Current version of package
 # Hard code for now, obviously not ideal though
-easyxtb_VERSION = "0.5.0"
+easyxtb_VERSION = "0.5.1d"
 
 def update_config():
     """Ensure that any config options added in later versions of the package are in
@@ -217,3 +216,15 @@ if CREST_BIN is not None:
     if CREST_BIN.is_symlink():
         CREST_BIN = CREST_BIN.readlink()
     logger.debug(f"{CREST_BIN=}")
+
+
+def determine_threads() -> int:
+    """Work out a sensible number of threads to use for calculations."""
+    n_threads = os.cpu_count()
+    # Leave more spare cores the more there are available
+    sensible_threads = int(n_threads // 1.3)
+    return sensible_threads
+
+# If user hasn't set the number of threads, pick one for them
+if config["n_proc"] is None:
+    config["n_proc"] = determine_threads()
