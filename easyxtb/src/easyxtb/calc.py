@@ -20,7 +20,7 @@ import subprocess
 from pathlib import Path
 from shutil import rmtree
 
-from .conf import XTB_BIN, CREST_BIN, TEMP_DIR
+from .conf import config, XTB_BIN, CREST_BIN, TEMP_DIR
 from .geometry import Geometry
 from .parse import parse_energy, parse_g98_frequencies
 
@@ -79,7 +79,7 @@ class Calculation:
         options: dict | None = None,
         command: list[str] | None = None,
         input_geometry: Geometry | None = None,
-        calc_dir: os.PathLike | None = TEMP_DIR,
+        calc_dir: os.PathLike | None = None,
     ):
         """A convenience object to prepare, launch, and hold the results of
         calculations.
@@ -124,8 +124,7 @@ class Calculation:
         self.options = options if options else {}
         self.command = command
         self.input_geometry = input_geometry
-        if calc_dir:
-            self.calc_dir = Path(calc_dir)
+        self.calc_dir = Path(calc_dir) if calc_dir else TEMP_DIR
         logger.info(f"New Calculation created for runtype {self.runtype} with {self.program}")
     
     def run(self):
@@ -319,6 +318,7 @@ def energy(
     multiplicity: int = 1,
     solvation: str | None = None,
     method: int = 2,
+    n_proc: int | None = None,
     return_calc: bool = False,
 ) -> float | tuple[float, Calculation]:
     """Calculate energy in hartree for given geometry."""
@@ -330,6 +330,7 @@ def energy(
             "uhf": multiplicity - 1,
             "gfn": method,
             "alpb": solvation,
+            "p": n_proc if n_proc else config["n_proc"],
         },
     )
     calc.run()
@@ -346,6 +347,7 @@ def optimize(
     solvation: str | None = None,
     method: int = 2,
     level: str = "normal",
+    n_proc: int | None = None,
     return_calc: bool = False,
 ) -> Geometry | tuple[Geometry, Calculation]:
     """Optimize the geometry, starting from the provided initial geometry, and return
@@ -360,6 +362,7 @@ def optimize(
             "uhf": multiplicity - 1,
             "gfn": method,
             "alpb": solvation,
+            "p": n_proc if n_proc else config["n_proc"],
         },
     )
     calc.run()
@@ -378,6 +381,7 @@ def frequencies(
     multiplicity: int = 1,
     solvation: str | None = None,
     method: int = 2,
+    n_proc: int | None = None,
     return_calc: bool = False,
 ) -> list[dict] | tuple[list[dict], Calculation]:
     """Calculate vibrational frequencies and return results as a list of dicts."""
@@ -390,6 +394,7 @@ def frequencies(
             "uhf": multiplicity - 1,
             "gfn": method,
             "alpb": solvation,
+            "p": n_proc if n_proc else config["n_proc"],
         },
     )
     calc.run()
@@ -406,6 +411,7 @@ def opt_freq(
     solvation: str | None = None,
     method: int = 2,
     level: str = "normal",
+    n_proc: int | None = None,
     return_calc: bool = False,
 ) -> tuple[Geometry, list[dict]] | tuple[Geometry, list[dict], Calculation]:
     """Optimize geometry then calculate vibrational frequencies.
@@ -424,6 +430,7 @@ def opt_freq(
             "uhf": multiplicity - 1,
             "gfn": method,
             "alpb": solvation,
+            "p": n_proc if n_proc else config["n_proc"],
         },
     )
     calc.run()
@@ -442,6 +449,7 @@ def opt_freq(
                 "uhf": multiplicity - 1,
                 "gfn": method,
                 "alpb": solvation,
+                "p": n_proc if n_proc else config["n_proc"],
             },
         )
         calc.run()
@@ -458,6 +466,7 @@ def orbitals(
     multiplicity: int = 1,
     solvation: str | None = None,
     method: int = 2,
+    n_proc: int | None = None,
     return_calc: bool = False,
 ) -> str | tuple[str, Calculation]:
     """Calculate molecular orbitals for given geometry.
@@ -474,6 +483,7 @@ def orbitals(
             "uhf": multiplicity - 1,
             "gfn": method,
             "alpb": solvation,
+            "p": n_proc if n_proc else config["n_proc"],
         },
     )
     calc.run()
@@ -491,6 +501,7 @@ def conformers(
     method: int = 2,
     ewin: int | float = 6,
     hess: bool = False,
+    n_proc: int | None = None,
     return_calc: bool = False,
 ) -> list[dict]:
     """Simulate a conformer ensemble and return set of conformer Geometries and energies.
@@ -512,6 +523,7 @@ def conformers(
             "uhf": multiplicity - 1,
             "alpb": solvation,
             "ewin": ewin,
+            "T": n_proc if n_proc else config["n_proc"],
         },
     )
     if hess:
@@ -529,6 +541,7 @@ def protonate(
     multiplicity: int = 1,
     solvation: str | None = None,
     method: int = 2,
+    n_proc: int | None = None,
     return_calc: bool = False,
 ) -> list[dict]:
     """Screen possible protonation sites and return set of tautomer Geometries and energies.
@@ -548,6 +561,7 @@ def protonate(
             "chrg": charge,
             "uhf": multiplicity - 1,
             "alpb": solvation,
+            "T": n_proc if n_proc else config["n_proc"],
         },
     )
     calc.run()
@@ -563,6 +577,7 @@ def deprotonate(
     multiplicity: int = 1,
     solvation: str | None = None,
     method: int = 2,
+    n_proc: int | None = None,
     return_calc: bool = False,
 ) -> list[dict]:
     """Screen possible deprotonation sites and return set of tautomer Geometries and energies.
@@ -582,6 +597,7 @@ def deprotonate(
             "chrg": charge,
             "uhf": multiplicity - 1,
             "alpb": solvation,
+            "T": n_proc if n_proc else config["n_proc"],
         },
     )
     calc.run()
