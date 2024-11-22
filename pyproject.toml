@@ -1,6 +1,6 @@
 [project]
 name = "avo_xtb"
-version = "0.5.0"
+version = "0.6.0"
 description = "A convenient interface to xtb (and CREST) in Avogadro 2"
 readme = "README.md"
 requires-python = ">=3.10"
