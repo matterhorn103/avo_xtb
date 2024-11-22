@@ -26,9 +26,12 @@ class Geometry:
     def __init__(
         self,
         atoms: list[Atom],
+        charge: int = 0,
+        multiplicity: int = 1,
         _comment: str | None = None,
     ):
-        """A set of atoms within a 3D space for use in calculations.
+        """A set of atoms within a 3D space for use in calculations with an associated
+        charge and multiplicity.
 
         Provides class methods for creation from, and instance methods for writing to,
         XYZ and CJSON formats.
@@ -36,6 +39,11 @@ class Geometry:
         The coordinates should be provided as a list of `Atom` objects.
         """
         self.atoms = atoms
+        self.charge = charge
+        if multiplicity >= 1:
+            self.multiplicity = multiplicity
+        else:
+            raise ValueError("Multiplicity must be at least 1 (a singlet).")
         self._comment = _comment
     
     def __iter__(self):
@@ -78,6 +86,10 @@ class Geometry:
                     "number": all_element_numbers,
                 },
             },
+            "properties": {
+                "totalCharge": self.charge,
+                "totalSpinMultiplicity": self.multiplicity,
+            }
         }
         return cjson
 
@@ -155,7 +167,11 @@ class Geometry:
     
     @classmethod
     def from_cjson(cls, cjson_dict: dict):
-        """Create a `Geometry` object from an CJSON in the form of a Python dict."""
+        """Create a `Geometry` object from an CJSON in the form of a Python dict.
+        
+        If the CJSON does not specify the overall charge and multiplicity, a neutral
+        singlet is assumed, regardless of the chemical feasibility of that.
+        """
         logger.debug("Instantiating a geometry from a cjson")
         atoms = []
         for i, atomic_no in enumerate(cjson_dict["atoms"]["elements"]):
@@ -167,7 +183,9 @@ class Geometry:
                     cjson_dict["atoms"]["coords"]["3d"][3*i + 2],
                 )
             )
-        return Geometry(atoms)
+        charge = cjson_dict.get("properties", {}).get("totalCharge", 0)
+        multiplicity = cjson_dict.get("properties", {}).get("totalSpinMultiplicity", 1)
+        return Geometry(atoms, charge, multiplicity)
 
     @classmethod
     def from_file(cls, file: os.PathLike, format: str = None, multi: bool = False):
