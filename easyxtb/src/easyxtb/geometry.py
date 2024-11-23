@@ -174,7 +174,7 @@ class Geometry:
         """
         logger.debug("Instantiating a geometry from a cjson")
         atoms = []
-        for i, atomic_no in enumerate(cjson_dict["atoms"]["elements"]):
+        for i, atomic_no in enumerate(cjson_dict["atoms"]["elements"]["number"]):
             atoms.append(
                 Atom(
                     get_element_symbol(atomic_no),
