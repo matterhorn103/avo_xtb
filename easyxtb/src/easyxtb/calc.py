@@ -172,9 +172,9 @@ class Calculation:
                     *self.runtype_args,
                     "--",
                 ]
-            if self.input_geometry.charge != 0:
+            if "chrg" not in self.options and self.input_geometry.charge != 0:
                 command.extend(["--chrg", str(self.input_geometry.charge)])
-            if self.input_geometry.multiplicity != 1:
+            if "uhf" not in self.options and self.input_geometry.multiplicity != 1:
                 command.extend(["--uhf", str(self.input_geometry.multiplicity - 1)])
             for flag, value in self.options.items():
                 # Add appropriate number of minuses to flags
