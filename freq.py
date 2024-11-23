@@ -38,14 +38,12 @@ if __name__ == "__main__":
         # Read input from Avogadro
         avo_input = json.loads(sys.stdin.read())
         # Extract the coords
-        geom = easyxtb.Geometry.from_xyz(avo_input["xyz"].split("\n"))
+        geom = easyxtb.Geometry.from_cjson(avo_input["cjson"])
 
         # Run calculation; returns set of frequency data
         logger.debug("avo_xtb is requesting a frequency calculation")
         freqs = easyxtb.calc.frequencies(
             geom,
-            charge=avo_input["charge"],
-            multiplicity=avo_input["spin"],
             solvation=easyxtb.config["solvent"],
             method=easyxtb.config["method"],
         )
