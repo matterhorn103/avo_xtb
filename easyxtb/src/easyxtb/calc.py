@@ -161,21 +161,20 @@ class Calculation:
             command = self.command
         else:
             # Build command line args
-            if self.runtype is None:
-                # Simple single point
-                command = [str(self.program_path), str(geom_file)]
-            else:
-                command = [
-                    str(self.program_path),
-                    str(geom_file),
-                    "--" + self.runtype,
-                    *self.runtype_args,
-                    "--",
-                ]
+            command = [str(self.program_path), str(geom_file)]
             if "chrg" not in self.options and self.input_geometry.charge != 0:
                 command.extend(["--chrg", str(self.input_geometry.charge)])
             if "uhf" not in self.options and self.input_geometry.multiplicity != 1:
                 command.extend(["--uhf", str(self.input_geometry.multiplicity - 1)])
+            if self.runtype is None:
+                # Simple single point
+                pass
+            else:
+                command.extend([
+                    "--" + self.runtype,
+                    *self.runtype_args,
+                    "--",
+                ])
             for flag, value in self.options.items():
                 # Add appropriate number of minuses to flags
                 if len(flag) == 1:

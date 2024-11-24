@@ -2,7 +2,6 @@
 significantly increasing footprint."""
 
 import json
-import os
 
 
 def _flatten_arrays(data: dict) -> dict:

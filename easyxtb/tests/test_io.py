@@ -4,17 +4,17 @@
 import json
 from pathlib import Path
 
-from easyxtb import Geometry, Atom
+from easyxtb import Geometry
+from . import equal_geom
 
 
-files_dir = Path(__file__).parent / "files"
-# These raw files are as produced by Avogadro nightlies as of 2024-11-24 (1.99-based)
+files_dir = Path(__file__).parent / "files/input"
 raw_files = [
     "acetic_acid_raw",
     "acetone_raw",
     "benzene_raw",
     "benzoate_raw",
-    "me4n_raw",
+    "bu4n_raw",
     "tempo_raw",
 ]
 
@@ -38,27 +38,12 @@ def test_open_cjson():
     for filename in raw_files:
         Geometry.from_file(files_dir / f"{filename}.cjson")
 
-def round_atom_coordinates(atoms: list[Atom], precision: int = 10) -> list[Atom]:
-    # Often have to account for difference in precision between formats or sources
-    rounded_atoms = []
-    for atom in atoms:
-        rounded_atoms.append(
-            Atom(
-                atom.element,
-                round(atom.x, precision),
-                round(atom.y, precision),
-                round(atom.z, precision),
-            )
-        )
-    return rounded_atoms
-
 def test_xyz_cjson_coords_equivalence():
     for filename in raw_files:
+        print(filename)
         xyz_geom = Geometry.from_file(files_dir / f"{filename}.xyz")
         cjson_geom = Geometry.from_file(files_dir / f"{filename}.cjson")
-        rounded_xyz_atoms = round_atom_coordinates(xyz_geom.atoms, 10)
-        rounded_cjson_atoms = round_atom_coordinates(cjson_geom.atoms, 10)
-        assert rounded_xyz_atoms == rounded_cjson_atoms
+        assert equal_geom(xyz_geom, cjson_geom, precision=14)
 
 def test_default_xyz_charge_multiplicity():
     for filename in raw_files:
@@ -117,27 +102,27 @@ def test_write_cjson(tmp_path):
     acetic_acid.write_cjson(tmp_path / "acetic_acid_raw_out.cjson")
 
 def test_xyz_roundtrip():
-    me4n_file = files_dir / "me4n_raw.xyz"
-    with open(me4n_file, encoding="utf-8") as f:
-        me4n_lines = f.read().splitlines()
-    me4n = Geometry.from_file(me4n_file)
+    bu4n_file = files_dir / "bu4n_raw.xyz"
+    with open(bu4n_file, encoding="utf-8") as f:
+        bu4n_lines = f.read().splitlines()
+    bu4n = Geometry.from_file(bu4n_file)
     # Compare agnostic wrt the number of spaces used
-    assert str(me4n.to_xyz()).split() == str(me4n_lines).split()
+    assert str(bu4n.to_xyz()).split() == str(bu4n_lines).split()
 
 def test_cjson_roundtrip():
-    me4n_file = files_dir / "me4n_chrg_spin.cjson"
-    with open(me4n_file, encoding="utf-8") as f:
-        me4n_original = json.load(f)
-    me4n = Geometry.from_file(me4n_file)
-    me4n_cjson_new = me4n.to_cjson()
-    assert me4n_cjson_new == me4n_original
+    bu4n_file = files_dir / "bu4n_chrg_spin.cjson"
+    with open(bu4n_file, encoding="utf-8") as f:
+        bu4n_original = json.load(f)
+    bu4n = Geometry.from_file(bu4n_file)
+    bu4n_cjson_new = bu4n.to_cjson()
+    assert bu4n_cjson_new == bu4n_original
 
 def test_cjson_read_write_roundtrip(tmp_path):
-    me4n_file = files_dir / "me4n_chrg_spin.cjson"
-    with open(me4n_file, encoding="utf-8") as f:
-        me4n_string_original = f.read()
-    me4n = Geometry.from_file(me4n_file)
-    me4n.write_cjson(tmp_path / "me4n_chrg_spin_out.cjson")
-    with open(tmp_path / "me4n_chrg_spin_out.cjson", encoding="utf-8") as f:
-        me4n_string_new = f.read()
-    assert me4n_string_original == me4n_string_new
+    bu4n_file = files_dir / "bu4n_chrg_spin.cjson"
+    with open(bu4n_file, encoding="utf-8") as f:
+        bu4n_string_original = f.read()
+    bu4n = Geometry.from_file(bu4n_file)
+    bu4n.write_cjson(tmp_path / "bu4n_chrg_spin_out.cjson")
+    with open(tmp_path / "bu4n_chrg_spin_out.cjson", encoding="utf-8") as f:
+        bu4n_string_new = f.read()
+    assert bu4n_string_original == bu4n_string_new

@@ -4,7 +4,7 @@ from .conf import config, config_file
 from .conf import PLUGIN_DIR, CALC_DIR, TEMP_DIR, BIN_DIR, XTB_BIN, CREST_BIN
 from .geometry import Atom, Geometry
 from .calc import Calculation
-from . import calc, conf, convert
+from . import calc, conf, convert, format
 
 
 logger = logging.getLogger(__name__)
