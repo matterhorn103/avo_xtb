@@ -38,14 +38,12 @@ if __name__ == "__main__":
         # Read input from Avogadro
         avo_input = json.loads(sys.stdin.read())
         # Extract the coords
-        geom = easyxtb.Geometry.from_xyz(avo_input["xyz"].split("\n"))
+        geom = easyxtb.Geometry.from_cjson(avo_input["cjson"])
 
         # Run calculation; returns energy as float in hartree
         logger.debug("avo_xtb is requesting a single point energy calculation")
         energy_hartree = easyxtb.calc.energy(
             geom,
-            charge=avo_input["charge"],
-            multiplicity=avo_input["spin"],
             solvation=easyxtb.config["solvent"],
             method=easyxtb.config["method"],
         )

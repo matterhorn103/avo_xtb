@@ -172,6 +172,10 @@ class Calculation:
                     *self.runtype_args,
                     "--",
                 ]
+            if "chrg" not in self.options and self.input_geometry.charge != 0:
+                command.extend(["--chrg", str(self.input_geometry.charge)])
+            if "uhf" not in self.options and self.input_geometry.multiplicity != 1:
+                command.extend(["--uhf", str(self.input_geometry.multiplicity - 1)])
             for flag, value in self.options.items():
                 # Add appropriate number of minuses to flags
                 if len(flag) == 1:
@@ -216,7 +220,11 @@ class Calculation:
         # If there's an output geometry, read it
         if self.output_file.with_name("xtbopt.xyz").exists():
             logger.debug(f"Output geometry found at {self.output_file.with_name('xtbopt.xyz')}")
-            self.output_geometry = Geometry.from_file(self.output_file.with_name("xtbopt.xyz"))
+            self.output_geometry = Geometry.from_file(
+                self.output_file.with_name("xtbopt.xyz"),
+                charge=self.input_geometry.charge,
+                multiplicity=self.input_geometry.multiplicity,
+            )
             logger.debug("Read output geometry")
         else:
             # Assume geom was the same at end of calc as at beginning
@@ -248,7 +256,11 @@ class Calculation:
                 # Conformer search
                 logger.debug("A conformer search was requested, so checking for files")
                 # Get energy and geom of lowest conformer
-                best = Geometry.from_file(self.output_file.with_name("crest_best.xyz"))
+                best = Geometry.from_file(
+                    self.output_file.with_name("crest_best.xyz"),
+                    charge=self.input_geometry.charge,
+                    multiplicity=self.input_geometry.multiplicity,
+                )
                 logger.debug(f"Geometry of lowest energy conformer read from {self.output_file.with_name('crest_best.xyz')}")
                 self.output_geometry = best
                 self.energy = float(best._comment)
@@ -257,6 +269,8 @@ class Calculation:
                 conformer_geoms = Geometry.from_file(
                     self.output_file.with_name("crest_conformers.xyz"),
                     multi=True,
+                    charge=self.input_geometry.charge,
+                    multiplicity=self.input_geometry.multiplicity,
                 )
                 logger.debug(f"Geometries of conformers read from {self.output_file.with_name('crest_conformers.xyz')}")
                 self.conformers = [
@@ -273,6 +287,8 @@ class Calculation:
                 tautomer_geoms = Geometry.from_file(
                     self.output_file.with_name("protonated.xyz"),
                     multi=True,
+                    charge=self.input_geometry.charge + 1,
+                    multiplicity=self.input_geometry.multiplicity,
                 )
                 logger.debug(f"Geometries of tautomers read from {self.output_file.with_name('protonated.xyz')}")
                 self.tautomers = [
@@ -294,6 +310,8 @@ class Calculation:
                 tautomer_geoms = Geometry.from_file(
                     self.output_file.with_name("deprotonated.xyz"),
                     multi=True,
+                    charge=self.input_geometry.charge - 1,
+                    multiplicity=self.input_geometry.multiplicity,
                 )
                 logger.debug(f"Geometries of tautomers read from {self.output_file.with_name('deprotonated.xyz')}")
                 self.tautomers = [
@@ -314,8 +332,6 @@ class Calculation:
 
 def energy(
     input_geometry: Geometry,
-    charge: int = 0,
-    multiplicity: int = 1,
     solvation: str | None = None,
     method: int = 2,
     n_proc: int | None = None,
@@ -326,8 +342,6 @@ def energy(
     calc = Calculation(
         input_geometry=input_geometry,
         options={
-            "chrg": charge,
-            "uhf": multiplicity - 1,
             "gfn": method,
             "alpb": solvation,
             "p": n_proc if n_proc else config["n_proc"],
@@ -342,8 +356,6 @@ def energy(
 
 def optimize(
     input_geometry: Geometry,
-    charge: int = 0,
-    multiplicity: int = 1,
     solvation: str | None = None,
     method: int = 2,
     level: str = "normal",
@@ -358,8 +370,6 @@ def optimize(
         runtype="opt",
         runtype_args=[level],
         options={
-            "chrg": charge,
-            "uhf": multiplicity - 1,
             "gfn": method,
             "alpb": solvation,
             "p": n_proc if n_proc else config["n_proc"],
@@ -377,8 +387,6 @@ def optimize(
 
 def frequencies(
     input_geometry: Geometry,
-    charge: int = 0,
-    multiplicity: int = 1,
     solvation: str | None = None,
     method: int = 2,
     n_proc: int | None = None,
@@ -390,8 +398,6 @@ def frequencies(
         input_geometry=input_geometry,
         runtype="hess",
         options={
-            "chrg": charge,
-            "uhf": multiplicity - 1,
             "gfn": method,
             "alpb": solvation,
             "p": n_proc if n_proc else config["n_proc"],
@@ -406,8 +412,6 @@ def frequencies(
 
 def opt_freq(
     input_geometry: Geometry,
-    charge: int = 0,
-    multiplicity: int = 1,
     solvation: str | None = None,
     method: int = 2,
     level: str = "normal",
@@ -426,8 +430,6 @@ def opt_freq(
         runtype="ohess",
         runtype_args=[level],
         options={
-            "chrg": charge,
-            "uhf": multiplicity - 1,
             "gfn": method,
             "alpb": solvation,
             "p": n_proc if n_proc else config["n_proc"],
@@ -441,12 +443,10 @@ def opt_freq(
     distorted_geom_file = calc.output_file.with_name("xtbhess.xyz")
     while distorted_geom_file.exists():
         calc = Calculation(
-            input_geometry=Geometry.from_file(distorted_geom_file),
+            input_geometry=Geometry.from_file(distorted_geom_file, charge=input_geometry.charge, multiplicity=input_geometry.multiplicity),
             runtype="ohess",
             runtype_args=[level],
             options={
-                "chrg": charge,
-                "uhf": multiplicity - 1,
                 "gfn": method,
                 "alpb": solvation,
                 "p": n_proc if n_proc else config["n_proc"],
@@ -462,8 +462,6 @@ def opt_freq(
 
 def orbitals(
     input_geometry: Geometry,
-    charge: int = 0,
-    multiplicity: int = 1,
     solvation: str | None = None,
     method: int = 2,
     n_proc: int | None = None,
@@ -479,8 +477,6 @@ def orbitals(
         input_geometry=input_geometry,
         options={
             "molden": True,
-            "chrg": charge,
-            "uhf": multiplicity - 1,
             "gfn": method,
             "alpb": solvation,
             "p": n_proc if n_proc else config["n_proc"],
@@ -495,8 +491,6 @@ def orbitals(
 
 def conformers(
     input_geometry: Geometry,
-    charge: int = 0,
-    multiplicity: int = 1,
     solvation: str | None = None,
     method: int = 2,
     ewin: int | float = 6,
@@ -519,8 +513,6 @@ def conformers(
         options={
             "xnam": XTB_BIN,
             method_flag: True,
-            "chrg": charge,
-            "uhf": multiplicity - 1,
             "alpb": solvation,
             "ewin": ewin,
             "T": n_proc if n_proc else config["n_proc"],
@@ -537,8 +529,6 @@ def conformers(
 
 def protonate(
     input_geometry: Geometry,
-    charge: int = 0,
-    multiplicity: int = 1,
     solvation: str | None = None,
     method: int = 2,
     n_proc: int | None = None,
@@ -547,8 +537,6 @@ def protonate(
     """Screen possible protonation sites and return set of tautomer Geometries and energies.
 
     The returned tautomers are ordered from lowest to highest energy.
-    
-    Note that `charge` should be the charge on the molecule before protonation.
     """
     method_flag = f"gfn{method}"
     calc = Calculation(
@@ -558,8 +546,6 @@ def protonate(
         options={
             "xnam": XTB_BIN,
             method_flag: True,
-            "chrg": charge,
-            "uhf": multiplicity - 1,
             "alpb": solvation,
             "T": n_proc if n_proc else config["n_proc"],
         },
@@ -573,8 +559,6 @@ def protonate(
 
 def deprotonate(
     input_geometry: Geometry,
-    charge: int = 0,
-    multiplicity: int = 1,
     solvation: str | None = None,
     method: int = 2,
     n_proc: int | None = None,
@@ -583,8 +567,6 @@ def deprotonate(
     """Screen possible deprotonation sites and return set of tautomer Geometries and energies.
 
     The returned tautomers are ordered from lowest to highest energy.
-    
-    Note that `charge` should be the charge on the molecule before deprotonation.
     """
     method_flag = f"gfn{method}"
     calc = Calculation(
@@ -594,8 +576,6 @@ def deprotonate(
         options={
             "xnam": XTB_BIN,
             method_flag: True,
-            "chrg": charge,
-            "uhf": multiplicity - 1,
             "alpb": solvation,
             "T": n_proc if n_proc else config["n_proc"],
         },

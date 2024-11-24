@@ -26,9 +26,12 @@ class Geometry:
     def __init__(
         self,
         atoms: list[Atom],
+        charge: int = 0,
+        multiplicity: int = 1,
         _comment: str | None = None,
     ):
-        """A set of atoms within a 3D space for use in calculations.
+        """A set of atoms within a 3D space for use in calculations with an associated
+        charge and multiplicity.
 
         Provides class methods for creation from, and instance methods for writing to,
         XYZ and CJSON formats.
@@ -36,6 +39,11 @@ class Geometry:
         The coordinates should be provided as a list of `Atom` objects.
         """
         self.atoms = atoms
+        self.charge = charge
+        if multiplicity >= 1:
+            self.multiplicity = multiplicity
+        else:
+            raise ValueError("Multiplicity must be at least 1 (a singlet).")
         self._comment = _comment
     
     def __iter__(self):
@@ -78,6 +86,10 @@ class Geometry:
                     "number": all_element_numbers,
                 },
             },
+            "properties": {
+                "totalCharge": self.charge,
+                "totalSpinMultiplicity": self.multiplicity,
+            }
         }
         return cjson
 
@@ -117,7 +129,7 @@ class Geometry:
             self.write_cjson(dest)
 
     @classmethod
-    def from_xyz(cls, xyz_lines: list[str]):
+    def from_xyz(cls, xyz_lines: list[str], charge: int = 0, multiplicity: int = 1):
         """Create a `Geometry` object from an XYZ in the form of a list of lines."""
         logger.debug("Instantiating a geometry from an xyz")
         atoms = []
@@ -130,10 +142,10 @@ class Geometry:
                 atoms.append(
                     Atom(atom_parts[0], *[float(n) for n in atom_parts[1:4]])
                 )
-        return Geometry(atoms, _comment=xyz_lines[1])
+        return Geometry(atoms, charge, multiplicity, _comment=xyz_lines[1])
     
     @classmethod
-    def from_multi_xyz(cls, xyz_lines: list[str]):
+    def from_multi_xyz(cls, xyz_lines: list[str], charge: int = 0, multiplicity: int = 1):
         """Create a set of `Geometry` objects from an XYZ (in the form of a list of
         lines) that contains multiple different structures.
         
@@ -149,16 +161,20 @@ class Geometry:
         for i, l in enumerate(xyz_lines):
             current_xyz.append(l)
             if i == len(xyz_lines) - 1 or xyz_lines[i+1] == atom_count_line:
-                geometries.append(cls.from_xyz(current_xyz))
+                geometries.append(cls.from_xyz(current_xyz, charge, multiplicity))
                 current_xyz = []
         return geometries
     
     @classmethod
-    def from_cjson(cls, cjson_dict: dict):
-        """Create a `Geometry` object from an CJSON in the form of a Python dict."""
+    def from_cjson(cls, cjson_dict: dict, charge: int = None, multiplicity: int = None):
+        """Create a `Geometry` object from an CJSON in the form of a Python dict.
+        
+        If the CJSON does not specify the overall charge and multiplicity, a neutral
+        singlet is assumed, regardless of the chemical feasibility of that.
+        """
         logger.debug("Instantiating a geometry from a cjson")
         atoms = []
-        for i, atomic_no in enumerate(cjson_dict["atoms"]["elements"]):
+        for i, atomic_no in enumerate(cjson_dict["atoms"]["elements"]["number"]):
             atoms.append(
                 Atom(
                     get_element_symbol(atomic_no),
@@ -167,15 +183,27 @@ class Geometry:
                     cjson_dict["atoms"]["coords"]["3d"][3*i + 2],
                 )
             )
-        return Geometry(atoms)
+        charge = charge if charge else cjson_dict.get("properties", {}).get("totalCharge", 0)
+        multiplicity = multiplicity if multiplicity else cjson_dict.get("properties", {}).get("totalSpinMultiplicity", 1)
+        return Geometry(atoms, charge, multiplicity)
 
     @classmethod
-    def from_file(cls, file: os.PathLike, format: str = None, multi: bool = False):
+    def from_file(
+        cls,
+        file: os.PathLike,
+        format: str = None,
+        multi: bool = False,
+        charge: int = None,
+        multiplicity: int = None,
+    ):
         """Create a `Geometry` object from an XYZ or CJSON file.
         
         The format can be specified by passing either ".xyz" or ".cjson" as the `format`
         argument, or it can be left to automatically be detected based on the filename
         ending.
+
+        If the file is a CJSON, charge and multiplicity will be read from the file if
+        present. Passing them as arguments will override this, but is not required.
 
         The method attempts to automatically detect an XYZ file containing multiple
         structures, parse as appropriate, and return a list of `Geometry` objects.
@@ -192,15 +220,17 @@ class Geometry:
         if format == ".xyz":
             with open(filepath, encoding="utf-8") as f:
                 xyz_lines = f.read().split("\n")
+            charge = charge if charge else 0
+            multiplicity = multiplicity if multiplicity else 1
             # Detect multiple structures in single xyz file
             # Make the reasonable assumption that all structures have the same number of
             # atoms and that therefore the first line of the file repeats itself
             atom_count_line = xyz_lines[0]
             n_structures = xyz_lines.count(atom_count_line)
             if n_structures > 1 or multi:
-                return cls.from_multi_xyz(xyz_lines)
+                return cls.from_multi_xyz(xyz_lines, charge=charge, multiplicity=multiplicity)
             else:
-                return cls.from_xyz(xyz_lines)
+                return cls.from_xyz(xyz_lines, charge=charge, multiplicity=multiplicity)
 
         if format == ".cjson":
             with open(filepath, encoding="utf-8") as f:

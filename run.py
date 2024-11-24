@@ -94,7 +94,7 @@ if __name__ == "__main__":
         # Read input from Avogadro
         avo_input = json.loads(sys.stdin.read())
         # Extract the coords
-        geom = easyxtb.Geometry.from_xyz(avo_input["xyz"].split("\n"))
+        geom = easyxtb.Geometry.from_cjson(avo_input["cjson"])
 
         command = avo_input["command"].split()
         # Remove xtb and <input_geometry> placeholders
