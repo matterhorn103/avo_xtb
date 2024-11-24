@@ -38,17 +38,27 @@ def test_open_cjson():
     for filename in raw_files:
         Geometry.from_file(files_dir / f"{filename}.cjson")
 
+def round_atom_coordinates(atoms: list[Atom], precision: int = 10) -> list[Atom]:
+    # Often have to account for difference in precision between formats or sources
+    rounded_atoms = []
+    for atom in atoms:
+        rounded_atoms.append(
+            Atom(
+                atom.element,
+                round(atom.x, precision),
+                round(atom.y, precision),
+                round(atom.z, precision),
+            )
+        )
+    return rounded_atoms
+
 def test_xyz_cjson_coords_equivalence():
     for filename in raw_files:
         xyz_geom = Geometry.from_file(files_dir / f"{filename}.xyz")
         cjson_geom = Geometry.from_file(files_dir / f"{filename}.cjson")
-        # Avogadro only saves XYZ geoms with 5 decimal places in coordinate values
-        rounded_atoms = []
-        for atom in cjson_geom.atoms:
-            rounded_atoms.append(
-                Atom(atom.element, round(atom.x, 5), round(atom.y, 5), round(atom.z, 5))
-            )
-        assert xyz_geom.atoms == rounded_atoms
+        rounded_xyz_atoms = round_atom_coordinates(xyz_geom.atoms, 10)
+        rounded_cjson_atoms = round_atom_coordinates(cjson_geom.atoms, 10)
+        assert rounded_xyz_atoms == rounded_cjson_atoms
 
 def test_default_xyz_charge_multiplicity():
     for filename in raw_files:
@@ -115,18 +125,19 @@ def test_xyz_roundtrip():
     assert str(me4n.to_xyz()).split() == str(me4n_lines).split()
 
 def test_cjson_roundtrip():
-    me4n_file = files_dir / "me4n_bare.cjson"
+    me4n_file = files_dir / "me4n_chrg_spin.cjson"
     with open(me4n_file, encoding="utf-8") as f:
-        me4n_cjson_original = json.load(f)
+        me4n_original = json.load(f)
     me4n = Geometry.from_file(me4n_file)
-    assert me4n.to_cjson() == me4n_cjson_original
+    me4n_cjson_new = me4n.to_cjson()
+    assert me4n_cjson_new == me4n_original
 
 def test_cjson_read_write_roundtrip(tmp_path):
-    me4n_file = files_dir / "me4n_bare.cjson"
+    me4n_file = files_dir / "me4n_chrg_spin.cjson"
     with open(me4n_file, encoding="utf-8") as f:
         me4n_string_original = f.read()
     me4n = Geometry.from_file(me4n_file)
-    me4n.write_cjson(tmp_path / "me4n_bare_out.cjson")
-    with open(tmp_path / "me4n_bare_out.cjson", encoding="utf-8") as f:
+    me4n.write_cjson(tmp_path / "me4n_chrg_spin_out.cjson")
+    with open(tmp_path / "me4n_chrg_spin_out.cjson", encoding="utf-8") as f:
         me4n_string_new = f.read()
     assert me4n_string_original == me4n_string_new

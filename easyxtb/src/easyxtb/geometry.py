@@ -59,11 +59,13 @@ class Geometry:
         xyz = [str(len(self.atoms)), comment]
         for a in self.atoms:
             # Turn each atom (line of array) into a single string and add to xyz
+            # xtb and ORCA use 14 decimal places for XYZs and Avogadro writes between 14
+            # and 16 to CJSON so let's match that
             atom_line = "     ".join([
                 a.element + (" " * (5 - len(a.element))),
-                f"{a.x:.5f}",
-                f"{a.y:.5f}",
-                f"{a.z:.5f}",
+                f"{a.x:.14f}",
+                f"{a.y:.14f}",
+                f"{a.z:.14f}",
             ])
             # Make everything line up by removing a space in front of each minus
             atom_line = atom_line.replace(" -", "-")

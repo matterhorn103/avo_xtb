@@ -7,9 +7,5 @@
     "elements": {
       "number": [6, 6, 1, 1, 1, 8, 6, 1, 1, 1]
     }
-  },
-  "properties": {
-    "totalCharge": 0,
-    "totalSpinMultiplicity": 1
   }
 }
