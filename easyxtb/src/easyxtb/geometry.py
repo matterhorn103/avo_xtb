@@ -104,7 +104,7 @@ class Geometry:
         # Make sure it ends with a newline
         lines = self.to_xyz() + [""]
         with open(dest, "w", encoding="utf-8") as f:
-            f.write("\n".join(lines) + "\n")
+            f.write("\n".join(lines))
         return dest
     
     def write_cjson(
@@ -130,8 +130,10 @@ class Geometry:
         logger.debug(f"Saving the geometry as a cjson file to {dest}")
         cjson = self.to_cjson()
         cjson_string = cjson_dumps(cjson, prettyprint=prettyprint, indent=indent, **kwargs)
+        # Make sure it ends with a newline
+        cjson_string += "\n"
         with open(dest, "w", encoding="utf-8") as f:
-            f.write(cjson_string + "\n")
+            f.write(cjson_string)
         return dest
 
     def to_file(self, dest: os.PathLike, format: str = None) -> os.PathLike:
