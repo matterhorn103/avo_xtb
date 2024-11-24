@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from .convert import get_atomic_number, get_element_symbol
+from .format import cjson_dumps
 
 
 logger = logging.getLogger(__name__)
@@ -78,6 +79,7 @@ class Geometry:
             all_element_numbers.append(get_atomic_number(atom.element))
             all_coords.extend([float(atom.x), float(atom.y), float(atom.z)])
         cjson = {
+            "chemicalJson": 1,
             "atoms": {
                 "coords": {
                     "3d": all_coords,
@@ -94,22 +96,44 @@ class Geometry:
         return cjson
 
     def write_xyz(self, dest: os.PathLike) -> os.PathLike:
-        """Write geometry to an XYZ file at the provided path."""
+        """Write geometry to an XYZ file at the provided path.
+        
+        The file is written with a trailing newline.
+        """
         logger.debug(f"Saving the geometry as an xyz file to {dest}")
         # Make sure it ends with a newline
         lines = self.to_xyz() + [""]
         with open(dest, "w", encoding="utf-8") as f:
-            f.write("\n".join(lines))
+            f.write("\n".join(lines) + "\n")
         return dest
     
-    def write_cjson(self, dest: os.PathLike) -> os.PathLike:
-        """Write geometry to a CJSON file at the provided path."""
+    def write_cjson(
+        self,
+        dest: os.PathLike,
+        prettyprint=True,
+        indent=2,
+        **kwargs,
+    ) -> os.PathLike:
+        """Write geometry to a CJSON file at the provided path.
+        
+        With the default `prettyprint` option, all simple arrays (not themselves
+        containing objects/dicts or arrays/lists) will be flattened onto a single line,
+        while all other array elements and object members will be pretty-printed with
+        the specified indent level (2 spaces by default).
+
+        `indent` and any `**kwargs` are passed to Python's `json.dumps()` as is, so the
+        same values are valid e.g. `indent=0` will insert newlines while `indent=None`
+        will afford a compact single-line representation.
+
+        The file is written with a trailing newline.
+        """
         logger.debug(f"Saving the geometry as a cjson file to {dest}")
         cjson = self.to_cjson()
+        cjson_string = cjson_dumps(cjson, prettyprint=prettyprint, indent=indent, **kwargs)
         with open(dest, "w", encoding="utf-8") as f:
-            json.dump(cjson, f)
+            f.write(cjson_string + "\n")
         return dest
-    
+
     def to_file(self, dest: os.PathLike, format: str = None) -> os.PathLike:
         """Write geometry to an XYZ or CJSON file.
         
@@ -121,12 +145,11 @@ class Geometry:
         # Autodetect format of file
         if format is None:
             format = filepath.suffix
-
         if format == ".xyz":
             self.write_xyz(dest)
-
         if format == ".cjson":
             self.write_cjson(dest)
+        return dest
 
     @classmethod
     def from_xyz(cls, xyz_lines: list[str], charge: int = 0, multiplicity: int = 1):
@@ -170,7 +193,8 @@ class Geometry:
         """Create a `Geometry` object from an CJSON in the form of a Python dict.
         
         If the CJSON does not specify the overall charge and multiplicity, a neutral
-        singlet is assumed, regardless of the chemical feasibility of that.
+        singlet is assumed, regardless of the chemical feasibility of that, unless the
+        values are specified as arguments.
         """
         logger.debug("Instantiating a geometry from a cjson")
         atoms = []
@@ -202,8 +226,11 @@ class Geometry:
         argument, or it can be left to automatically be detected based on the filename
         ending.
 
-        If the file is a CJSON, charge and multiplicity will be read from the file if
-        present. Passing them as arguments will override this, but is not required.
+        Charge and multiplicity are handled as by the `from_xyz()` and `from_cjson()`
+        methods: if the file is a CJSON, charge and multiplicity will be read from the
+        file if present, then will default to 0 and 1 respectively; if the file is an
+        XYZ, they will be assumed to be 0 and 1; in all cases passing them as arguments
+        will override both parsed values and defaults.
 
         The method attempts to automatically detect an XYZ file containing multiple
         structures, parse as appropriate, and return a list of `Geometry` objects.
@@ -235,4 +262,4 @@ class Geometry:
         if format == ".cjson":
             with open(filepath, encoding="utf-8") as f:
                 cjson = json.load(f)
-            return cls.from_cjson(cjson)
+            return cls.from_cjson(cjson, charge=charge, multiplicity=multiplicity)
