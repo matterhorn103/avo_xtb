@@ -415,13 +415,14 @@ def opt_freq(
     method: int = 2,
     level: str = "normal",
     n_proc: int | None = None,
+    auto_restart: bool = True,
     return_calc: bool = False,
 ) -> tuple[Geometry, list[dict]] | tuple[Geometry, list[dict], Calculation]:
     """Optimize geometry then calculate vibrational frequencies.
     
     If a negative frequency is detected by xtb, it recommends to restart the calculation
     from a distorted geometry that it provides, so this is done automatically if
-    applicable.
+    applicable by default.
     """
 
     calc = Calculation(
@@ -440,7 +441,7 @@ def opt_freq(
     # (Generated automatically by xtb if result had negative frequency)
     # If found, rerun
     distorted_geom_file = calc.output_file.with_name("xtbhess.xyz")
-    while distorted_geom_file.exists():
+    while distorted_geom_file.exists() and auto_restart:
         calc = Calculation(
             input_geometry=Geometry.from_file(distorted_geom_file, charge=input_geometry.charge, multiplicity=input_geometry.multiplicity),
             runtype="ohess",
