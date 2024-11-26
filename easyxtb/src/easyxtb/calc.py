@@ -161,21 +161,14 @@ class Calculation:
             command = self.command
         else:
             # Build command line args
-            if self.runtype is None:
-                # Simple single point
-                command = [str(self.program_path), str(geom_file)]
-            else:
-                command = [
-                    str(self.program_path),
-                    str(geom_file),
-                    "--" + self.runtype,
-                    *self.runtype_args,
-                    "--",
-                ]
+            # "xtb"
+            command = [str(self.program_path)]
+            # Charge and spin from the initial Geometry
             if "chrg" not in self.options and self.input_geometry.charge != 0:
                 command.extend(["--chrg", str(self.input_geometry.charge)])
-            if "uhf" not in self.options and self.input_geometry.multiplicity != 1:
-                command.extend(["--uhf", str(self.input_geometry.multiplicity - 1)])
+            if "uhf" not in self.options and self.input_geometry.spin != 0:
+                command.extend(["--uhf", str(self.input_geometry.spin)])
+            # Any other options
             for flag, value in self.options.items():
                 # Add appropriate number of minuses to flags
                 if len(flag) == 1:
@@ -188,6 +181,19 @@ class Calculation:
                     continue
                 else:
                     command.extend([flag, str(value)])
+            # Which calculation to run
+            if self.runtype is None:
+                # Simple single point
+                pass
+            else:
+                command.extend([
+                    "--" + self.runtype,
+                    *self.runtype_args,
+                    "--",
+                ])
+            # Path to the input geometry file, preceded by a -- to ensure that it is not
+            # parsed as an argument to the runtype
+            command.extend(["--", str(geom_file)])
         logger.debug(f"Calculation will be run with the command: {' '.join(command)}")
         
         # Run xtb or crest from command line
@@ -223,7 +229,7 @@ class Calculation:
             self.output_geometry = Geometry.from_file(
                 self.output_file.with_name("xtbopt.xyz"),
                 charge=self.input_geometry.charge,
-                multiplicity=self.input_geometry.multiplicity,
+                spin=self.input_geometry.spin,
             )
             logger.debug("Read output geometry")
         else:
@@ -259,7 +265,7 @@ class Calculation:
                 best = Geometry.from_file(
                     self.output_file.with_name("crest_best.xyz"),
                     charge=self.input_geometry.charge,
-                    multiplicity=self.input_geometry.multiplicity,
+                    spin=self.input_geometry.spin,
                 )
                 logger.debug(f"Geometry of lowest energy conformer read from {self.output_file.with_name('crest_best.xyz')}")
                 self.output_geometry = best
@@ -270,7 +276,7 @@ class Calculation:
                     self.output_file.with_name("crest_conformers.xyz"),
                     multi=True,
                     charge=self.input_geometry.charge,
-                    multiplicity=self.input_geometry.multiplicity,
+                    spin=self.input_geometry.spin,
                 )
                 logger.debug(f"Geometries of conformers read from {self.output_file.with_name('crest_conformers.xyz')}")
                 self.conformers = [
@@ -288,7 +294,7 @@ class Calculation:
                     self.output_file.with_name("protonated.xyz"),
                     multi=True,
                     charge=self.input_geometry.charge + 1,
-                    multiplicity=self.input_geometry.multiplicity,
+                    spin=self.input_geometry.spin,
                 )
                 logger.debug(f"Geometries of tautomers read from {self.output_file.with_name('protonated.xyz')}")
                 self.tautomers = [
@@ -311,7 +317,7 @@ class Calculation:
                     self.output_file.with_name("deprotonated.xyz"),
                     multi=True,
                     charge=self.input_geometry.charge - 1,
-                    multiplicity=self.input_geometry.multiplicity,
+                    spin=self.input_geometry.spin,
                 )
                 logger.debug(f"Geometries of tautomers read from {self.output_file.with_name('deprotonated.xyz')}")
                 self.tautomers = [
@@ -416,13 +422,14 @@ def opt_freq(
     method: int = 2,
     level: str = "normal",
     n_proc: int | None = None,
+    auto_restart: bool = True,
     return_calc: bool = False,
 ) -> tuple[Geometry, list[dict]] | tuple[Geometry, list[dict], Calculation]:
     """Optimize geometry then calculate vibrational frequencies.
     
     If a negative frequency is detected by xtb, it recommends to restart the calculation
     from a distorted geometry that it provides, so this is done automatically if
-    applicable.
+    applicable by default.
     """
 
     calc = Calculation(
@@ -441,9 +448,9 @@ def opt_freq(
     # (Generated automatically by xtb if result had negative frequency)
     # If found, rerun
     distorted_geom_file = calc.output_file.with_name("xtbhess.xyz")
-    while distorted_geom_file.exists():
+    while distorted_geom_file.exists() and auto_restart:
         calc = Calculation(
-            input_geometry=Geometry.from_file(distorted_geom_file, charge=input_geometry.charge, multiplicity=input_geometry.multiplicity),
+            input_geometry=Geometry.from_file(distorted_geom_file, charge=input_geometry.charge, spin=input_geometry.spin),
             runtype="ohess",
             runtype_args=[level],
             options={

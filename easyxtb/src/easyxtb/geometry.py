@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from .convert import get_atomic_number, get_element_symbol
+from .format import cjson_dumps
 
 
 logger = logging.getLogger(__name__)
@@ -27,23 +28,25 @@ class Geometry:
         self,
         atoms: list[Atom],
         charge: int = 0,
-        multiplicity: int = 1,
+        spin: int = 0,
         _comment: str | None = None,
     ):
         """A set of atoms within a 3D space for use in calculations with an associated
-        charge and multiplicity.
+        charge and spin.
 
         Provides class methods for creation from, and instance methods for writing to,
         XYZ and CJSON formats.
         
         The coordinates should be provided as a list of `Atom` objects.
+
+        `spin` is the number of unpaired electrons.
         """
         self.atoms = atoms
         self.charge = charge
-        if multiplicity >= 1:
-            self.multiplicity = multiplicity
+        if spin >= 0:
+            self.spin = spin
         else:
-            raise ValueError("Multiplicity must be at least 1 (a singlet).")
+            raise ValueError("spin (number of unpaired electrons) cannot be negative")
         self._comment = _comment
     
     def __iter__(self):
@@ -58,11 +61,13 @@ class Geometry:
         xyz = [str(len(self.atoms)), comment]
         for a in self.atoms:
             # Turn each atom (line of array) into a single string and add to xyz
+            # xtb and ORCA use 14 decimal places for XYZs and Avogadro writes between 14
+            # and 16 to CJSON so let's match that
             atom_line = "     ".join([
                 a.element + (" " * (5 - len(a.element))),
-                f"{a.x:.5f}",
-                f"{a.y:.5f}",
-                f"{a.z:.5f}",
+                f"{a.x:.14f}",
+                f"{a.y:.14f}",
+                f"{a.z:.14f}",
             ])
             # Make everything line up by removing a space in front of each minus
             atom_line = atom_line.replace(" -", "-")
@@ -78,6 +83,7 @@ class Geometry:
             all_element_numbers.append(get_atomic_number(atom.element))
             all_coords.extend([float(atom.x), float(atom.y), float(atom.z)])
         cjson = {
+            "chemicalJson": 1,
             "atoms": {
                 "coords": {
                     "3d": all_coords,
@@ -88,13 +94,16 @@ class Geometry:
             },
             "properties": {
                 "totalCharge": self.charge,
-                "totalSpinMultiplicity": self.multiplicity,
+                "totalSpinMultiplicity": self.spin + 1,
             }
         }
         return cjson
 
     def write_xyz(self, dest: os.PathLike) -> os.PathLike:
-        """Write geometry to an XYZ file at the provided path."""
+        """Write geometry to an XYZ file at the provided path.
+        
+        The file is written with a trailing newline.
+        """
         logger.debug(f"Saving the geometry as an xyz file to {dest}")
         # Make sure it ends with a newline
         lines = self.to_xyz() + [""]
@@ -102,14 +111,35 @@ class Geometry:
             f.write("\n".join(lines))
         return dest
     
-    def write_cjson(self, dest: os.PathLike) -> os.PathLike:
-        """Write geometry to a CJSON file at the provided path."""
+    def write_cjson(
+        self,
+        dest: os.PathLike,
+        prettyprint=True,
+        indent=2,
+        **kwargs,
+    ) -> os.PathLike:
+        """Write geometry to a CJSON file at the provided path.
+        
+        With the default `prettyprint` option, all simple arrays (not themselves
+        containing objects/dicts or arrays/lists) will be flattened onto a single line,
+        while all other array elements and object members will be pretty-printed with
+        the specified indent level (2 spaces by default).
+
+        `indent` and any `**kwargs` are passed to Python's `json.dumps()` as is, so the
+        same values are valid e.g. `indent=0` will insert newlines while `indent=None`
+        will afford a compact single-line representation.
+
+        The file is written with a trailing newline.
+        """
         logger.debug(f"Saving the geometry as a cjson file to {dest}")
         cjson = self.to_cjson()
+        cjson_string = cjson_dumps(cjson, prettyprint=prettyprint, indent=indent, **kwargs)
+        # Make sure it ends with a newline
+        cjson_string += "\n"
         with open(dest, "w", encoding="utf-8") as f:
-            json.dump(cjson, f)
+            f.write(cjson_string)
         return dest
-    
+
     def to_file(self, dest: os.PathLike, format: str = None) -> os.PathLike:
         """Write geometry to an XYZ or CJSON file.
         
@@ -121,15 +151,14 @@ class Geometry:
         # Autodetect format of file
         if format is None:
             format = filepath.suffix
-
         if format == ".xyz":
             self.write_xyz(dest)
-
         if format == ".cjson":
             self.write_cjson(dest)
+        return dest
 
     @classmethod
-    def from_xyz(cls, xyz_lines: list[str], charge: int = 0, multiplicity: int = 1):
+    def from_xyz(cls, xyz_lines: list[str], charge: int = 0, spin: int = 0):
         """Create a `Geometry` object from an XYZ in the form of a list of lines."""
         logger.debug("Instantiating a geometry from an xyz")
         atoms = []
@@ -142,10 +171,10 @@ class Geometry:
                 atoms.append(
                     Atom(atom_parts[0], *[float(n) for n in atom_parts[1:4]])
                 )
-        return Geometry(atoms, charge, multiplicity, _comment=xyz_lines[1])
+        return Geometry(atoms, charge, spin, _comment=xyz_lines[1])
     
     @classmethod
-    def from_multi_xyz(cls, xyz_lines: list[str], charge: int = 0, multiplicity: int = 1):
+    def from_multi_xyz(cls, xyz_lines: list[str], charge: int = 0, spin: int = 0):
         """Create a set of `Geometry` objects from an XYZ (in the form of a list of
         lines) that contains multiple different structures.
         
@@ -161,16 +190,17 @@ class Geometry:
         for i, l in enumerate(xyz_lines):
             current_xyz.append(l)
             if i == len(xyz_lines) - 1 or xyz_lines[i+1] == atom_count_line:
-                geometries.append(cls.from_xyz(current_xyz, charge, multiplicity))
+                geometries.append(cls.from_xyz(current_xyz, charge, spin))
                 current_xyz = []
         return geometries
     
     @classmethod
-    def from_cjson(cls, cjson_dict: dict, charge: int = None, multiplicity: int = None):
+    def from_cjson(cls, cjson_dict: dict, charge: int = None, spin: int = None):
         """Create a `Geometry` object from an CJSON in the form of a Python dict.
         
-        If the CJSON does not specify the overall charge and multiplicity, a neutral
-        singlet is assumed, regardless of the chemical feasibility of that.
+        If the CJSON does not specify the overall charge and spin, a neutral
+        singlet is assumed, regardless of the chemical feasibility of that, unless the
+        values are specified as arguments.
         """
         logger.debug("Instantiating a geometry from a cjson")
         atoms = []
@@ -184,8 +214,8 @@ class Geometry:
                 )
             )
         charge = charge if charge else cjson_dict.get("properties", {}).get("totalCharge", 0)
-        multiplicity = multiplicity if multiplicity else cjson_dict.get("properties", {}).get("totalSpinMultiplicity", 1)
-        return Geometry(atoms, charge, multiplicity)
+        spin = spin if spin else cjson_dict.get("properties", {}).get("totalSpinMultiplicity", 1) - 1
+        return Geometry(atoms, charge, spin)
 
     @classmethod
     def from_file(
@@ -194,7 +224,7 @@ class Geometry:
         format: str = None,
         multi: bool = False,
         charge: int = None,
-        multiplicity: int = None,
+        spin: int = None,
     ):
         """Create a `Geometry` object from an XYZ or CJSON file.
         
@@ -202,8 +232,12 @@ class Geometry:
         argument, or it can be left to automatically be detected based on the filename
         ending.
 
-        If the file is a CJSON, charge and multiplicity will be read from the file if
-        present. Passing them as arguments will override this, but is not required.
+        Charge and spin are handled as by the `from_xyz()` and `from_cjson()` methods:
+        - if the file is a CJSON, charge and spin will be read from the file if present,
+          then will default to 0;
+        - if the file is an XYZ, they will be assumed to be 0.
+        
+        In all cases passing them as arguments will override everything.
 
         The method attempts to automatically detect an XYZ file containing multiple
         structures, parse as appropriate, and return a list of `Geometry` objects.
@@ -221,18 +255,18 @@ class Geometry:
             with open(filepath, encoding="utf-8") as f:
                 xyz_lines = f.read().split("\n")
             charge = charge if charge else 0
-            multiplicity = multiplicity if multiplicity else 1
+            spin = spin if spin else 0
             # Detect multiple structures in single xyz file
             # Make the reasonable assumption that all structures have the same number of
             # atoms and that therefore the first line of the file repeats itself
             atom_count_line = xyz_lines[0]
             n_structures = xyz_lines.count(atom_count_line)
             if n_structures > 1 or multi:
-                return cls.from_multi_xyz(xyz_lines, charge=charge, multiplicity=multiplicity)
+                return cls.from_multi_xyz(xyz_lines, charge=charge, spin=spin)
             else:
-                return cls.from_xyz(xyz_lines, charge=charge, multiplicity=multiplicity)
+                return cls.from_xyz(xyz_lines, charge=charge, spin=spin)
 
         if format == ".cjson":
             with open(filepath, encoding="utf-8") as f:
                 cjson = json.load(f)
-            return cls.from_cjson(cjson)
+            return cls.from_cjson(cjson, charge=charge, spin=spin)
