@@ -134,7 +134,7 @@ if __name__ == "__main__":
         # Save change to user_dir if there has been one
         if avo_input["user_dir"] != str(easyxtb.CALC_DIR):
             easyxtb.CALC_DIR = Path(avo_input["user_dir"])
-            easyxtb.conf.TEMP_DIR = easyxtb.CALC_DIR / "last"
+            easyxtb.configuration.TEMP_DIR = easyxtb.CALC_DIR / "last"
             try:
                 easyxtb.TEMP_DIR.mkdir(parents=True, exist_ok=True)
             except PermissionError:
@@ -171,4 +171,4 @@ if __name__ == "__main__":
         # Update optimization level
         easyxtb.config["opt_lvl"] = avo_input["opt_lvl"]
 
-        easyxtb.conf.save_config()
+        easyxtb.configuration.save_config()

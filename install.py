@@ -101,7 +101,7 @@ def link_xtb_bin(xtb_folder):
     # Add to config
     easyxtb.config["xtb_bin"] = str(easyxtb.XTB_BIN)
     # Save config
-    easyxtb.conf.save_config()
+    easyxtb.configuration.save_config()
 
 
 def link_crest_bin(crest_folder):
@@ -116,7 +116,7 @@ def link_crest_bin(crest_folder):
     # Add to config
     easyxtb.config["crest_bin"] = str(easyxtb.CREST_BIN)
     # Save config
-    easyxtb.conf.save_config()
+    easyxtb.configuration.save_config()
 
 
 if __name__ == "__main__":
@@ -157,7 +157,7 @@ if __name__ == "__main__":
                 "install_dir": {
                     "type": "string",
                     "label": "Install in",
-                    "default": str(easyxtb.conf.BIN_DIR),
+                    "default": str(easyxtb.configuration.BIN_DIR),
                     "order": 5.0,
                 },
                 "notice": {

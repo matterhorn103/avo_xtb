@@ -43,7 +43,7 @@ if __name__ == "__main__":
 
         # Run calculation; returns path to Gaussian file containing frequencies
         logger.debug("avo_xtb is requesting an opt+freq calculation")
-        opt_geom, freqs, calc = easyxtb.calc.opt_freq(
+        opt_geom, freqs, calc = easyxtb.calculate.opt_freq(
             geom,
             solvation=easyxtb.config["solvent"],
             method=easyxtb.config["method"],

@@ -42,7 +42,7 @@ if __name__ == "__main__":
 
         # Run calculation; returns energy as float in hartree
         logger.debug("avo_xtb is requesting a single point energy calculation")
-        energy_hartree = easyxtb.calc.energy(
+        energy_hartree = easyxtb.calculate.energy(
             geom,
             solvation=easyxtb.config["solvent"],
             method=easyxtb.config["method"],

@@ -20,7 +20,7 @@ import subprocess
 from pathlib import Path
 from shutil import rmtree
 
-from .conf import config, XTB_BIN, CREST_BIN, TEMP_DIR
+from .configuration import config, XTB_BIN, CREST_BIN, TEMP_DIR
 from .geometry import Geometry
 from .parse import parse_energy, parse_g98_frequencies
 

@@ -57,7 +57,7 @@ if __name__ == "__main__":
         # Do nothing to data other than add message with version and path info
         output["message"] = (
             "avo_xtb plugin\n"
-            + f"easyxtb version: {easyxtb.conf.easyxtb_VERSION}\n"
+            + f"easyxtb version: {easyxtb.configuration.easyxtb_VERSION}\n"
             + f"xtb version: {xtb_version}\n"
             + f"xtb path: {easyxtb.XTB_BIN}\n"
             + f"CREST version: {crest_version}\n"

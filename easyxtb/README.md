@@ -48,7 +48,7 @@ Note that `easyxtb` follows the convention used by `xtb` itself, where `spin` is
 The package provides a function API for basic xtb calculation types (`energy`, `optimize`, `frequencies`, `opt_freq`, `orbitals`):
 
 ```python
->>> optimized = py_xtb.calc.optimize(input_geom, solvation="water", method=2, level="normal")
+>>> optimized = py_xtb.calculate.optimize(input_geom, solvation="water", method=2, level="normal")
 >>> for atom in optimized:
 ...     print(atom)
 ... 
@@ -78,7 +78,7 @@ The xtb team recommend generally using the `ohess` (optimization followed by a f
 The `opt_freq()` calculation function takes advantage of this and will continue reoptimizing using these distorted geometries until a minimum is reached, so is more reliable in getting what we want:
 
 ```python
->>> output_geom, output_freqs, calc = py_xtb.calc.opt_freq(input_geom, solvation="water", return_calc=True)
+>>> output_geom, output_freqs, calc = py_xtb.calculate.opt_freq(input_geom, solvation="water", return_calc=True)
 >>> output_freqs[0]
 {'mode': 1, 'symmetry': 'a', 'frequency': 70.0622, 'reduced_mass': 13.4154, 'ir_intensity': 6.422, 'raman_scattering_activity': 0.0, 'eigenvectors': [[0.0, 0.0, -0.28], [-0.0, 0.0, -0.0], [-0.0, -0.0, 0.25], [0.0, -0.0, 0.04], [0.0, -0.0, -0.24], [-0.0, 0.0, -0.0], [-0.0, 0.0, 0.29], [-0.0, 0.0, 0.15], [0.0, -0.0, 0.02], [0.0, -0.0, -0.12], [0.0, 0.0, -0.15], [0.0, -0.0, 0.55], [0.0, 0.01, -0.56], [0.0, 0.0, -0.19]]}
 ```

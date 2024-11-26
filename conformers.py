@@ -155,7 +155,7 @@ if __name__ == "__main__":
             solvation = avo_input["solvent"]
 
         # Run calculation; returns set of conformers as well as Calculation object
-        conformers, calc = easyxtb.calc.conformers(
+        conformers, calc = easyxtb.calculate.conformers(
             geom,
             solvation=solvation,
             method=2,

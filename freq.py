@@ -42,7 +42,7 @@ if __name__ == "__main__":
 
         # Run calculation; returns set of frequency data
         logger.debug("avo_xtb is requesting a frequency calculation")
-        freqs = easyxtb.calc.frequencies(
+        freqs = easyxtb.calculate.frequencies(
             geom,
             solvation=easyxtb.config["solvent"],
             method=easyxtb.config["method"],

@@ -42,7 +42,7 @@ if __name__ == "__main__":
         geom = easyxtb.Geometry.from_cjson(avo_input["cjson"])
 
         # Run calculation; returns set of tautomers as well as Calculation object
-        tautomers, calc = easyxtb.calc.deprotonate(
+        tautomers, calc = easyxtb.calculate.deprotonate(
             geom,
             solvation=easyxtb.config["solvent"],
             method=2,

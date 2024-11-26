@@ -1,10 +1,10 @@
 import logging
 
-from .conf import config, config_file
-from .conf import PLUGIN_DIR, CALC_DIR, TEMP_DIR, BIN_DIR, XTB_BIN, CREST_BIN
+from .configuration import config, config_file
+from .configuration import PLUGIN_DIR, CALC_DIR, TEMP_DIR, BIN_DIR, XTB_BIN, CREST_BIN
 from .geometry import Atom, Geometry
-from .calc import Calculation
-from . import calc, conf, convert, format
+from .calculate import Calculation
+from . import calculate, configuration, convert, format
 
 
 logger = logging.getLogger(__name__)
