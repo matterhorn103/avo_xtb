@@ -113,7 +113,7 @@ if init:
 
 # Current version of package
 # Hard code for now, obviously not ideal though
-easyxtb_VERSION = "0.6.0"
+easyxtb_VERSION = "0.7.0"
 
 def update_config():
     """Ensure that any config options added in later versions of the package are in
