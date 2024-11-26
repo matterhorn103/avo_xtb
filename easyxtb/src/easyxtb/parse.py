@@ -3,6 +3,17 @@
 
 """Functions to parse specific data from output files."""
 
+
+def parse_charge_spin(output_string: str) -> tuple[int, int]:
+    """Get the charge and spin that xtb used for a calculation."""
+    lines = output_string.split("\n")
+    charge_lines = [l for l in lines if ":  net charge" in l]
+    spin_lines = [l for l in lines if ":  unpaired electrons" in l]
+    charge = int(charge_lines[0].split()[3])
+    spin = int(spin_lines[0].split()[3])
+    return (charge, spin)
+
+
 def parse_energy(output_string: str) -> float:
     """Find the final energy in an xtb output file and return as a float.
     

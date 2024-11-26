@@ -3,7 +3,6 @@
 
 from easyxtb import Geometry, Atom
 
-
 def round_atom_coordinates(atoms: list[Atom], precision: int = 12) -> list[Atom]:
     # Often have to account for difference in precision between formats or sources
     rounded_atoms = []

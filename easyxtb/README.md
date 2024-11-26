@@ -37,10 +37,18 @@ Atom(element='O', x=2.9034, y=0.39476, z=1e-05)
 Atom(element='H', x=2.60455, y=-0.50701, z=2e-05)
 ```
 
+Charge and spin are picked up automatically from a CJSON file, but for XYZ files or for overriding they can be specified:
+
+```python
+>>> acetate_anion = py_xtb.Geometry.from_file(Path.home() / "calcs/acetate.xyz", charge=-1)
+```
+
+Note that `easyxtb` follows the convention used by `xtb` itself, where `spin` is the number of unpaired electrons.
+
 The package provides a function API for basic xtb calculation types (`energy`, `optimize`, `frequencies`, `opt_freq`, `orbitals`):
 
 ```python
->>> optimized = py_xtb.calc.optimize(input_geom, charge=0, multiplicity=1, solvation="water", method=2, level="normal")
+>>> optimized = py_xtb.calc.optimize(input_geom, solvation="water", method=2, level="normal")
 >>> for atom in optimized:
 ...     print(atom)
 ... 
@@ -54,7 +62,7 @@ Atom(element='H', x=1.55896002888703, y=-0.46876579604809, z=-0.00948378184114)
 For greater control and for runtypes or command line options that don't yet have support in the API the `Calculation` object can be used:
 
 ```python
->>> freq_calc = py_xtb.Calculation(program="xtb", runtype="hess", options={"charge": 0, "multiplicity": 1, "solvation": "water"})
+>>> freq_calc = py_xtb.Calculation(program="xtb", runtype="hess", options={"solvation": "water"})
 >>> freq_calc.input_geometry = input_geom
 >>> freq_calc.run()
 >>> freq_calc.energy

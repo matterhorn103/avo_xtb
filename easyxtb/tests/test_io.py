@@ -9,100 +9,100 @@ from . import equal_geom
 
 
 files_dir = Path(__file__).parent / "files/input"
-raw_files = [
-    "acetic_acid_raw",
-    "acetone_raw",
-    "benzene_raw",
-    "benzoate_raw",
-    "bu4n_raw",
-    "tempo_raw",
+input_files = [
+    "acetic_acid",
+    "acetone",
+    "benzene",
+    "benzoate",
+    "bu4n",
+    "tempo",
 ]
 
 def test_parse_xyz():
-    for filename in raw_files:
-        with open(files_dir / f"{filename}.xyz", encoding="utf-8") as f:
+    for mol in input_files:
+        with open(files_dir / f"{mol}.xyz", encoding="utf-8") as f:
             xyz = f.read()
         Geometry.from_xyz(xyz.split("\n"))
 
 def test_parse_cjson():
-    for filename in raw_files:
-        with open(files_dir / f"{filename}.cjson", encoding="utf-8") as f:
+    for mol in input_files:
+        with open(files_dir / f"{mol}.cjson", encoding="utf-8") as f:
             cjson = json.load(f)
         Geometry.from_cjson(cjson)
 
 def test_open_xyz():
-    for filename in raw_files:
-        Geometry.from_file(files_dir / f"{filename}.xyz")
+    for mol in input_files:
+        Geometry.from_file(files_dir / f"{mol}.xyz")
 
 def test_open_cjson():
-    for filename in raw_files:
-        Geometry.from_file(files_dir / f"{filename}.cjson")
+    for mol in input_files:
+        Geometry.from_file(files_dir / f"{mol}.cjson")
 
 def test_xyz_cjson_coords_equivalence():
-    for filename in raw_files:
-        print(filename)
-        xyz_geom = Geometry.from_file(files_dir / f"{filename}.xyz")
-        cjson_geom = Geometry.from_file(files_dir / f"{filename}.cjson")
+    for mol in input_files:
+        print(mol)
+        xyz_geom = Geometry.from_file(files_dir / f"{mol}.xyz")
+        cjson_geom = Geometry.from_file(files_dir / f"{mol}.cjson")
         assert equal_geom(xyz_geom, cjson_geom, precision=14)
 
-def test_default_xyz_charge_multiplicity():
-    for filename in raw_files:
-        with open(files_dir / f"{filename}.xyz", encoding="utf-8") as f:
+def test_default_xyz_charge_spin():
+    for mol in input_files:
+        with open(files_dir / f"{mol}.xyz", encoding="utf-8") as f:
             xyz = f.read()
         g = Geometry.from_xyz(xyz.split("\n"))
         assert g.charge == 0
-        assert g.multiplicity == 1
+        assert g.spin == 0
 
 def test_specify_xyz_charge():
-    benzoate = Geometry.from_file(files_dir / "benzoate_raw.xyz", charge=-1)
+    benzoate = Geometry.from_file(files_dir / "benzoate.xyz", charge=-1)
     assert benzoate.charge == -1
 
-def test_specify_xyz_multiplicity():
-    tempo = Geometry.from_file(files_dir / "tempo_raw.xyz", multiplicity=2)
-    assert tempo.multiplicity == 2
+def test_specify_xyz_spin():
+    tempo = Geometry.from_file(files_dir / "tempo.xyz", spin=1)
+    assert tempo.spin == 1
 
-def test_default_cjson_charge_multiplicity():
+def test_default_cjson_charge_spin():
     acetone = Geometry.from_file(files_dir / "acetone_bare.cjson")
     benzoate = Geometry.from_file(files_dir / "benzoate_bare.cjson")
     assert acetone.charge == 0
-    assert acetone.multiplicity == 1
+    assert acetone.spin == 0
     assert benzoate.charge == 0
-    assert benzoate.multiplicity == 1
+    assert benzoate.spin == 0
 
-def test_parsed_cjson_charge_multiplicity():
-    acetone = Geometry.from_file(files_dir / "acetone_raw.cjson")
-    benzoate = Geometry.from_file(files_dir / "benzoate_raw.cjson")
-    tempo = Geometry.from_file(files_dir / "tempo_raw.cjson")
+def test_parsed_cjson_charge_spin():
+    acetone = Geometry.from_file(files_dir / "acetone.cjson")
+    benzoate = Geometry.from_file(files_dir / "benzoate.cjson")
+    tempo = Geometry.from_file(files_dir / "tempo.cjson")
     assert acetone.charge == 0
-    assert acetone.multiplicity == 1
+    assert acetone.spin == 0
     assert benzoate.charge == -1
-    assert benzoate.multiplicity == 1
+    assert benzoate.spin == 0
     assert tempo.charge == 0
-    assert tempo.multiplicity == 2
+    assert tempo.spin == 1
 
-def test_override_cjson_charge_multiplicity():
-    acetone = Geometry.from_file(files_dir / "acetone_raw.cjson", charge=2, multiplicity=5)
+def test_override_cjson_charge_spin():
+    acetone = Geometry.from_file(files_dir / "acetone.cjson", charge=2, spin=5)
     assert acetone.charge == 2
-    assert acetone.multiplicity == 5
+    assert acetone.spin == 5
 
 def test_generate_xyz():
-    benzene = Geometry.from_file(files_dir / "benzene_raw.xyz")
+    benzene = Geometry.from_file(files_dir / "benzene.xyz")
     benzene.to_xyz()
 
 def test_generate_cjson():
-    benzene = Geometry.from_file(files_dir / "benzene_raw.cjson")
+    benzene = Geometry.from_file(files_dir / "benzene.cjson")
     benzene.to_cjson()
 
 def test_write_xyz(tmp_path):
-    acetic_acid = Geometry.from_file(files_dir / "acetic_acid_raw.xyz")
-    acetic_acid.write_xyz(tmp_path / "acetic_acid_raw_out.xyz")
+    acetic_acid = Geometry.from_file(files_dir / "acetic_acid.xyz")
+    acetic_acid.write_xyz(tmp_path / "acetic_acid_out.xyz")
 
 def test_write_cjson(tmp_path):
-    acetic_acid = Geometry.from_file(files_dir / "acetic_acid_raw.cjson")
-    acetic_acid.write_cjson(tmp_path / "acetic_acid_raw_out.cjson")
+    acetic_acid = Geometry.from_file(files_dir / "acetic_acid.cjson")
+    acetic_acid.write_cjson(tmp_path / "acetic_acid_out.cjson")
 
 def test_xyz_roundtrip():
-    bu4n_file = files_dir / "bu4n_raw.xyz"
+    bu4n_file = files_dir / "bu4n.xyz"
     with open(bu4n_file, encoding="utf-8") as f:
         bu4n_lines = f.read().splitlines()
     bu4n = Geometry.from_file(bu4n_file)
