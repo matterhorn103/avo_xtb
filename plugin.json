@@ -6,20 +6,20 @@
   "description": "Access the power of xtb through the Avogadro interface.",
   "type": "commands",
   "commands": [
+    { "name": "about", "command": "avo_xtb/about.py" },
     { "name": "config", "command": "avo_xtb/config.py" },
+    { "name": "install", "command": "avo_xtb/install.py" },
+    { "name": "open", "command": "avo_xtb/open.py" },
     { "name": "energy", "command": "avo_xtb/energy.py" },
     { "name": "opt", "command": "avo_xtb/opt.py" },
     { "name": "freq", "command": "avo_xtb/freq.py" },
     { "name": "ohess", "command": "avo_xtb/ohess.py"},
     { "name": "orbitals", "command": "avo_xtb/orbitals.py" },
-    { "name": "run", "command": "avo_xtb/run.py" },
-    { "name": "docs", "command": "avo_xtb/docs.py" },
+    { "name": "run-xtb", "command": "avo_xtb/run_xtb.py" },
+    { "name": "xtb-docs", "command": "avo_xtb/xtb_docs.py" },
     { "name": "conformers", "command": "avo_xtb/conformers.py" },
     { "name": "protonate", "command": "avo_xtb/protonate.py" },
     { "name": "deprotonate", "command": "avo_xtb/deprotonate.py" },
-    { "name": "crest-docs", "command": "avo_xtb/crest_docs.py" },
-    { "name": "open", "command": "avo_xtb/open.py" },
-    { "name": "install", "command": "avo_xtb/install.py" },
-    { "name": "about", "command": "avo_xtb/about.py" }
+    { "name": "crest-docs", "command": "avo_xtb/crest_docs.py" }
   ]
 }

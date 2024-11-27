@@ -7,7 +7,7 @@ import logging
 import sys
 
 from support import easyxtb
-from avo_xtb.crest.protonate import cleanup_after_taut
+from protonate import cleanup_after_taut
 
 
 logger = logging.getLogger(__name__)
