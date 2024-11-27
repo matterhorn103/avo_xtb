@@ -1,6 +1,6 @@
 [project]
 name = "easyxtb"
-version = "0.7.0"
+version = "0.8.0.dev"
 description = "A Python API for xtb (and CREST)."
 readme = "README.md"
 requires-python = ">=3.10"
