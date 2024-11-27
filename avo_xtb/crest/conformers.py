@@ -8,8 +8,8 @@ import sys
 from pathlib import Path
 from shutil import copytree
 
-from support import easyxtb
-from opt import cleanup_after_opt
+from ..support import easyxtb
+from ..xtb.opt import cleanup_after_opt
 
 
 logger = logging.getLogger(__name__)

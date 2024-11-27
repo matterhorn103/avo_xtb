@@ -5,7 +5,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent / "easyxtb/src"))
 
 # Make easyxtb available as to anything that imports support.py as if it was installed
-import easyxtb
+from .. import easyxtb
 
 
 # Make sure stdout stream is always Unicode, as Avogadro 1.99 expects
