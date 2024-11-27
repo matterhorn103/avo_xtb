@@ -350,7 +350,7 @@ def energy(
         options={
             "gfn": method,
             "alpb": solvation,
-            "p": n_proc if n_proc else config["n_proc"],
+            "P": n_proc if n_proc else config["n_proc"],
         },
     )
     calc.run()
