@@ -7,6 +7,7 @@ import argparse
 import json
 import logging
 import sys
+from copy import deepcopy
 from pathlib import Path
 from shutil import copytree
 
@@ -120,7 +121,7 @@ if __name__ == "__main__":
         # Start by passing back an empty cjson, then add changes
         output = {
             "moleculeFormat": "cjson",
-            "cjson": easyxtb.convert.empty_cjson.copy(),
+            "cjson": deepcopy(easyxtb.convert.empty_cjson),
         }
 
         # TODO Catch errors in xtb execution

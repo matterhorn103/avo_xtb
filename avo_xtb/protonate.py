@@ -5,6 +5,7 @@ import argparse
 import json
 import logging
 import sys
+from copy import deepcopy
 
 from support import easyxtb
 
@@ -19,7 +20,7 @@ def cleanup_after_taut(cjson: dict) -> dict:
     Essentially gives an empty cjson, with only the total charge and spin retained.
     """
 
-    output = easyxtb.convert.empty_cjson.copy()
+    output = deepcopy(easyxtb.convert.empty_cjson)
     output["properties"]["totalCharge"] = cjson["properties"]["totalCharge"]
     output["properties"]["totalSpinMultiplicity"] = cjson["properties"]["totalSpinMultiplicity"]
 
