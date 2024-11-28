@@ -20,6 +20,7 @@
     { "name": "conformers", "command": "avo_xtb/conformers.py" },
     { "name": "protonate", "command": "avo_xtb/protonate.py" },
     { "name": "deprotonate", "command": "avo_xtb/deprotonate.py" },
+    { "name": "solvate", "command": "avo_xtb/solvate.py" },
     { "name": "crest-docs", "command": "avo_xtb/crest_docs.py" }
   ]
 }

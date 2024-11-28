@@ -75,9 +75,9 @@ class Calculation:
         self,
         program: str | os.PathLike = "xtb",
         runtype: str | None = None,
-        runtype_args: list[str] | None = None,
+        runtype_args: list | None = None,
         options: dict | None = None,
-        command: list[str] | None = None,
+        command: list | None = None,
         input_geometry: Geometry | None = None,
         calc_dir: os.PathLike | None = None,
     ):
@@ -89,6 +89,10 @@ class Calculation:
         automatically.
         To use a flag that takes no argument, set the value to `True`.
         Flags with values of `False` or `None` will not be passed.
+
+        `Geometry` objects passed as items in `runtype_args` or `command` or as values
+        in `options` will be saved as XYZ files and the path to the file will be put in
+        the command in its place.
 
         Note that any contents of `calc_dir` will be removed when the calculation
         begins.
@@ -127,6 +131,79 @@ class Calculation:
         self.calc_dir = Path(calc_dir) if calc_dir else TEMP_DIR
         logger.info(f"New Calculation created for runtype {self.runtype} with {self.program}")
     
+    def _build_xtb_command(self, geom_file):
+        # Build command line args
+        # "xtb"
+        command = [self.program_path]
+        # Charge and spin from the initial Geometry
+        if "chrg" not in self.options and self.input_geometry.charge != 0:
+            command.extend(["--chrg", self.input_geometry.charge])
+        if "uhf" not in self.options and self.input_geometry.spin != 0:
+            command.extend(["--uhf", self.input_geometry.spin])
+        # Any other options
+        for flag, value in self.options.items():
+            # Add appropriate number of minuses to flags
+            if len(flag) == 1:
+                flag = "-" + flag
+            else:
+                flag = "--" + flag
+            if value is True:
+                command.append(flag)
+            elif value is False or value is None:
+                continue
+            elif isinstance(value, Geometry):
+                command.extend([flag, value])
+            else:
+                command.extend([flag, value])
+        # Which calculation to run
+        if self.runtype is None:
+            # Simple single point
+            pass
+        else:
+            command.extend([
+                "--" + self.runtype,
+                *self.runtype_args,
+            ])
+        # Path to the input geometry file, preceded by a -- to ensure that it is not
+        # parsed as an argument to the runtype
+        command.extend(["--", geom_file])
+        return command
+
+    def _build_crest_command(self, geom_file):
+        # Build command line args
+        # "crest"
+        command = [self.program_path]
+        # Path to the input geometry file
+        command.append(geom_file)
+        # Which calculation to run
+        if self.runtype is None:
+            # v3 iMTD-GC sampling
+            pass
+        else:
+            command.extend([
+                "--" + self.runtype,
+                *self.runtype_args,
+            ])
+        # Charge and spin from the initial Geometry
+        if "chrg" not in self.options and self.input_geometry.charge != 0:
+            command.extend(["--chrg", self.input_geometry.charge])
+        if "uhf" not in self.options and self.input_geometry.spin != 0:
+            command.extend(["--uhf", self.input_geometry.spin])
+        # Any other options
+        for flag, value in self.options.items():
+            # Add appropriate number of minuses to flags
+            if len(flag) == 1:
+                flag = "-" + flag
+            else:
+                flag = "--" + flag
+            if value is True:
+                command.append(flag)
+            elif value is False or value is None:
+                continue
+            else:
+                command.extend([flag, value])
+        return command
+
     def run(self):
         """Run calculation with xtb or crest, storing the output, the saved output file,
         and the parsed energy, as well as the `subprocess` object."""
@@ -156,44 +233,24 @@ class Calculation:
         logger.debug(f"Working directory changed to {Path.cwd()}")
         self.output_file = geom_file.with_name("output.out")
         
+        # Build command line args
         if self.command:
             # If arguments were passed by the user, use them as is
             command = self.command
+        elif self.program == "crest":
+            # CREST parses command line input in a slightly different way to xtb
+            command = self._build_crest_command(geom_file)
         else:
-            # Build command line args
-            # "xtb"
-            command = [str(self.program_path)]
-            # Charge and spin from the initial Geometry
-            if "chrg" not in self.options and self.input_geometry.charge != 0:
-                command.extend(["--chrg", str(self.input_geometry.charge)])
-            if "uhf" not in self.options and self.input_geometry.spin != 0:
-                command.extend(["--uhf", str(self.input_geometry.spin)])
-            # Any other options
-            for flag, value in self.options.items():
-                # Add appropriate number of minuses to flags
-                if len(flag) == 1:
-                    flag = "-" + flag
-                else:
-                    flag = "--" + flag
-                if value is True:
-                    command.append(flag)
-                elif value is False or value is None:
-                    continue
-                else:
-                    command.extend([flag, str(value)])
-            # Which calculation to run
-            if self.runtype is None:
-                # Simple single point
-                pass
-            else:
-                command.extend([
-                    "--" + self.runtype,
-                    *self.runtype_args,
-                    "--",
-                ])
-            # Path to the input geometry file, preceded by a -- to ensure that it is not
-            # parsed as an argument to the runtype
-            command.extend(["--", str(geom_file)])
+            command = self._build_xtb_command(geom_file)
+        # Replace any Geometry objects with paths to files
+        aux_count = 0
+        for i, arg in enumerate(command):
+            if isinstance(arg, Geometry):
+                aux_count += 1
+                aux_file = arg.write_xyz(self.calc_dir / f"aux{aux_count}.xyz")
+                command[i] = aux_file
+        # Sanitize everything to strings
+        command = [x if isinstance(x, str) else str(x) for x in command]
         logger.debug(f"Calculation will be run with the command: {' '.join(command)}")
         
         # Run xtb or crest from command line
@@ -218,7 +275,6 @@ class Calculation:
             self.process_xtb()
 
     def process_xtb(self):
-
         # First do generic operations that apply to many calculation types
         # Extract energy from output (if not found, returns None)
         self.energy = parse_energy(self.output)
@@ -504,7 +560,7 @@ def conformers(
     hess: bool = False,
     n_proc: int | None = None,
     return_calc: bool = False,
-) -> list[dict]:
+) -> list[dict] | tuple[list[dict], Calculation]:
     """Simulate a conformer ensemble and return set of conformer Geometries and energies.
 
     The returned conformers are ordered from lowest to highest energy.
@@ -540,7 +596,7 @@ def protonate(
     method: int = 2,
     n_proc: int | None = None,
     return_calc: bool = False,
-) -> list[dict]:
+) -> list[dict] | tuple[list[dict], Calculation]:
     """Screen possible protonation sites and return set of tautomer Geometries and energies.
 
     The returned tautomers are ordered from lowest to highest energy.
@@ -570,7 +626,7 @@ def deprotonate(
     method: int = 2,
     n_proc: int | None = None,
     return_calc: bool = False,
-) -> list[dict]:
+) -> list[dict] | tuple[list[dict], Calculation]:
     """Screen possible deprotonation sites and return set of tautomer Geometries and energies.
 
     The returned tautomers are ordered from lowest to highest energy.
@@ -592,3 +648,36 @@ def deprotonate(
         return calc.tautomers, calc
     else:
         return calc.tautomers
+
+
+def solvate(
+    solute_geometry: Geometry,
+    solvent_geometry: Geometry,
+    nsolv: int,
+    method: int = 2,
+    n_proc: int | None = None,
+    return_calc: bool = False,
+) -> Geometry | tuple[Geometry, Calculation]:
+    """Grow a solvent shell around a solute for a total of `nsolv` solvent molecules. 
+
+    Note that non-zero charge and spin on the solvent `Geometry` will not be passed to
+    CREST.
+    """
+    method_flag = f"gfn{method}"
+    calc = Calculation(
+        program="crest",
+        input_geometry=solute_geometry,
+        runtype="deprotonate",
+        runtype_args=[solvent_geometry],
+        options={
+            "nsolv": nsolv,
+            "xnam": XTB_BIN,
+            method_flag: True,
+            "T": n_proc if n_proc else config["n_proc"],
+        },
+    )
+    calc.run()
+    if return_calc:
+        return calc.output_geometry, calc
+    else:
+        return calc.output_geometry
