@@ -222,7 +222,7 @@ class Calculation:
             self.calc_dir.mkdir(parents=True)
 
         # Save geometry to file
-        geom_file = self.calc_dir / "input.xyz"
+        geom_file = self.calc_dir/"input.xyz"
         logger.debug(f"Saving input geometry to {geom_file}")
         self.input_geometry.write_xyz(geom_file)
         # We are using proper paths for pretty much everything so it shouldn't be
@@ -247,7 +247,7 @@ class Calculation:
         for i, arg in enumerate(command):
             if isinstance(arg, Geometry):
                 aux_count += 1
-                aux_file = arg.write_xyz(self.calc_dir / f"aux{aux_count}.xyz")
+                aux_file = arg.write_xyz(self.calc_dir/f"aux{aux_count}.xyz")
                 command[i] = aux_file
         # Sanitize everything to strings
         command = [x if isinstance(x, str) else str(x) for x in command]
@@ -388,6 +388,16 @@ class Calculation:
                 self.output_geometry = best["geometry"]
                 self.energy = best["energy"]
                 logger.debug(f"Energy of lowest energy tautomer: {self.energy}")
+            case "qcg":
+                # Explicit solvent shell growing
+                logger.debug("Growing of a solvent shell was requested, so checking for generated cluster geometry")
+                # Get final cluster geom
+                self.output_geometry = Geometry.from_file(
+                    self.calc_dir/"grow/cluster.xyz",
+                    charge=self.input_geometry.charge,
+                    spin=self.input_geometry.spin,
+                )
+                logger.debug(f'Cluster geometry read from {self.calc_dir/"grow/cluster.xyz"}')
             case _:
                 pass
 
