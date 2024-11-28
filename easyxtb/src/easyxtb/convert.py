@@ -42,7 +42,6 @@ empty_cjson = {
       "number": [],
     },
     "formalCharges": [],
-    "layer": [],
   },
   "bonds": {
     "connections": {
