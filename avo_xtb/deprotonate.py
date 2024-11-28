@@ -45,7 +45,7 @@ if __name__ == "__main__":
         tautomers, calc = easyxtb.calculate.deprotonate(
             geom,
             solvation=easyxtb.config["solvent"],
-            method=2,
+            method=easyxtb.config["method"],
             return_calc=True,
         )
 
