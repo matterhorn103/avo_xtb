@@ -667,9 +667,10 @@ def solvate(
     calc = Calculation(
         program="crest",
         input_geometry=solute_geometry,
-        runtype="deprotonate",
+        runtype="qcg",
         runtype_args=[solvent_geometry],
         options={
+            "grow": True,
             "nsolv": nsolv,
             "xnam": XTB_BIN,
             method_flag: True,
