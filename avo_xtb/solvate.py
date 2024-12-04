@@ -74,10 +74,14 @@ def solvate(avo_input: dict) -> dict:
         method=2,
     )
 
+    # Add solute bonding information from input CJSON
+    output_cjson = output_geom.to_cjson()
+    output_cjson["bonds"] = deepcopy(solute_cjson["bonds"])
+
     # Format everything appropriately for Avogadro
     output = {
         "moleculeFormat": "cjson",
-        "cjson": output_geom.to_cjson(),
+        "cjson": output_cjson,
     }
 
     # Save result
