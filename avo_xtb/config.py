@@ -33,25 +33,31 @@ if __name__ == "__main__":
                     "default": str(easyxtb.XTB_BIN),
                     "order": 1.0,
                 },
+                "crest_bin": {
+                    "type": "string",
+                    "label": "Location of the CREST binary",
+                    "default": str(easyxtb.CREST_BIN),
+                    "order": 2.0,
+                },
                 "user_dir": {
                     "type": "string",
                     "label": "Run calculations (in subfolder) in",
                     "default": str(easyxtb.CALC_DIR),
-                    "order": 2.0,
+                    "order": 3.0,
                 },
                 "n_proc": {
                     "type": "integer",
                     "label": "Parallel processes to run",
                     "minimum": 1,
                     "default": 1,
-                    "order": 3.0
+                    "order": 4.0
                     },
                 "energy_units": {
                     "type": "stringList",
                     "label": "Preferred energy units",
                     "values": ["kJ/mol", "kcal/mol"],
                     "default": 0,
-                    "order": 4.0,
+                    "order": 5.0,
                 },
                 "solvent": {
                     "type": "stringList",
@@ -84,14 +90,14 @@ if __name__ == "__main__":
                         "water",
                     ],
                     "default": 0,
-                    "order": 5.0,
+                    "order": 6.0,
                 },
                 "method": {
                     "type": "stringList",
-                    "label": "Method (xtb only)",
+                    "label": "Method",
                     "values": methods,
                     "default": methods[-1],
-                    "order": 6.0,
+                    "order": 7.0,
                 },
                 "opt_lvl": {
                     "type": "stringList",
@@ -107,7 +113,7 @@ if __name__ == "__main__":
                         "extreme",
                     ],
                     "default": 4,
-                    "order": 7.0,
+                    "order": 8.0,
                 },
                 "warning": {
                     "type": "text",
@@ -146,9 +152,18 @@ if __name__ == "__main__":
             easyxtb.config["calc_dir"] = str(easyxtb.CALC_DIR)
 
         # Save change to xtb_bin if there has been one
-        if avo_input["xtb_bin"] != str(easyxtb.XTB_BIN):
+        if avo_input["xtb_bin"] in ["none", ""]:
+            pass
+        elif avo_input["xtb_bin"] != str(easyxtb.XTB_BIN):
             easyxtb.XTB_BIN = Path(avo_input["xtb_bin"])
             easyxtb.config["xtb_bin"] = str(easyxtb.XTB_BIN)
+        
+        # Save change to crest_bin if there has been one
+        if avo_input["crest_bin"] in ["none", ""]:
+            pass
+        elif Path(avo_input["crest_bin"]) != easyxtb.CREST_BIN:
+            easyxtb.CREST_BIN = Path(avo_input["crest_bin"])
+            easyxtb.config["crest_bin"] = str(easyxtb.CREST_BIN)
 
         # Update number of threads
         easyxtb.config["n_proc"] = avo_input["n_proc"]
@@ -156,14 +171,11 @@ if __name__ == "__main__":
         # Update energy units
         easyxtb.config["energy_units"] = avo_input["energy_units"]
 
-        # Convert "none" string to Python None
-        if avo_input["solvent"] == "none":
-            solvent_selected = None
-        else:
-            solvent_selected = avo_input["solvent"]
-
         # Update solvent
-        easyxtb.config["solvent"] = solvent_selected
+        if avo_input["solvent"] == "none":
+            easyxtb.config["solvent"] = None
+        else:
+            easyxtb.config["solvent"] = avo_input["solvent"]
 
         # Update method
         easyxtb.config["method"] = methods.index(avo_input["method"])
