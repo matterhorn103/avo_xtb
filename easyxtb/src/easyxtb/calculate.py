@@ -578,7 +578,7 @@ def conformers(
     All conformers within <ewin> kcal/mol are kept.
     If hess=True, vibrational frequencies are calculated and the conformers reordered by Gibbs energy.
     """
-    method_flag = f"gfn{method}" if method else f"gfn{config["method"]}"
+    method_flag = f"gfn{method}" if method else f'gfn{config["method"]}'
     calc = Calculation(
         program="crest",
         input_geometry=input_geometry,
@@ -611,7 +611,7 @@ def protonate(
 
     The returned tautomers are ordered from lowest to highest energy.
     """
-    method_flag = f"gfn{method}" if method else f"gfn{config["method"]}"
+    method_flag = f"gfn{method}" if method else f'gfn{config["method"]}'
     calc = Calculation(
         program="crest",
         input_geometry=input_geometry,
@@ -641,7 +641,7 @@ def deprotonate(
 
     The returned tautomers are ordered from lowest to highest energy.
     """
-    method_flag = f"gfn{method}" if method else f"gfn{config["method"]}"
+    method_flag = f"gfn{method}" if method else f'gfn{config["method"]}'
     calc = Calculation(
         program="crest",
         input_geometry=input_geometry,
@@ -673,7 +673,7 @@ def solvate(
     Note that non-zero charge and spin on the solvent `Geometry` will not be passed to
     CREST.
     """
-    method_flag = f"gfn{method}" if method else f"gfn{config["method"]}"
+    method_flag = f"gfn{method}" if method else f'gfn{config["method"]}'
     calc = Calculation(
         program="crest",
         input_geometry=solute_geometry,
