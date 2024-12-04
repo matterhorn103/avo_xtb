@@ -42,11 +42,7 @@ if __name__ == "__main__":
 
         # Run calculation; returns energy as float in hartree
         logger.debug("avo_xtb is requesting a single point energy calculation")
-        energy_hartree = easyxtb.calculate.energy(
-            geom,
-            solvation=easyxtb.config["solvent"],
-            method=easyxtb.config["method"],
-        )
+        energy_hartree = easyxtb.calculate.energy(geom)
         # If an energy couldn't be parsed, will return None, so have to allow for that
         if energy_hartree is None:
             # Seems like a reasonable placeholder that should be obviously incorrect to

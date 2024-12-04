@@ -72,7 +72,6 @@ def solvate(avo_input: dict) -> dict:
         solute_geom,
         solvent_geom,
         nsolv=avo_input["nsolv"],
-        method=2,
     )
 
     # Add solute bonding information from input CJSON

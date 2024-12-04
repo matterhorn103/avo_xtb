@@ -69,7 +69,7 @@ try:
 except PermissionError:
     error_msg = (
         f"easyxtb was expecting to use {PLUGIN_DIR} to write and store calculation results, but you do not seem to have write permission for this.\n"
-        + f"Please choose a suitable data directory, and add its path to {PLUGIN_DIR / 'config.json'} under 'calc_dir'."
+        + f"Please choose a suitable data directory, and add its path to {PLUGIN_DIR / 'config.json'} under 'calcs_dir'."
     )
     logger.error(error_msg)
     print(error_msg)
@@ -78,18 +78,18 @@ except PermissionError:
 
 # User can customize the directory used as temporary directory for the calculations
 # Don't use `tmp` or similar because it doesn't usually persist between reboots
-if "calc_dir" in config:
-    CALC_DIR = Path(config["calc_dir"])
-    logger.debug("Using custom calculation directory from user config")
+if "calcs_dir" in config:
+    CALCS_DIR = Path(config["calcs_dir"])
+    logger.debug("Using custom calculations directory from user config")
 else:
-    CALC_DIR = PLUGIN_DIR
-logger.debug(f"{CALC_DIR=}")
+    CALCS_DIR = Path(PLUGIN_DIR)
+logger.debug(f"{CALCS_DIR=}")
 
 
 # Use the same directory by default for each new calc, overwriting the old one, to avoid
 # build-up of lots of files
-TEMP_DIR = CALC_DIR / "last"
-# Create both the TEMP_DIR and the parent CALC_DIR at the same time if they don't exist
+TEMP_DIR = CALCS_DIR / "last"
+# Create both the TEMP_DIR and the parent CALCS_DIR at the same time if they don't exist
 TEMP_DIR.mkdir(parents=True, exist_ok=True)
 logger.debug(f"{TEMP_DIR=}")
 
@@ -97,12 +97,12 @@ logger.debug(f"{TEMP_DIR=}")
 # If this is first run, check file writing works fine
 if init:
     try:
-        with open((CALC_DIR / "probe.txt"), "w", encoding="utf-8") as probe_file:
+        with open((CALCS_DIR / "probe.txt"), "w", encoding="utf-8") as probe_file:
             probe_file.write(
                 "This file is created only to check everything works.\nIt will be deleted when the first calculation is run."
             )
-        config["calc_dir"] = str(CALC_DIR)
-        logger.debug("Write permission for CALC_DIR confirmed")
+        config["calcs_dir"] = str(CALCS_DIR)
+        logger.debug("Write permission for CALCS_DIR confirmed")
     except Exception as e:
         logger.error(e.message)
         print(e.message)
@@ -125,6 +125,9 @@ def update_config():
         if option not in config:
             config[option] = default
             logger.debug(f"User config does not contain setting for {option}, so has been set to {default}")
+    if "calc_dir" in config:
+        config["calcs_dir"] = config["calc_dir"]
+        del config["calc_dir"]
     # Record which version was used last
     config["version"] = easyxtb_VERSION
     save_config()

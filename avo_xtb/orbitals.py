@@ -42,11 +42,7 @@ if __name__ == "__main__":
 
         # Run calculation; returns Molden output file as string
         logger.debug("avo_xtb is requesting a molecular orbitals calculation")
-        molden_string = easyxtb.calculate.orbitals(
-            geom,
-            solvation=easyxtb.config["solvent"],
-            method=easyxtb.config["method"],
-        )
+        molden_string = easyxtb.calculate.orbitals(geom)
 
         # Format everything appropriately for Avogadro
         # Just pass orbitals file with instruction to read only properties
