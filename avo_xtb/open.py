@@ -32,10 +32,10 @@ if __name__ == "__main__":
     if args.run_command:
         # Have to detect os
         if platform.system() == "Windows":
-            subprocess.run(["explorer.exe", easyxtb.CALC_DIR])
+            subprocess.run(["explorer.exe", easyxtb.CALCS_DIR])
 
         elif platform.system() == "Darwin":
-            subprocess.run(["open", easyxtb.CALC_DIR])
+            subprocess.run(["open", easyxtb.CALCS_DIR])
 
         else:
-            subprocess.run(["xdg-open", easyxtb.CALC_DIR])
+            subprocess.run(["xdg-open", easyxtb.CALCS_DIR])

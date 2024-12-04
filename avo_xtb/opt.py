@@ -61,13 +61,7 @@ if __name__ == "__main__":
 
         # Run calculation; returns optimized geometry as well as Calculation object
         logger.debug("avo_xtb is requesting a geometry optimization")
-        opt_geom, calc = easyxtb.calculate.optimize(
-            geom,
-            solvation=easyxtb.config["solvent"],
-            method=easyxtb.config["method"],
-            level=easyxtb.config["opt_lvl"],
-            return_calc=True,
-        )
+        opt_geom, calc = easyxtb.calculate.optimize(geom, return_calc=True)
 
         # Convert geometry to cjson
         geom_cjson = opt_geom.to_cjson()

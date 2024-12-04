@@ -80,8 +80,6 @@ if __name__ == "__main__":
         # Run calculation; returns set of conformers as well as Calculation object
         conformers, calc = easyxtb.calculate.conformers(
             geom,
-            solvation=easyxtb.config["solvent"],
-            method=easyxtb.config["method"],
             ewin=ewin_kcal,
             hess=avo_input["hess"],
             return_calc=True,
