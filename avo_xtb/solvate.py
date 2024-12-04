@@ -9,6 +9,7 @@ from copy import deepcopy
 from pathlib import Path
 
 from support import easyxtb
+from about import XTB_VERSION, CREST_VERSION
 
 
 logger = logging.getLogger(__name__)
@@ -135,6 +136,24 @@ if __name__ == "__main__":
                 },
             },
         }
+        # If we think it won't work with the versions of xtb and CREST being used, show
+        # a warning
+        xtb_version_tuple = tuple([int(n) for n in XTB_VERSION.split(".")])
+        crest_version_tuple = tuple([int(n) for n in CREST_VERSION.split(".")])
+        if crest_version_tuple >= (3,0,0) and xtb_version_tuple < (6,7,0):
+            options["userOptions"]["warning"] = {
+                "type": "text",
+                "label": "WARNING",
+                "default": "QCG calculations with version 3 of CREST require xtb 6.7.1 or newer, so this command is unlikely to work for you!",
+                "order": 4.0,
+            }
+        elif (3,0,0) <= crest_version_tuple <= (3,1,0):
+            options["userOptions"]["warning"] = {
+                "type": "text",
+                "label": "WARNING",
+                "default": "QCG calculations with versions 3.0.x of CREST have a bug, so this command is unlikely to work for you!",
+                "order": 4.0,
+            }
         print(json.dumps(options))
 
     if args.display_name:
