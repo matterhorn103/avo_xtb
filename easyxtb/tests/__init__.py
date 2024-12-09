@@ -17,12 +17,29 @@ def round_atom_coordinates(atoms: list[Atom], precision: int = 12) -> list[Atom]
         )
     return rounded_atoms
 
-def equal_geom(geom1: Geometry, geom2: Geometry, precision: int = 12) -> bool:
-    rounded1 = round_atom_coordinates(geom1.atoms, precision)
-    rounded2 = round_atom_coordinates(geom2.atoms, precision)
-    for i in range(len(rounded1)):
-        if rounded1[i] != rounded2[i]:
-            print(rounded1[i])
-            print(rounded2[i])
+def equal_geom(geom1: Geometry, geom2: Geometry, precision: float = 7e-5) -> bool:
+    for i in range(len(geom1.atoms)):
+        diffs = [
+            abs(geom1.atoms[i].x - geom2.atoms[i].x),
+            abs(geom1.atoms[i].y - geom2.atoms[i].y),
+            abs(geom1.atoms[i].z - geom2.atoms[i].z),
+        ]
+        if (
+            geom1.atoms[i].element != geom2.atoms[i].element
+            or not all([diff <= precision for diff in diffs])
+        ):
+            print(geom1.atoms[i])
+            print(geom2.atoms[i])
             print()
-    return rounded1 == rounded2
+            return False
+    return True
+
+def equal_freqs(freqs1: list, freqs2: list, precision: float = 1.0) -> bool:
+    for i, f in enumerate(freqs1):
+        diff = abs(f["frequency"] - freqs2[i]["frequency"])
+        if not diff <= precision:
+            print(f)
+            print(freqs2[i])
+            print()
+            return False
+    return True
