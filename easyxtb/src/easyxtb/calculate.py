@@ -222,7 +222,7 @@ class Calculation:
             self.calc_dir.mkdir(parents=True)
 
         # Save geometry to file
-        geom_file = self.calc_dir / "input.xyz"
+        geom_file = self.calc_dir/"input.xyz"
         logger.debug(f"Saving input geometry to {geom_file}")
         self.input_geometry.write_xyz(geom_file)
         # We are using proper paths for pretty much everything so it shouldn't be
@@ -247,7 +247,7 @@ class Calculation:
         for i, arg in enumerate(command):
             if isinstance(arg, Geometry):
                 aux_count += 1
-                aux_file = arg.write_xyz(self.calc_dir / f"aux{aux_count}.xyz")
+                aux_file = arg.write_xyz(self.calc_dir/f"aux{aux_count}.xyz")
                 command[i] = aux_file
         # Sanitize everything to strings
         command = [x if isinstance(x, str) else str(x) for x in command]
@@ -388,6 +388,16 @@ class Calculation:
                 self.output_geometry = best["geometry"]
                 self.energy = best["energy"]
                 logger.debug(f"Energy of lowest energy tautomer: {self.energy}")
+            case "qcg":
+                # Explicit solvent shell growing
+                logger.debug("Growing of a solvent shell was requested, so checking for generated cluster geometry")
+                # Get final cluster geom
+                self.output_geometry = Geometry.from_file(
+                    self.calc_dir/"grow/cluster.xyz",
+                    charge=self.input_geometry.charge,
+                    spin=self.input_geometry.spin,
+                )
+                logger.debug(f'Cluster geometry read from {self.calc_dir/"grow/cluster.xyz"}')
             case _:
                 pass
 
@@ -395,7 +405,7 @@ class Calculation:
 def energy(
     input_geometry: Geometry,
     solvation: str | None = None,
-    method: int = 2,
+    method: int | None = None,
     n_proc: int | None = None,
     return_calc: bool = False,
 ) -> float | tuple[float, Calculation]:
@@ -404,8 +414,8 @@ def energy(
     calc = Calculation(
         input_geometry=input_geometry,
         options={
-            "gfn": method,
-            "alpb": solvation,
+            "gfn": method if method else config["method"],
+            "alpb": solvation if solvation else config["solvent"],
             "P": n_proc if n_proc else config["n_proc"],
         },
     )
@@ -419,8 +429,8 @@ def energy(
 def optimize(
     input_geometry: Geometry,
     solvation: str | None = None,
-    method: int = 2,
-    level: str = "normal",
+    method: int | None = None,
+    level: str | None = None,
     n_proc: int | None = None,
     return_calc: bool = False,
 ) -> Geometry | tuple[Geometry, Calculation]:
@@ -430,10 +440,10 @@ def optimize(
     calc = Calculation(
         input_geometry=input_geometry,
         runtype="opt",
-        runtype_args=[level],
+        runtype_args = [level] if level else [config["opt_lvl"]],
         options={
-            "gfn": method,
-            "alpb": solvation,
+            "gfn": method if method else config["method"],
+            "alpb": solvation if solvation else config["solvent"],
             "p": n_proc if n_proc else config["n_proc"],
         },
     )
@@ -450,7 +460,7 @@ def optimize(
 def frequencies(
     input_geometry: Geometry,
     solvation: str | None = None,
-    method: int = 2,
+    method: int | None = None,
     n_proc: int | None = None,
     return_calc: bool = False,
 ) -> list[dict] | tuple[list[dict], Calculation]:
@@ -460,8 +470,8 @@ def frequencies(
         input_geometry=input_geometry,
         runtype="hess",
         options={
-            "gfn": method,
-            "alpb": solvation,
+            "gfn": method if method else config["method"],
+            "alpb": solvation if solvation else config["solvent"],
             "p": n_proc if n_proc else config["n_proc"],
         },
     )
@@ -475,8 +485,8 @@ def frequencies(
 def opt_freq(
     input_geometry: Geometry,
     solvation: str | None = None,
-    method: int = 2,
-    level: str = "normal",
+    method: int | None = None,
+    level: str | None = None,
     n_proc: int | None = None,
     auto_restart: bool = True,
     return_calc: bool = False,
@@ -491,10 +501,10 @@ def opt_freq(
     calc = Calculation(
         input_geometry=input_geometry,
         runtype="ohess",
-        runtype_args=[level],
+        runtype_args=[level] if level else [config["opt_lvl"]],
         options={
-            "gfn": method,
-            "alpb": solvation,
+            "gfn": method if method else config["method"],
+            "alpb": solvation if solvation else config["solvent"],
             "p": n_proc if n_proc else config["n_proc"],
         },
     )
@@ -510,8 +520,8 @@ def opt_freq(
             runtype="ohess",
             runtype_args=[level],
             options={
-                "gfn": method,
-                "alpb": solvation,
+                "gfn": method if method else config["method"],
+                "alpb": solvation if solvation else config["solvent"],
                 "p": n_proc if n_proc else config["n_proc"],
             },
         )
@@ -526,7 +536,7 @@ def opt_freq(
 def orbitals(
     input_geometry: Geometry,
     solvation: str | None = None,
-    method: int = 2,
+    method: int | None = None,
     n_proc: int | None = None,
     return_calc: bool = False,
 ) -> str | tuple[str, Calculation]:
@@ -540,8 +550,8 @@ def orbitals(
         input_geometry=input_geometry,
         options={
             "molden": True,
-            "gfn": method,
-            "alpb": solvation,
+            "gfn": method if method else config["method"],
+            "alpb": solvation if solvation else config["solvent"],
             "p": n_proc if n_proc else config["n_proc"],
         },
     )
@@ -555,7 +565,7 @@ def orbitals(
 def conformers(
     input_geometry: Geometry,
     solvation: str | None = None,
-    method: int = 2,
+    method: int | None = None,
     ewin: int | float = 6,
     hess: bool = False,
     n_proc: int | None = None,
@@ -568,7 +578,7 @@ def conformers(
     All conformers within <ewin> kcal/mol are kept.
     If hess=True, vibrational frequencies are calculated and the conformers reordered by Gibbs energy.
     """
-    method_flag = f"gfn{method}"
+    method_flag = f"gfn{method}" if method else f'gfn{config["method"]}'
     calc = Calculation(
         program="crest",
         input_geometry=input_geometry,
@@ -576,7 +586,7 @@ def conformers(
         options={
             "xnam": XTB_BIN,
             method_flag: True,
-            "alpb": solvation,
+            "alpb": solvation if solvation else config["solvent"],
             "ewin": ewin,
             "T": n_proc if n_proc else config["n_proc"],
         },
@@ -593,7 +603,7 @@ def conformers(
 def protonate(
     input_geometry: Geometry,
     solvation: str | None = None,
-    method: int = 2,
+    method: int | None = None,
     n_proc: int | None = None,
     return_calc: bool = False,
 ) -> list[dict] | tuple[list[dict], Calculation]:
@@ -601,7 +611,7 @@ def protonate(
 
     The returned tautomers are ordered from lowest to highest energy.
     """
-    method_flag = f"gfn{method}"
+    method_flag = f"gfn{method}" if method else f'gfn{config["method"]}'
     calc = Calculation(
         program="crest",
         input_geometry=input_geometry,
@@ -609,7 +619,7 @@ def protonate(
         options={
             "xnam": XTB_BIN,
             method_flag: True,
-            "alpb": solvation,
+            "alpb": solvation if solvation else config["solvent"],
             "T": n_proc if n_proc else config["n_proc"],
         },
     )
@@ -623,7 +633,7 @@ def protonate(
 def deprotonate(
     input_geometry: Geometry,
     solvation: str | None = None,
-    method: int = 2,
+    method: int | None = None,
     n_proc: int | None = None,
     return_calc: bool = False,
 ) -> list[dict] | tuple[list[dict], Calculation]:
@@ -631,7 +641,7 @@ def deprotonate(
 
     The returned tautomers are ordered from lowest to highest energy.
     """
-    method_flag = f"gfn{method}"
+    method_flag = f"gfn{method}" if method else f'gfn{config["method"]}'
     calc = Calculation(
         program="crest",
         input_geometry=input_geometry,
@@ -639,7 +649,7 @@ def deprotonate(
         options={
             "xnam": XTB_BIN,
             method_flag: True,
-            "alpb": solvation,
+            "alpb": solvation if solvation else config["solvent"],
             "T": n_proc if n_proc else config["n_proc"],
         },
     )
@@ -654,7 +664,7 @@ def solvate(
     solute_geometry: Geometry,
     solvent_geometry: Geometry,
     nsolv: int,
-    method: int = 2,
+    method: int | None = None,
     n_proc: int | None = None,
     return_calc: bool = False,
 ) -> Geometry | tuple[Geometry, Calculation]:
@@ -663,7 +673,7 @@ def solvate(
     Note that non-zero charge and spin on the solvent `Geometry` will not be passed to
     CREST.
     """
-    method_flag = f"gfn{method}"
+    method_flag = f"gfn{method}" if method else f'gfn{config["method"]}'
     calc = Calculation(
         program="crest",
         input_geometry=solute_geometry,

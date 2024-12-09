@@ -41,8 +41,8 @@ if __name__ == "__main__":
                 },
                 "user_dir": {
                     "type": "string",
-                    "label": "Run calculations (in subfolder) in",
-                    "default": str(easyxtb.CALC_DIR),
+                    "label": "Run calculations (in a /last subfolder) in",
+                    "default": str(easyxtb.CALCS_DIR),
                     "order": 3.0,
                 },
                 "n_proc": {
@@ -138,9 +138,9 @@ if __name__ == "__main__":
         avo_input = json.loads(sys.stdin.read())
 
         # Save change to user_dir if there has been one
-        if avo_input["user_dir"] != str(easyxtb.CALC_DIR):
-            easyxtb.CALC_DIR = Path(avo_input["user_dir"])
-            easyxtb.configuration.TEMP_DIR = easyxtb.CALC_DIR / "last"
+        if avo_input["user_dir"] != str(easyxtb.CALCS_DIR):
+            easyxtb.CALCS_DIR = Path(avo_input["user_dir"])
+            easyxtb.configuration.TEMP_DIR = easyxtb.CALCS_DIR / "last"
             try:
                 easyxtb.TEMP_DIR.mkdir(parents=True, exist_ok=True)
             except PermissionError:
@@ -149,7 +149,7 @@ if __name__ == "__main__":
                 }
                 # Pass back to Avogadro to display to user
                 print(json.dumps(output))
-            easyxtb.config["calc_dir"] = str(easyxtb.CALC_DIR)
+            easyxtb.config["calcs_dir"] = str(easyxtb.CALCS_DIR)
 
         # Save change to xtb_bin if there has been one
         if avo_input["xtb_bin"] in ["none", ""]:

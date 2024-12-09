@@ -39,7 +39,7 @@ if __name__ == "__main__":
                 "save_dir": {
                     "type": "string",
                     "label": "Save results in",
-                    "default": str(easyxtb.CALC_DIR),
+                    "default": str(easyxtb.CALCS_DIR),
                     "order": 1.0,
                 },
                 # "Number of threads": {
@@ -159,15 +159,15 @@ if __name__ == "__main__":
         output["message"] = "\n\n".join(message)
 
         # Save result
-        with open(easyxtb.CALC_DIR / "result.cjson", "w", encoding="utf-8") as save_file:
+        with open(easyxtb.CALCS_DIR / "result.cjson", "w", encoding="utf-8") as save_file:
             json.dump(output["cjson"], save_file, indent=2)
 
         # If user specified a save location, copy calculation directory to there
         if not (
             avo_input["save_dir"] in ["", None]
-            or Path(avo_input["save_dir"]) == easyxtb.CALC_DIR
+            or Path(avo_input["save_dir"]) == easyxtb.CALCS_DIR
         ):
-            copytree(easyxtb.CALC_DIR, Path(avo_input["save_dir"]), dirs_exist_ok=True)
+            copytree(easyxtb.CALCS_DIR, Path(avo_input["save_dir"]), dirs_exist_ok=True)
 
         # Pass back to Avogadro
         print(json.dumps(output))
