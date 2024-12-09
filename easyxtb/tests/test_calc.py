@@ -4,7 +4,7 @@
 from pathlib import Path
 
 from easyxtb import Geometry, calculate, parse
-from . import equal_geom
+from . import equal_geom, equal_freqs
 
 
 input_dir = Path(__file__).parent / "files/input"
@@ -54,7 +54,7 @@ def test_freq_neutral_singlet():
         with open(results_dir / f"{mol}_g98.out", encoding="utf-8") as f:
             ref_freqs = parse.parse_g98_frequencies(f.read())
         print(f"Testing {mol}:")
-        assert freqs == ref_freqs
+        assert equal_freqs(freqs, ref_freqs)
         print("  Success")
 
 def test_freq_anion():
@@ -64,7 +64,7 @@ def test_freq_anion():
         with open(results_dir / f"{mol}_g98.out", encoding="utf-8") as f:
             ref_freqs = parse.parse_g98_frequencies(f.read())
         print(f"Testing {mol}:")
-        assert freqs == ref_freqs
+        assert equal_freqs(freqs, ref_freqs)
         print("  Success")
 
 def test_freq_cation():
@@ -74,7 +74,7 @@ def test_freq_cation():
         with open(results_dir / f"{mol}_g98.out", encoding="utf-8") as f:
             ref_freqs = parse.parse_g98_frequencies(f.read())
         print(f"Testing {mol}:")
-        assert freqs == ref_freqs
+        assert equal_freqs(freqs, ref_freqs)
         print("  Success")
 
 def test_freq_doublet():
@@ -84,5 +84,5 @@ def test_freq_doublet():
         with open(results_dir / f"{mol}_g98.out", encoding="utf-8") as f:
             ref_freqs = parse.parse_g98_frequencies(f.read())
         print(f"Testing {mol}:")
-        assert freqs == ref_freqs
+        assert equal_freqs(freqs, ref_freqs)
         print("  Success")
