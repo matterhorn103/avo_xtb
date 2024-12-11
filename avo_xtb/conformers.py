@@ -61,7 +61,7 @@ if __name__ == "__main__":
     if args.display_name:
         print("Conformers…")
     if args.menu_path:
-        print("Extensions|Semi-empirical (xtb){770}")
+        print("Extensions|Semi-Empirical (xtb){770}")
 
     if args.run_command:
         # Read input from Avogadro

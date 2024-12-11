@@ -51,7 +51,7 @@ if __name__ == "__main__":
     if args.display_name:
         print("Optimize")
     if args.menu_path:
-        print("Extensions|Semi-empirical (xtb){880}")
+        print("Extensions|Semi-Empirical (xtb){880}")
 
     if args.run_command:
         # Read input from Avogadro

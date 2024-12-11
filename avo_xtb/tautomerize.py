@@ -85,7 +85,7 @@ if __name__ == "__main__":
     if args.display_name:
         print("Tautomerize")
     if args.menu_path:
-        print("Extensions|Semi-empirical (xtb){760}")
+        print("Extensions|Semi-Empirical (xtb){760}")
 
     if args.run_command:
         # Read input from Avogadro
