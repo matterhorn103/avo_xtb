@@ -5,26 +5,12 @@ import argparse
 import json
 import logging
 import sys
-from copy import deepcopy
 
 from support import easyxtb
+from tautomerize import cleanup_after_taut
 
 
 logger = logging.getLogger(__name__)
-
-
-def cleanup_after_taut(cjson: dict) -> dict:
-    """Returns a copy of a cjson dict minus any data that is no longer meaningful after
-    a CREST tautomerization/protonation/deprotonation procedure.
-    
-    Essentially gives an empty cjson, with only the total charge and spin retained.
-    """
-
-    output = deepcopy(easyxtb.convert.empty_cjson)
-    output["properties"]["totalCharge"] = cjson["properties"]["totalCharge"]
-    output["properties"]["totalSpinMultiplicity"] = cjson["properties"]["totalSpinMultiplicity"]
-
-    return output
 
 
 if __name__ == "__main__":
@@ -47,7 +33,7 @@ if __name__ == "__main__":
     if args.display_name:
         print("Protonate")
     if args.menu_path:
-        print("Extensions|Semi-empirical (xtb){740}")
+        print("Extensions|Semi-empirical (xtb){750}")
 
     if args.run_command:
         # Read input from Avogadro

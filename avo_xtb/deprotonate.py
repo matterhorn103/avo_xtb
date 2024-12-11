@@ -7,7 +7,7 @@ import logging
 import sys
 
 from support import easyxtb
-from protonate import cleanup_after_taut
+from tautomerize import cleanup_after_taut
 
 
 logger = logging.getLogger(__name__)
@@ -33,7 +33,7 @@ if __name__ == "__main__":
     if args.display_name:
         print("Deprotonate")
     if args.menu_path:
-        print("Extensions|Semi-empirical (xtb){730}")
+        print("Extensions|Semi-empirical (xtb){740}")
 
     if args.run_command:
         # Read input from Avogadro
