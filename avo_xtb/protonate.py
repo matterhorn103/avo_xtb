@@ -56,7 +56,11 @@ if __name__ == "__main__":
         geom = easyxtb.Geometry.from_cjson(avo_input["cjson"])
 
         # Run calculation; returns set of tautomers as well as Calculation object
-        tautomers, calc = easyxtb.calculate.protonate(geom, return_calc=True)
+        tautomers, calc = easyxtb.calculate.protonate(
+            geom,
+            options=easyxtb.config["crest_opts"],
+            return_calc=True,
+        )
 
         best_cjson = calc.output_geometry.to_cjson()
         tautomer_cjson = easyxtb.convert.taut_to_cjson(tautomers)

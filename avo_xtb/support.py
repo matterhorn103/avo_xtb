@@ -12,7 +12,7 @@ import easyxtb
 sys.stdout.reconfigure(encoding="utf-8")
 
 
-# Add some extra plugin-specific things to the config
+# Piggyback the easyxtb config and add some extra plugin-specific things
 plugin_defaults = {
     "energy_units": "kJ/mol",
     "xtb_opts": {},
