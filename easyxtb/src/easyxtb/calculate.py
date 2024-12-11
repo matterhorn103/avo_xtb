@@ -415,11 +415,11 @@ def energy(
     options = options if options else {}
     calc = Calculation(
         input_geometry=input_geometry,
-        options=options.update({
+        options = {
             "gfn": method if method else config["method"],
             "alpb": solvation if solvation else config["solvent"],
             "P": n_proc if n_proc else config["n_proc"],
-        }),
+        } | options,
     )
     calc.run()
     if return_calc:
@@ -445,11 +445,11 @@ def optimize(
         input_geometry=input_geometry,
         runtype="opt",
         runtype_args = [level] if level else [config["opt_lvl"]],
-        options=options.update({
+        options = {
             "gfn": method if method else config["method"],
             "alpb": solvation if solvation else config["solvent"],
             "p": n_proc if n_proc else config["n_proc"],
-        }),
+        } | options,
     )
     calc.run()
     # Check for convergence
@@ -475,11 +475,11 @@ def frequencies(
     calc = Calculation(
         input_geometry=input_geometry,
         runtype="hess",
-        options=options.update({
+        options = {
             "gfn": method if method else config["method"],
             "alpb": solvation if solvation else config["solvent"],
             "p": n_proc if n_proc else config["n_proc"],
-        }),
+        } | options,
     )
     calc.run()
     if return_calc:
@@ -506,11 +506,11 @@ def opt_freq(
     """
 
     options = options if options else {}
-    options=options.update({
+    options = {
         "gfn": method if method else config["method"],
         "alpb": solvation if solvation else config["solvent"],
         "p": n_proc if n_proc else config["n_proc"],
-    })
+    } | options
     calc = Calculation(
         input_geometry=input_geometry,
         runtype="ohess",
@@ -555,12 +555,12 @@ def orbitals(
     options = options if options else {}
     calc = Calculation(
         input_geometry=input_geometry,
-        options=options.update({
+        options = {
             "molden": True,
             "gfn": method if method else config["method"],
             "alpb": solvation if solvation else config["solvent"],
             "p": n_proc if n_proc else config["n_proc"],
-        }),
+        } | options,
     )
     calc.run()
     if return_calc:
@@ -592,13 +592,13 @@ def conformers(
         program="crest",
         input_geometry=input_geometry,
         runtype="v3",
-        options=options.update({
+        options = {
             "xnam": XTB_BIN,
             method_flag: True,
             "alpb": solvation if solvation else config["solvent"],
             "ewin": ewin,
             "T": n_proc if n_proc else config["n_proc"],
-        }),
+        } | options,
     )
     if hess:
         calc.options["prop"] = "hess"
@@ -627,12 +627,12 @@ def protonate(
         program="crest",
         input_geometry=input_geometry,
         runtype="protonate",
-        options=options.update({
+        options = {
             "xnam": XTB_BIN,
             method_flag: True,
             "alpb": solvation if solvation else config["solvent"],
             "T": n_proc if n_proc else config["n_proc"],
-        }),
+        } | options,
     )
     calc.run()
     if return_calc:
@@ -659,12 +659,12 @@ def deprotonate(
         program="crest",
         input_geometry=input_geometry,
         runtype="deprotonate",
-        options=options.update({
+        options = {
             "xnam": XTB_BIN,
             method_flag: True,
             "alpb": solvation if solvation else config["solvent"],
             "T": n_proc if n_proc else config["n_proc"],
-        }),
+        } | options,
     )
     calc.run()
     if return_calc:
@@ -694,13 +694,13 @@ def solvate(
         input_geometry=solute_geometry,
         runtype="qcg",
         runtype_args=[solvent_geometry],
-        options=options.update({
+        options = {
             "grow": True,
             "nsolv": nsolv,
             "xnam": XTB_BIN,
             method_flag: True,
             "T": n_proc if n_proc else config["n_proc"],
-        }),
+        } | options,
     )
     calc.run()
     if return_calc:
