@@ -185,7 +185,7 @@ if __name__ == "__main__":
     if args.display_name:
         print("Configure…")
     if args.menu_path:
-        print("Extensions|Semi-Empirical (xtb){20}")
+        print("Extensions|Semi-Empirical QM (xTB){20}")
 
     if args.run_command:
         # Read input from Avogadro

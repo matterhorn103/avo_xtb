@@ -54,7 +54,7 @@ if __name__ == "__main__":
     if args.display_name:
         print("About avo_xtb")
     if args.menu_path:
-        print("Extensions|Semi-Empirical (xtb){10}")
+        print("Extensions|Semi-Empirical QM (xTB){10}")
 
     if args.run_command:
 

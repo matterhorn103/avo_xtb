@@ -30,7 +30,7 @@ if __name__ == "__main__":
     if args.display_name:
         print("CREST Help")
     if args.menu_path:
-        print("Extensions|Semi-Empirical (xtb){700}")
+        print("Extensions|Semi-Empirical QM (xTB){700}")
 
     if args.run_command:
         # Still have to read input from Avogadro and pass cjson back

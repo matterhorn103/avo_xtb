@@ -32,7 +32,7 @@ if __name__ == "__main__":
     if args.display_name:
         print("Energy")
     if args.menu_path:
-        print("Extensions|Semi-Empirical (xtb){890}")
+        print("Extensions|Semi-Empirical QM (xTB){890}")
 
     if args.run_command:
         # Read input from Avogadro

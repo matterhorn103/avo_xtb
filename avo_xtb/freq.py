@@ -32,7 +32,7 @@ if __name__ == "__main__":
     if args.display_name:
         print("Frequencies")
     if args.menu_path:
-        print("Extensions|Semi-Empirical (xtb){870}")
+        print("Extensions|Semi-Empirical QM (xTB){870}")
 
     if args.run_command:
         # Read input from Avogadro
