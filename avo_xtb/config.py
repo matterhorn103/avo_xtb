@@ -33,12 +33,12 @@ def convert_options(
         opts_string = opts_string.lstrip().rstrip(";")
     elif opts_dict is None:
         opts_dict = {}
-        opts_split = opts_string.split(";")
+        opts_split = [x.strip() for x in opts_string.split(";")]
         for opt_arg in opts_split:
             if opt_arg == "":
                 continue
             opt_arg_split = opt_arg.split(" ", maxsplit=1)
-            opt = opt_arg_split[0]
+            opt = opt_arg_split[0].lstrip("-")
             try:
                 arg = opt_arg_split[1]
             except IndexError:
@@ -49,6 +49,7 @@ def convert_options(
 
 # List of available methods
 methods = ["GFN0-xTB", "GFN1-xTB", "GFN2-xTB"]
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
