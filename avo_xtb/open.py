@@ -27,7 +27,7 @@ if __name__ == "__main__":
     if args.display_name:
         print("Go to Calculation Files")
     if args.menu_path:
-        print("Extensions|Semi-empirical (xtb){340}")
+        print("Extensions|Semi-Empirical QM (xTB){340}")
 
     if args.run_command:
         # Have to detect os

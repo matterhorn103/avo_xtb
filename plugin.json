@@ -17,6 +17,7 @@
     { "name": "orbitals", "command": "avo_xtb/orbitals.py" },
     { "name": "xtb-docs", "command": "avo_xtb/xtb_docs.py" },
     { "name": "conformers", "command": "avo_xtb/conformers.py" },
+    { "name": "tautomerize", "command": "avo_xtb/tautomerize.py" },
     { "name": "protonate", "command": "avo_xtb/protonate.py" },
     { "name": "deprotonate", "command": "avo_xtb/deprotonate.py" },
     { "name": "solvate", "command": "avo_xtb/solvate.py" },

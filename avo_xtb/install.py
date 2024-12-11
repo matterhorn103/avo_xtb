@@ -178,7 +178,7 @@ if __name__ == "__main__":
     if args.display_name:
         print("Get xtb…")
     if args.menu_path:
-        print("Extensions|Semi-empirical (xtb){30}")
+        print("Extensions|Semi-Empirical QM (xTB){30}")
 
     if args.run_command:
         # Read input from Avogadro

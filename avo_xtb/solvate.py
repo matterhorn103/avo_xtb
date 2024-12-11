@@ -160,7 +160,7 @@ if __name__ == "__main__":
         print("Solvate…")
 
     if args.menu_path:
-        print("Extensions|Semi-empirical (xtb){760}")
+        print("Extensions|Semi-Empirical QM (xTB){730}")
 
     if args.run_command:
         # Read input from Avogadro

@@ -342,40 +342,27 @@ class Calculation:
                 logger.debug(f"Found {len(self.conformers)} conformers in the ensemble")
                 # By convention the first in the file is the lowest but make sure anyway
                 self.conformers = sorted(self.conformers, key=lambda x: x["energy"])
-            case "protonate":
-                # Protonation site screening
-                logger.debug("A protonation site screening was requested, so checking for files")
+            case "tautomerize" | "protonate" | "deprotonate":
+                # Protomer screening with +/- 1 or 0 protons
+                logger.debug("A protomer screening was requested, so checking for files")
+                match self.runtype:
+                    case "tautomerize":
+                        result_filename = "tautomers.xyz"
+                        result_charge = self.input_geometry.charge
+                    case "protonate":
+                        result_filename = "protonated.xyz"
+                        result_charge = self.input_geometry.charge + 1
+                    case "deprotonate":
+                        result_filename = "deprotonated.xyz"
+                        result_charge = self.input_geometry.charge - 1
                 # Get set of tautomers
                 tautomer_geoms = Geometry.from_file(
-                    self.output_file.with_name("protonated.xyz"),
+                    self.output_file.with_name(result_filename),
                     multi=True,
-                    charge=self.input_geometry.charge + 1,
+                    charge=result_charge,
                     spin=self.input_geometry.spin,
                 )
-                logger.debug(f"Geometries of tautomers read from {self.output_file.with_name('protonated.xyz')}")
-                self.tautomers = [
-                    {"geometry": geom, "energy": float(geom._comment)}
-                    for geom in tautomer_geoms
-                ]
-                logger.debug(f"Found {len(self.tautomers)} tautomers in the ensemble")
-                # By convention the first in the file is the lowest but make sure anyway
-                self.tautomers = sorted(self.tautomers, key=lambda x: x["energy"])
-                # Get energy and geom of lowest tautomer
-                best = self.tautomers[0]
-                self.output_geometry = best["geometry"]
-                self.energy = best["energy"]
-                logger.debug(f"Energy of lowest energy tautomer: {self.energy}")
-            case "deprotonate":
-                # Deprotonation site screening
-                logger.debug("A deprotonation site screening was requested, so checking for files")
-                # Get set of tautomers
-                tautomer_geoms = Geometry.from_file(
-                    self.output_file.with_name("deprotonated.xyz"),
-                    multi=True,
-                    charge=self.input_geometry.charge - 1,
-                    spin=self.input_geometry.spin,
-                )
-                logger.debug(f"Geometries of tautomers read from {self.output_file.with_name('deprotonated.xyz')}")
+                logger.debug(f"Geometries of tautomers read from {self.output_file.with_name(result_filename)}")
                 self.tautomers = [
                     {"geometry": geom, "energy": float(geom._comment)}
                     for geom in tautomer_geoms
@@ -607,6 +594,38 @@ def conformers(
         return calc.conformers, calc
     else:
         return calc.conformers
+
+
+def tautomerize(
+    input_geometry: Geometry,
+    solvation: str | None = None,
+    method: int | None = None,
+    n_proc: int | None = None,
+    options: dict | None = None,
+    return_calc: bool = False,
+) -> list[dict] | tuple[list[dict], Calculation]:
+    """Sample prototropic tautomers and return set of tautomer Geometries and energies.
+
+    The returned tautomers are ordered from lowest to highest energy.
+    """
+    method_flag = f"gfn{method}" if method else f'gfn{config["method"]}'
+    options = options if options else {}
+    calc = Calculation(
+        program="crest",
+        input_geometry=input_geometry,
+        runtype="tautomerize",
+        options = {
+            "xnam": XTB_BIN,
+            method_flag: True,
+            "alpb": solvation if solvation else config["solvent"],
+            "T": n_proc if n_proc else config["n_proc"],
+        } | options,
+    )
+    calc.run()
+    if return_calc:
+        return calc.tautomers, calc
+    else:
+        return calc.tautomers
 
 
 def protonate(
