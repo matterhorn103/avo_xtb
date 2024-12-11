@@ -15,7 +15,6 @@
     { "name": "freq", "command": "avo_xtb/freq.py" },
     { "name": "ohess", "command": "avo_xtb/ohess.py"},
     { "name": "orbitals", "command": "avo_xtb/orbitals.py" },
-    { "name": "run-xtb", "command": "avo_xtb/run_xtb.py" },
     { "name": "xtb-docs", "command": "avo_xtb/xtb_docs.py" },
     { "name": "conformers", "command": "avo_xtb/conformers.py" },
     { "name": "protonate", "command": "avo_xtb/protonate.py" },

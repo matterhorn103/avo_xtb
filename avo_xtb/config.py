@@ -11,6 +11,42 @@ from pathlib import Path
 from support import easyxtb
 
 
+def convert_options(
+    opts_string: str | None = None,
+    opts_dict: dict | None = None,
+) -> tuple[str, dict]:
+    """Convert a series of command line options passed as a semicolon-delimited string
+    to a dict and vice versa."""
+    if opts_string is None and opts_dict is None:
+        raise ValueError("Must provide either string or dict")
+    elif opts_string is None:
+        opts_string = ""
+        for opt, arg in opts_dict.items():
+            if len(opt) == 1:
+                opts_string += f" -{opt}"
+            else:
+                opts_string += f" --{opt}"
+            if arg is True:
+                opts_string += ";"
+            else:
+                opts_string += f" {arg};"
+        opts_string = opts_string.lstrip().rstrip(";")
+    elif opts_dict is None:
+        opts_dict = {}
+        opts_split = opts_string.split(";")
+        for opt_arg in opts_split:
+            if opt_arg == "":
+                continue
+            opt_arg_split = opt_arg.split(" ", maxsplit=1)
+            opt = opt_arg_split[0]
+            try:
+                arg = opt_arg_split[1]
+            except IndexError:
+                arg = True
+            opts_dict[opt] = arg
+    return opts_string, opts_dict
+
+
 # List of available methods
 methods = ["GFN0-xTB", "GFN1-xTB", "GFN2-xTB"]
 
@@ -115,18 +151,35 @@ if __name__ == "__main__":
                     "default": 4,
                     "order": 8.0,
                 },
+                "xtb_opts": {
+                    "type": "string",
+                    "label": "Extra command line options for xtb (separate with ;)",
+                    "default": "",
+                    "order": 9.0,
+                },
+                "crest_opts": {
+                    "type": "string",
+                    "label": "Extra command line options for CREST (separate with ;)",
+                    "default": "",
+                    "order": 10.0,
+                },
                 "warning": {
                     "type": "text",
                     "label": "Note",
-                    "default": "Some changes here will only affect other\nmenus after restarting Avogadro!",
-                    "order": 10.0,
+                    "default": "Some changes here will only affect other\ndialogs after restarting Avogadro!",
+                    "order": 12.0,
                 },
             }
         }
         # Set other options' defaults to match that found in user config
-        for option in ["solvent", "energy_units", "method", "opt_lvl", "n_proc"]:
-            if easyxtb.config[option] is not None:
-                options["userOptions"][option]["default"] = easyxtb.config[option]
+        for option in options["userOptions"].keys():
+            if easyxtb.config.get(option) is not None:
+                if option in ["xtb_opts", "crest_opts"]:
+                    opts_dict = easyxtb.config[option]
+                    opts_string = convert_options(opts_dict=opts_dict)[0]
+                    options["userOptions"][option]["default"] = opts_string
+                else:
+                    options["userOptions"][option]["default"] = easyxtb.config[option]
         print(json.dumps(options))
     if args.display_name:
         print("Configure…")
@@ -182,5 +235,13 @@ if __name__ == "__main__":
 
         # Update optimization level
         easyxtb.config["opt_lvl"] = avo_input["opt_lvl"]
+
+        # Update extra options for xtb and crest
+        easyxtb.config["xtb_opts"] = convert_options(
+            opts_string=avo_input["xtb_opts"]
+        )[1]
+        easyxtb.config["crest_opts"] = convert_options(
+            opts_string=avo_input["crest_opts"]
+        )[1]
 
         easyxtb.configuration.save_config()
