@@ -5,8 +5,6 @@ import argparse
 import json
 import logging
 import sys
-from pathlib import Path
-from shutil import copytree
 
 from support import easyxtb
 from opt import cleanup_after_opt
@@ -82,6 +80,7 @@ if __name__ == "__main__":
             geom,
             ewin=ewin_kcal,
             hess=avo_input["hess"],
+            options=easyxtb.config["crest_opts"],
             return_calc=True,
         )
 

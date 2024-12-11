@@ -43,7 +43,11 @@ if __name__ == "__main__":
 
         # Run calculation; returns path to Gaussian file containing frequencies
         logger.debug("avo_xtb is requesting an opt+freq calculation")
-        opt_geom, freqs, calc = easyxtb.calculate.opt_freq(geom, return_calc=True)
+        opt_geom, freqs, calc = easyxtb.calculate.opt_freq(
+            geom,
+            options=easyxtb.config["xtb_opts"],
+            return_calc=True,
+        )
 
         # Convert geometry and frequencies to cjson
         geom_cjson = opt_geom.to_cjson()

@@ -1,6 +1,5 @@
 {
   "solvent": null,
-  "energy_units": "kJ/mol",
   "method": 2,
   "opt_lvl": "normal",
   "n_proc": null
