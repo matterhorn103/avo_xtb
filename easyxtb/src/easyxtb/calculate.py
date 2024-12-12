@@ -22,7 +22,7 @@ from shutil import rmtree
 
 from .configuration import config, XTB_BIN, CREST_BIN, TEMP_DIR
 from .geometry import Geometry
-from .parse import parse_energy, parse_g98_frequencies
+from .parse import parse_energy, parse_g98_frequencies, parse_mulliken_charges
 
 
 logger = logging.getLogger(__name__)
@@ -292,6 +292,14 @@ class Calculation:
             # Assume geom was the same at end of calc as at beginning
             logger.debug("No output geometry found - final geometry assumed to be same as initial")
             self.output_geometry = self.input_geometry
+        # Mulliken atomic charges
+        if self.output_file.with_name("charges").exists():
+            logger.debug(f"Partial charges printout found at {self.output_file.with_name('charges')}")
+            with open(self.output_file.with_name("charges"), encoding="utf-8") as f:
+                charges_string = f.read()
+            mulliken_charges = parse_mulliken_charges(charges_string)
+            self.partial_charges = {"mulliken": mulliken_charges}
+            logger.debug("Mulliken partial charges were found and read")
         # Orbital info
         # If Molden output was requested, read the file
         if self.options.get("molden", False):

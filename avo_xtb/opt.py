@@ -31,6 +31,49 @@ def cleanup_after_opt(cjson: dict) -> dict:
     return output
 
 
+def opt(avo_input: dict) -> dict:
+    # Extract the coords
+    geom = easyxtb.Geometry.from_cjson(avo_input["cjson"])
+
+    # Run calculation; returns optimized geometry as well as Calculation object
+    logger.debug("avo_xtb is requesting a geometry optimization")
+    opt_geom, calc = easyxtb.calculate.optimize(
+        geom,
+        options=easyxtb.config["xtb_opts"],
+        return_calc=True,
+    )
+
+    # Convert geometry to cjson
+    geom_cjson = opt_geom.to_cjson()
+
+    # Check for convergence
+    # TODO
+    # Will need to look for "FAILED TO CONVERGE"
+
+    # Get energy for Avogadro
+    energies = easyxtb.convert.convert_energy(calc.energy, "hartree")
+
+    # Format everything appropriately for Avogadro
+    # Start from the original cjson
+    output = {"moleculeFormat": "cjson", "cjson": avo_input["cjson"].copy()}
+
+    # Remove anything that is now unphysical after the optimization
+    output["cjson"] = cleanup_after_opt(output["cjson"])
+        
+    # Add data from calculation
+    output["cjson"]["atoms"]["coords"] = geom_cjson["atoms"]["coords"]
+    output["cjson"]["properties"]["totalEnergy"] = round(energies["eV"], 7)
+    # Partial charges if present
+    if hasattr(calc, "partial_charges"):
+        output["cjson"]["atoms"]["partialCharges"] = calc.partial_charges
+
+    # Save result
+    with open(easyxtb.TEMP_DIR / "result.cjson", "w", encoding="utf-8") as save_file:
+        json.dump(output["cjson"], save_file, indent=2)
+
+    return output
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--debug", action="store_true")
@@ -48,50 +91,17 @@ if __name__ == "__main__":
     if args.print_options:
         options = {"inputMoleculeFormat": "xyz"}
         print(json.dumps(options))
+        
     if args.display_name:
         print("Optimize")
+
     if args.menu_path:
         print("Extensions|Semi-Empirical QM (xTB){880}")
 
     if args.run_command:
         # Read input from Avogadro
         avo_input = json.loads(sys.stdin.read())
-        # Extract the coords
-        geom = easyxtb.Geometry.from_cjson(avo_input["cjson"])
-
-        # Run calculation; returns optimized geometry as well as Calculation object
-        logger.debug("avo_xtb is requesting a geometry optimization")
-        opt_geom, calc = easyxtb.calculate.optimize(
-            geom,
-            options=easyxtb.config["xtb_opts"],
-            return_calc=True,
-        )
-
-        # Convert geometry to cjson
-        geom_cjson = opt_geom.to_cjson()
-
-        # Check for convergence
-        # TODO
-        # Will need to look for "FAILED TO CONVERGE"
-
-        # Get energy for Avogadro
-        energies = easyxtb.convert.convert_energy(calc.energy, "hartree")
-
-        # Format everything appropriately for Avogadro
-        # Start from the original cjson
-        output = {"moleculeFormat": "cjson", "cjson": avo_input["cjson"].copy()}
-
-        # Remove anything that is now unphysical after the optimization
-        output["cjson"] = cleanup_after_opt(output["cjson"])
-        
-        # Add data from calculation
-        output["cjson"]["atoms"]["coords"] = geom_cjson["atoms"]["coords"]
-        output["cjson"]["properties"]["totalEnergy"] = round(energies["eV"], 7)
-
-        # Save result
-        with open(easyxtb.TEMP_DIR / "result.cjson", "w", encoding="utf-8") as save_file:
-            json.dump(output["cjson"], save_file, indent=2)
-        
+        output = opt(avo_input)
         # Pass back to Avogadro
         print(json.dumps(output))
         logger.debug(f"The following dictionary was passed back to Avogadro: {output}")

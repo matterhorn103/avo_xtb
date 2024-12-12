@@ -108,6 +108,14 @@ def parse_g98_frequencies(gaussian_output_string: str) -> list[dict]:
     return frequencies
 
 
+def parse_mulliken_charges(charges_file_string: str) -> list[float]:
+    """Parse the `charges` file output by xtb containing a list of Mulliken partial
+    charges."""
+    lines = charges_file_string.splitlines()
+    charges = [float(line.strip()) for line in lines if line != ""]
+    return charges
+
+
 def parse_orbitals(output_string: str) -> list[dict]:
     """Read the molecular orbital energy and occupancies from an xtb output file.
 
