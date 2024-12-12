@@ -8,19 +8,20 @@
   "commands": [
     { "name": "about", "command": "avo_xtb/about.py" },
     { "name": "config", "command": "avo_xtb/config.py" },
-    { "name": "install", "command": "avo_xtb/install.py" },
+    { "name": "install-xtb", "command": "avo_xtb/install_xtb.py" },
     { "name": "open", "command": "avo_xtb/open.py" },
     { "name": "energy", "command": "avo_xtb/energy.py" },
     { "name": "opt", "command": "avo_xtb/opt.py" },
     { "name": "freq", "command": "avo_xtb/freq.py" },
     { "name": "ohess", "command": "avo_xtb/ohess.py"},
     { "name": "orbitals", "command": "avo_xtb/orbitals.py" },
-    { "name": "xtb-docs", "command": "avo_xtb/xtb_docs.py" },
+    { "name": "docs-xtb", "command": "avo_xtb/docs_xtb.py" },
+    { "name": "install-crest", "command": "avo_xtb/install_crest.py" },
     { "name": "conformers", "command": "avo_xtb/conformers.py" },
     { "name": "tautomerize", "command": "avo_xtb/tautomerize.py" },
     { "name": "protonate", "command": "avo_xtb/protonate.py" },
     { "name": "deprotonate", "command": "avo_xtb/deprotonate.py" },
     { "name": "solvate", "command": "avo_xtb/solvate.py" },
-    { "name": "crest-docs", "command": "avo_xtb/crest_docs.py" }
+    { "name": "docs-crest", "command": "avo_xtb/docs_crest.py" }
   ]
 }

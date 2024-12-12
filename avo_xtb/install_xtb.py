@@ -20,16 +20,17 @@ from support import easyxtb
 logger = logging.getLogger(__name__)
 
 
-# For now just hard code the URLs of xtb and crest
-if platform.system() == "Windows":
-    xtb_url = "https://github.com/grimme-lab/xtb/releases/download/v6.7.1/xtb-6.7.1pre-Windows-x86_64.zip"
-    crest_url = "Not available for Windows!"
-elif platform.system() == "Darwin":
-    xtb_url = "Not available for macOS!"
-    crest_url = "Not available for macOS!"
-elif platform.system() == "Linux":
-    xtb_url = "https://github.com/grimme-lab/xtb/releases/download/v6.7.1/xtb-6.7.1-linux-x86_64.tar.xz"
-    crest_url = "https://github.com/crest-lab/crest/releases/download/v3.0.2/crest-gnu-12-ubuntu-latest.tar.xz"
+# For now just hard code the URLs of xtb
+xtb_urls = {
+    "Windows": "https://github.com/grimme-lab/xtb/releases/download/v6.7.1/xtb-6.7.1pre-Windows-x86_64.zip",
+    "Darwin": None,
+    "Linux": "https://github.com/grimme-lab/xtb/releases/download/v6.7.1/xtb-6.7.1-linux-x86_64.tar.xz",
+}
+crest_urls = {
+    "Windows": None,
+    "Darwin": None,
+    "Linux": "https://github.com/crest-lab/crest/releases/download/v3.0.2/crest-gnu-12-ubuntu-latest.tar.xz",
+}
 
 
 def download(url, parent_dir) -> Path:
@@ -55,66 +56,43 @@ def extract_tar(archive, target_dir) -> Path:
     return extracted
 
 
-def get_xtb(url, install_dir):
-    # Don't install xtb if url not valid
+def get_bin(url, install_dir):
+    # Don't install if url not valid
     if url[0:5] != "https":
         return
     # Download archive to specified directory, then extract there
     archive = download(url, install_dir)
     if archive.suffix == ".zip":
-        xtb_folder = extract_zip(archive, install_dir)
+        folder = extract_zip(archive, install_dir)
     else:
-        xtb_folder = extract_tar(archive, install_dir)
+        folder = extract_tar(archive, install_dir)
     # Rename unzipped folder to a non-versioned name we have chosen
-    xtb_folder = xtb_folder.rename(xtb_folder.with_name("xtb-dist"))
+    if "crest" in folder.name:
+        folder = folder.rename(folder.with_name("crest-dist"))
+    else:
+        folder = folder.rename(folder.with_name("xtb-dist"))
     # Remove archive
     archive.unlink()
-    return xtb_folder
+    return folder
 
 
-def get_crest(url, install_dir):
-    # Don't install crest if url not valid
-    if url[0:5] != "https":
-        return
-    # Download archive to specified directory, then extract there
-    archive = download(url, install_dir)
-    if archive.suffix == ".zip":
-        crest_folder = extract_zip(archive, install_dir)
+def link_bin(bin_path):
+    if "crest" in bin_path.name:
+        bin_name = "crest"
     else:
-        crest_folder = extract_tar(archive, install_dir)
-    # Rename unzipped folder to a non-versioned name we have chosen
-    crest_folder = crest_folder.rename(crest_folder.with_name("crest-dist"))
-    # Remove archive
-    archive.unlink()
-    return crest_folder
-
-
-def link_xtb_bin(xtb_folder):
-    # xtb binary will be in nested folder, we want it at top level as link
-    bin_path = Path(xtb_folder / "bin/xtb")
+        bin_name = "xtb"
     # Check Windows
     if bin_path.with_suffix(".exe").exists():
         bin_path = bin_path.with_suffix(".exe")
     # Link
-    easyxtb.XTB_BIN = easyxtb.BIN_DIR / bin_path.name
-    easyxtb.XTB_BIN.symlink_to(bin_path)
+    if bin_name == "xtb":
+        easyxtb.XTB_BIN = easyxtb.BIN_DIR / bin_path.name
+        easyxtb.XTB_BIN.symlink_to(bin_path)
+    elif bin_name == "crest":
+        easyxtb.CREST_BIN = easyxtb.BIN_DIR / bin_path.name
+        easyxtb.CREST_BIN.symlink_to(bin_path)
     # Add to config
-    easyxtb.config["xtb_bin"] = str(easyxtb.XTB_BIN)
-    # Save config
-    easyxtb.configuration.save_config()
-
-
-def link_crest_bin(crest_folder):
-    # crest binary will be in nested folder, we want it at top level as link
-    bin_path = Path(crest_folder / "crest")
-    # Check Windows
-    if bin_path.with_suffix(".exe").exists():
-        bin_path = bin_path.with_suffix(".exe")
-    # Link
-    easyxtb.CREST_BIN = easyxtb.BIN_DIR / bin_path.name
-    easyxtb.CREST_BIN.symlink_to(bin_path)
-    # Add to config
-    easyxtb.config["crest_bin"] = str(easyxtb.CREST_BIN)
+    easyxtb.config[f"{bin_name}_bin"] = str(easyxtb.BIN_DIR / bin_path.name)
     # Save config
     easyxtb.configuration.save_config()
 
@@ -145,14 +123,8 @@ if __name__ == "__main__":
                 "xtb_url": {
                     "type": "text",
                     "label": "xtb URL",
-                    "default": xtb_url,
+                    "default": xtb_urls[platform.system()],
                     "order": 2.0,
-                },
-                "crest_url": {
-                    "type": "text",
-                    "label": "crest URL",
-                    "default": crest_url,
-                    "order": 3.0,
                 },
                 "install_dir": {
                     "type": "string",
@@ -163,22 +135,24 @@ if __name__ == "__main__":
                 "notice": {
                     "type": "text",
                     "label": "By clicking OK",
-                    "default": "xtb and crest will be installed from the Grimme group repositories to the above location.",
+                    "default": "xtb will be installed from the Grimme group repositories to the above location.",
                     "order": 6.0,
                 },
                 "license": {
                     "type": "text",
                     "label": "Important",
-                    "default": "xtb and crest are distributed independently under the LGPL license v3.\nThe authors of Avogadro and avo_xtb bear no responsibility for xtb or crest or the contents of the Grimme group's repositories.\nSource code for the programs is available at the above web addresses.",
+                    "default": "xtb is distributed independently under the LGPL license v3.\nThe authors of Avogadro and avo_xtb bear no responsibility for xtb or the contents of the Grimme group's repositories.\nSource code for the program is available at the above web address.",
                     "order": 7.0,
                 },
             }
         }
         print(json.dumps(options))
+
     if args.display_name:
         print("Get xtb…")
+
     if args.menu_path:
-        print("Extensions|Semi-Empirical QM (xTB){30}")
+        print("Extensions|Semi-Empirical QM (xTB){801}")
 
     if args.run_command:
         # Read input from Avogadro
@@ -201,15 +175,12 @@ if __name__ == "__main__":
             except PermissionError:
                 output = {"message": "Install directory is not writeable"}
             else:
-                xtb_folder = get_xtb(xtb_url, install_dir)
-                crest_folder = get_crest(crest_url, install_dir)
+                xtb_folder = get_bin(xtb_urls[platform.system()], install_dir)
                 if xtb_folder:
-                    link_xtb_bin(xtb_folder)
-                if crest_folder:
-                    link_crest_bin(crest_folder)
+                    link_bin(xtb_folder/"bin/xtb")
                 # Report success
                 output = {
-                    "message": "xtb (and crest if requested) were successfully installed.\nPlease restart Avogadro."
+                    "message": "xtb was successfully installed.\nPlease restart Avogadro."
                 }
 
         # Pass result back to Avogadro to display to user
