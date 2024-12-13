@@ -78,7 +78,7 @@ if __name__ == "__main__":
                 },
                 "user_dir": {
                     "type": "string",
-                    "label": "Run calculations (in a /last subfolder) in",
+                    "label": "Run calculations in",
                     "default": str(easyxtb.CALCS_DIR),
                     "order": 3.0,
                 },
