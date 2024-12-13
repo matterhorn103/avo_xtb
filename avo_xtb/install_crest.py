@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2024 Matthew J. Milner <matterhorn103@proton.me>
 # SPDX-License-Identifier: BSD-3-Clause
 
-"""Automatically download xtb and crest binaries from their repositories on behalf of the user."""
+"""Automatically download the CREST binary from its repository on behalf of the user."""
 
 import argparse
 import json
@@ -35,7 +35,7 @@ if __name__ == "__main__":
     parser.add_argument("--menu-path", action="store_true")
     args = parser.parse_args()
 
-    # Disable this command if xtb has been found
+    # Disable this command if crest has been found
     if easyxtb.CREST_BIN is not None:
         quit()
 

@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: 2024 Matthew J. Milner <matterhorn103@proton.me>
 # SPDX-License-Identifier: BSD-3-Clause
 
-"""Automatically download xtb and crest binaries from their repositories on behalf of the user."""
+"""Automatically download xtb binaries from their repositories on behalf of the user."""
 
 import argparse
 import json

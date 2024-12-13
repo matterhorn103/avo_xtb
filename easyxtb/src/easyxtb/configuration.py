@@ -25,17 +25,17 @@ logger = logging.getLogger(__name__)
 # Could use platformdirs for this, but since we seem to be able to make do without any
 # other dependencies, let's just hard-code it for now
 if os.environ.get("XDG_DATA_HOME") is not None:
-    PLUGIN_DIR = Path(os.environ.get("XDG_DATA_HOME")) / "easyxtb"
+    PLUGIN_DIR = Path(os.environ.get("XDG_DATA_HOME"))/"easyxtb"
 elif platform.system() == "Windows":
-    PLUGIN_DIR = Path.home() / "AppData/Local/easyxtb"
+    PLUGIN_DIR = Path.home()/"AppData/Local/easyxtb"
 elif platform.system() == "Darwin":
-    PLUGIN_DIR = Path.home() / "Library/Application Support/easyxtb"
+    PLUGIN_DIR = Path.home()/"Library/Application Support/easyxtb"
 else:
-    PLUGIN_DIR = Path.home() / ".local/share/easyxtb"
+    PLUGIN_DIR = Path.home()/".local/share/easyxtb"
 logger.debug(f"{PLUGIN_DIR=}")
 
 
-config_file = PLUGIN_DIR / "config.json"
+config_file = PLUGIN_DIR/"config.json"
 default_config_file = Path(__file__).with_name("default_config.json")
 
 def save_config():
@@ -60,54 +60,54 @@ else:
 # Test if user has write permission to plugin directory
 try:
     PLUGIN_DIR.mkdir(parents=True, exist_ok=True)
-    with open((PLUGIN_DIR / "probe.txt"), "w", encoding="utf-8") as probe_file:
+    with open((PLUGIN_DIR/"probe.txt"), "w", encoding="utf-8") as probe_file:
         probe_file.write(
             "This file is created only to check everything works.\nIt will be deleted."
         )
-    (PLUGIN_DIR / "probe.txt").unlink()
+    (PLUGIN_DIR/"probe.txt").unlink()
     logger.debug("Write permission for PLUGIN_DIR confirmed")
 except PermissionError:
     error_msg = (
         f"easyxtb was expecting to use {PLUGIN_DIR} to write and store calculation results, but you do not seem to have write permission for this.\n"
-        + f"Please choose a suitable data directory, and add its path to {PLUGIN_DIR / 'config.json'} under 'calcs_dir'."
+        + f"Please choose a suitable data directory, and add its path to {PLUGIN_DIR/'config.json'} under 'calcs_dir'."
     )
     logger.error(error_msg)
     print(error_msg)
     raise PermissionError(error_msg)
 
 
-# User can customize the directory used as temporary directory for the calculations
+# User can customize the directory used as directory for the calculations
 # Don't use `tmp` or similar because it doesn't usually persist between reboots
 if "calcs_dir" in config:
     CALCS_DIR = Path(config["calcs_dir"])
     logger.debug("Using custom calculations directory from user config")
 else:
-    CALCS_DIR = Path(PLUGIN_DIR)
+    CALCS_DIR = Path(PLUGIN_DIR)/"calcs"
 logger.debug(f"{CALCS_DIR=}")
-
-
 # Use the same directory by default for each new calc, overwriting the old one, to avoid
 # build-up of lots of files
-TEMP_DIR = CALCS_DIR / "last"
-# Create both the TEMP_DIR and the parent CALCS_DIR at the same time if they don't exist
-TEMP_DIR.mkdir(parents=True, exist_ok=True)
+TEMP_DIR = CALCS_DIR/"last"
 logger.debug(f"{TEMP_DIR=}")
 
-
-# If this is first run, check file writing works fine
-if init:
-    try:
-        with open((CALCS_DIR / "probe.txt"), "w", encoding="utf-8") as probe_file:
+# Check file writing works fine
+try:
+    # Create both the TEMP_DIR and the parent CALCS_DIR at the same time if they don't exist
+    TEMP_DIR.mkdir(parents=True, exist_ok=True)
+    if init:
+        with open((TEMP_DIR/"probe.txt"), "w", encoding="utf-8") as probe_file:
             probe_file.write(
                 "This file is created only to check everything works.\nIt will be deleted when the first calculation is run."
             )
         config["calcs_dir"] = str(CALCS_DIR)
-        logger.debug("Write permission for CALCS_DIR confirmed")
-    except Exception as e:
-        logger.error(e.message)
-        print(e.message)
-        raise e
-    # Save the initialized configuration to a new config file
+    logger.debug("Write permission for CALCS_DIR confirmed")
+except Exception as e:
+    logger.error(e.message)
+    print(e.message)
+    raise e
+
+
+# Save the initialized configuration to a new config file
+if init:
     save_config()
 
 
@@ -140,22 +140,22 @@ if "version" not in config or config["version"] != easyxtb_VERSION:
 # provided by the user in config
 # As of 0.5.0, binaries should either be in the bin folder, or linked to from it, or
 # available in system PATH
-BIN_DIR = PLUGIN_DIR / "bin"
+BIN_DIR = PLUGIN_DIR/"bin"
 logger.debug(f"{BIN_DIR=}")
 BIN_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def find_xtb() -> Path | None:
     """Return path to xtb binary as Path object, or None."""
-    if (BIN_DIR / "xtb").exists():
+    if (BIN_DIR/"xtb").exists():
         # Normal binary or symlink to it
-        xtb = BIN_DIR / "xtb"
-    elif (BIN_DIR / "xtb.exe").exists():
+        xtb = BIN_DIR/"xtb"
+    elif (BIN_DIR/"xtb.exe").exists():
         # Windows
-        xtb = BIN_DIR / "xtb.exe"
-    elif (BIN_DIR / "xtb-dist").exists():
+        xtb = BIN_DIR/"xtb.exe"
+    elif (BIN_DIR/"xtb-dist").exists():
         # Whole xtb distribution folder with nested binary directory
-        xtb = BIN_DIR / "xtb-dist/bin/xtb"
+        xtb = BIN_DIR/"xtb-dist/bin/xtb"
         # Or, on Windows
         if platform.system() == "Windows":
             xtb = xtb.with_suffix(".exe")
@@ -170,13 +170,13 @@ def find_xtb() -> Path | None:
 
 def find_crest() -> Path | None:
     """Return path to crest binary as Path object, or None"""
-    if (BIN_DIR / "crest").exists():
-        crest = BIN_DIR / "crest"
-    elif (BIN_DIR / "crest/crest").exists():
-        crest = BIN_DIR / "crest/crest"
+    if (BIN_DIR/"crest").exists():
+        crest = BIN_DIR/"crest"
+    elif (BIN_DIR/"crest/crest").exists():
+        crest = BIN_DIR/"crest/crest"
     # Currently there is no Windows binary for crest but let's assume there will be
-    elif (BIN_DIR / "crest.exe").exists():
-        crest = BIN_DIR / "crest.exe"
+    elif (BIN_DIR/"crest.exe").exists():
+        crest = BIN_DIR/"crest.exe"
     elif which("crest") is not None:
         # Check PATH
         crest = Path(which("crest"))
@@ -212,7 +212,7 @@ if XTB_BIN is not None:
     logger.debug(f"{XTB_BIN=}")
     # Have to set environment variable XTBPATH so that parameterizations (e.g. of
     # GFN0-xTB) are found
-    os.environ["XTBPATH"] = str(XTB_BIN.parent.parent / "share/xtb")
+    os.environ["XTBPATH"] = str(XTB_BIN.parent.parent/"share/xtb")
 
 if CREST_BIN is not None:
     # Resolve any symlinks
