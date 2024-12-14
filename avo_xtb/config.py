@@ -192,7 +192,7 @@ def update_config(avo_input: dict):
             }
             # Pass back to Avogadro to display to user
             print(json.dumps(output))
-        easyxtb.config["calcs_dir"] = str(easyxtb.CALCS_DIR)
+        easyxtb.config["calcs_dir"] = str(easyxtb.CALCS_DIR.as_posix())
 
     # Save any changes to binary paths
     for program in ["xtb", "crest"]:
@@ -204,7 +204,7 @@ def update_config(avo_input: dict):
                 easyxtb.CREST_BIN = bin_path
             else:
                 easyxtb.XTB_BIN = bin_path
-            easyxtb.config[f"{program}_bin"] = str(bin_path)
+            easyxtb.config[f"{program}_bin"] = str(bin_path.as_posix())
 
     # Update other options that don't need coercing
     for option in ["n_proc", "energy_units", "solvent", "opt_lvl"]:

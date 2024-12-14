@@ -113,7 +113,7 @@ if init:
 
 # Current version of package
 # Hard code for now, obviously not ideal though
-easyxtb_VERSION = "0.8.0"
+easyxtb_VERSION = "0.8.1"
 
 def update_config():
     """Ensure that any config options added in later versions of the package are in
@@ -145,45 +145,23 @@ logger.debug(f"{BIN_DIR=}")
 BIN_DIR.mkdir(parents=True, exist_ok=True)
 
 
-def find_xtb() -> Path | None:
-    """Return path to xtb binary as Path object, or None."""
-    if (BIN_DIR/"xtb").exists():
-        # Normal binary or symlink to it
-        xtb = BIN_DIR/"xtb"
-    elif (BIN_DIR/"xtb.exe").exists():
-        # Windows
-        xtb = BIN_DIR/"xtb.exe"
-    elif (BIN_DIR/"xtb-dist").exists():
-        # Whole xtb distribution folder with nested binary directory
-        xtb = BIN_DIR/"xtb-dist/bin/xtb"
-        # Or, on Windows
-        if platform.system() == "Windows":
-            xtb = xtb.with_suffix(".exe")
-    elif which("xtb") is not None:
-        # Check PATH
-        xtb = Path(which("xtb"))
-    else:
-        xtb = None
-    logger.debug(f"xtb binary location determined to be: {xtb}")
-    return xtb
-
-
-def find_crest() -> Path | None:
-    """Return path to crest binary as Path object, or None"""
-    if (BIN_DIR/"crest").exists():
-        crest = BIN_DIR/"crest"
-    elif (BIN_DIR/"crest/crest").exists():
-        crest = BIN_DIR/"crest/crest"
-    # Currently there is no Windows binary for crest but let's assume there will be
-    elif (BIN_DIR/"crest.exe").exists():
-        crest = BIN_DIR/"crest.exe"
-    elif which("crest") is not None:
-        # Check PATH
-        crest = Path(which("crest"))
-    else:
-        crest = None
-    logger.debug(f"crest binary location determined to be: {crest}")
-    return crest
+def find_bin(program: str) -> Path | None:
+    """Return path to xtb or CREST binary as Path object, or None."""
+    bin_name = f"{program}.exe" if platform.system() == "Windows" else program
+    bin_path = None
+    for possible_location in [
+        BIN_DIR/bin_name,  # Normal binary or symlink to it
+        BIN_DIR/program/bin_name,  # Old layout for xtb, current for CREST
+        BIN_DIR/f"{program}-dist/bin/{bin_name}",  # Whole xtb distribution folder with nested binary directory
+    ]:
+        if possible_location.exists() and not possible_location.is_dir():
+            bin_path = possible_location
+            break
+    # Otherwise check the PATH
+    if not bin_path and which(bin_name) is not None:
+        bin_path = Path(which(bin_name))
+    logger.debug(f"{bin_name} binary location determined to be: {bin_path}")
+    return bin_path
 
 
 # Initialize and find the various binaries
@@ -194,15 +172,15 @@ def find_crest() -> Path | None:
 if "xtb_bin" in config:
     XTB_BIN = Path(config["xtb_bin"])
     if not XTB_BIN.exists():
-        XTB_BIN = find_xtb()
+        XTB_BIN = find_bin("xtb")
 else:
-    XTB_BIN = find_xtb()
+    XTB_BIN = find_bin("xtb")
 if "crest_bin" in config:
     CREST_BIN = Path(config["crest_bin"])
     if not CREST_BIN.exists():
-        CREST_BIN = find_crest()
+        CREST_BIN = find_bin("crest")
 else:
-    CREST_BIN = find_crest()
+    CREST_BIN = find_bin("crest")
 
 
 if XTB_BIN is not None:
