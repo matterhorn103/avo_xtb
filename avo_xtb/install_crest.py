@@ -11,7 +11,7 @@ import sys
 from pathlib import Path
 
 from support import easyxtb
-from install_xtb import get_bin, link_bin
+from install_xtb import get_bin
 
 
 logger = logging.getLogger(__name__)
@@ -103,12 +103,10 @@ if __name__ == "__main__":
             except PermissionError:
                 output = {"message": "Install directory is not writeable"}
             else:
-                crest_folder = get_bin(crest_urls[platform.system()], install_dir)
-                if crest_folder:
-                    link_bin(crest_folder/"crest")
+                crest_bin = get_bin(crest_urls[platform.system()], install_dir)
                 # Report success
                 output = {
-                    "message": "CREST was successfully installed.\nPlease restart Avogadro."
+                    "message": f"CREST was successfully installed to\n{crest_bin}\nPlease restart Avogadro."
                 }
 
         # Pass result back to Avogadro to display to user

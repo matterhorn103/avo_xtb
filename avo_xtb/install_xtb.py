@@ -56,7 +56,7 @@ def extract_tar(archive, target_dir) -> Path:
     return extracted
 
 
-def get_bin(url, install_dir):
+def get_bin(url: str, install_dir: Path) -> Path:
     # Don't install if url not valid
     if url[0:5] != "https":
         return
@@ -66,35 +66,19 @@ def get_bin(url, install_dir):
         folder = extract_zip(archive, install_dir)
     else:
         folder = extract_tar(archive, install_dir)
-    # Rename unzipped folder to a non-versioned name we have chosen
-    if "crest" in folder.name:
-        folder = folder.rename(folder.with_name("crest-dist"))
-    else:
-        folder = folder.rename(folder.with_name("xtb-dist"))
     # Remove archive
     archive.unlink()
-    return folder
-
-
-def link_bin(bin_path):
-    if "crest" in bin_path.name:
-        bin_name = "crest"
+    # Rename unzipped folder to a non-versioned name we have chosen
+    # Store appropriate path to binary
+    if "crest" in folder.name:
+        folder = folder.rename(folder.with_name("crest"))
+        bin_name = "crest.exe" if platform.system() == "Windows" else "crest"
+        bin_path = folder/bin_name
     else:
-        bin_name = "xtb"
-    # Check Windows
-    if bin_path.with_suffix(".exe").exists():
-        bin_path = bin_path.with_suffix(".exe")
-    # Link
-    if bin_name == "xtb":
-        easyxtb.XTB_BIN = easyxtb.BIN_DIR / bin_path.name
-        easyxtb.XTB_BIN.symlink_to(bin_path)
-    elif bin_name == "crest":
-        easyxtb.CREST_BIN = easyxtb.BIN_DIR / bin_path.name
-        easyxtb.CREST_BIN.symlink_to(bin_path)
-    # Add to config
-    easyxtb.config[f"{bin_name}_bin"] = str(easyxtb.BIN_DIR / bin_path.name)
-    # Save config
-    easyxtb.configuration.save_config()
+        folder = folder.rename(folder.with_name("xtb-dist"))
+        bin_name = "xtb.exe" if platform.system() == "Windows" else "xtb"
+        bin_path = folder/f"bin/{bin_name}"  
+    return bin_path
 
 
 if __name__ == "__main__":
@@ -175,12 +159,10 @@ if __name__ == "__main__":
             except PermissionError:
                 output = {"message": "Install directory is not writeable"}
             else:
-                xtb_folder = get_bin(xtb_urls[platform.system()], install_dir)
-                if xtb_folder:
-                    link_bin(xtb_folder/"bin/xtb")
+                xtb_bin = get_bin(xtb_urls[platform.system()], install_dir)
                 # Report success
                 output = {
-                    "message": "xtb was successfully installed.\nPlease restart Avogadro."
+                    "message": f"xtb was successfully installed to\n{xtb_bin}\nPlease restart Avogadro."
                 }
 
         # Pass result back to Avogadro to display to user
