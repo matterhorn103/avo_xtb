@@ -9,10 +9,10 @@ These methods provide fast and reasonably accurate calculation of **G**eometries
 
 ## easyxtb
 
-The Avogadro plugin is itself only a layer on top of the `easyxtb` Python package, which is written and maintained as part of this project.
+The Avogadro plugin is itself only a layer on top of the [`easyxtb`](https://github.com/matterhorn103/easyxtb) Python package, which is written and maintained as part of this project.
 `easyxtb` is published on the `PyPI` repository and can be used independently of the plugin from Python as an interface to `xtb` and `crest`.
 
-For more details on using `easyxtb` via the Python API, see `easyxtb/README.md`.
+For more details on using `easyxtb` via its Python API, see [the package's documentation](https://easyxtb.readthedocs.io/en/latest/).
 
 ## Capabilities
 
