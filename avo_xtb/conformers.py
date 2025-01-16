@@ -24,7 +24,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Disable if xtb and crest missing
-    if easyxtb.XTB_BIN is None or easyxtb.CREST_BIN is None:
+    if easyxtb.XTB.path is None or easyxtb.CREST.path is None:
         quit()
 
     if args.print_options:
@@ -75,17 +75,17 @@ if __name__ == "__main__":
         else:
             ewin_kcal = avo_input["ewin"]
 
-        # Run calculation; returns set of conformers as well as Calculation object
-        conformers, calc = easyxtb.calculate.conformers(
+        # Run calculation
+        calc = easyxtb.Calculation.v3(
             geom,
             ewin=ewin_kcal,
             hess=avo_input["hess"],
             options=easyxtb.config["crest_opts"],
-            return_calc=True,
         )
+        calc.run()
 
         best_cjson = calc.output_geometry.to_cjson()
-        conformer_cjson = easyxtb.convert.conf_to_cjson(conformers)
+        conformer_cjson = easyxtb.convert.conf_to_cjson(calc.conformers)
 
         # Get energy for Avogadro
         energies = easyxtb.convert.convert_energy(calc.energy, "hartree")

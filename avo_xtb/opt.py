@@ -35,16 +35,16 @@ def opt(avo_input: dict) -> dict:
     # Extract the coords
     geom = easyxtb.Geometry.from_cjson(avo_input["cjson"])
 
-    # Run calculation; returns optimized geometry as well as Calculation object
+    # Run calculation
     logger.debug("avo_xtb is requesting a geometry optimization")
-    opt_geom, calc = easyxtb.calculate.optimize(
+    calc = easyxtb.Calculation.opt(
         geom,
         options=easyxtb.config["xtb_opts"],
-        return_calc=True,
     )
+    calc.run()
 
     # Convert geometry to cjson
-    geom_cjson = opt_geom.to_cjson()
+    geom_cjson = calc.output_geometry.to_cjson()
 
     # Check for convergence
     # TODO
@@ -85,7 +85,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Disable if xtb missing
-    if easyxtb.XTB_BIN is None:
+    if easyxtb.XTB.path is None:
         quit()
 
     if args.print_options:

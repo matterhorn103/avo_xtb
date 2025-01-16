@@ -18,16 +18,16 @@ def energy(avo_input: dict) -> dict:
 
     # Run calculation; returns energy as float in hartree
     logger.debug("avo_xtb is requesting a single point energy calculation")
-    energy_hartree, calc = easyxtb.calculate.energy(
+    calc = easyxtb.Calculation.sp(
         geom,
         options=easyxtb.config["xtb_opts"],
-        return_calc=True,
     )
+    calc.run()
+    
     # If an energy couldn't be parsed, will return None, so have to allow for that
-    if energy_hartree is None:
-        # Seems like a reasonable placeholder that should be obviously incorrect to
-        # anyone
-        energy_hartree = 0.0
+    # Seems like a reasonable placeholder that should be obviously incorrect to anyone
+    energy_hartree = 0.0 if calc.energy is None else calc.energy
+        
     # Convert energy to eV for Avogadro, other units for users
     energies = easyxtb.convert.convert_energy(energy_hartree, "hartree")
     # Format everything appropriately for Avogadro
@@ -64,7 +64,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Disable if xtb missing
-    if easyxtb.XTB_BIN is None:
+    if easyxtb.XTB.path is None:
         quit()
 
     if args.print_options:

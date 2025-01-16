@@ -57,13 +57,13 @@ def get_config_options() -> dict:
             "xtb_bin": {
                 "type": "filePath",
                 "label": "Location of the xtb binary",
-                "default": str(easyxtb.XTB_BIN),
+                "default": str(easyxtb.XTB.path),
                 "order": 1.0,
             },
             "crest_bin": {
                 "type": "filePath",
                 "label": "Location of the CREST binary",
-                "default": str(easyxtb.CREST_BIN),
+                "default": str(easyxtb.CREST.path),
                 "order": 2.0,
             },
             "user_dir": {
@@ -201,9 +201,9 @@ def update_config(avo_input: dict):
         elif avo_input[f"{program}_bin"] != str():
             bin_path = Path(avo_input[f"{program}_bin"])
             if program == "crest":
-                easyxtb.CREST_BIN = bin_path
+                easyxtb.CREST.path = bin_path
             else:
-                easyxtb.XTB_BIN = bin_path
+                easyxtb.XTB.path = bin_path
             easyxtb.config[f"{program}_bin"] = str(bin_path.as_posix())
 
     # Update other options that don't need coercing

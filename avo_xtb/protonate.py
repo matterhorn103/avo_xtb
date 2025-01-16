@@ -24,7 +24,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Disable if xtb or crest missing
-    if easyxtb.XTB_BIN is None or easyxtb.CREST_BIN is None:
+    if easyxtb.XTB.path is None or easyxtb.CREST.path is None:
         quit()
 
     if args.print_options:
@@ -42,14 +42,14 @@ if __name__ == "__main__":
         geom = easyxtb.Geometry.from_cjson(avo_input["cjson"])
 
         # Run calculation; returns set of tautomers as well as Calculation object
-        tautomers, calc = easyxtb.calculate.protonate(
+        calc = easyxtb.Calculation.protonate(
             geom,
             options=easyxtb.config["crest_opts"],
-            return_calc=True,
         )
+        calc.run()
 
         best_cjson = calc.output_geometry.to_cjson()
-        tautomer_cjson = easyxtb.convert.taut_to_cjson(tautomers)
+        tautomer_cjson = easyxtb.convert.taut_to_cjson(calc.tautomers)
 
         # Get energy for Avogadro
         energies = easyxtb.convert.convert_energy(calc.energy, "hartree")
