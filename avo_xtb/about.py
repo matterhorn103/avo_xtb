@@ -18,18 +18,18 @@ logger = logging.getLogger(__name__)
 # Regex to match version numbers (e.g., 6.7.1, 2.12, 6.4.0)
 pattern = r"\bversion\s+(\d+\.\d+\.\d+|\d+\.\d+)\b"
 
-if easyxtb.XTB_BIN:
+if easyxtb.XTB.path:
     xtb_version_info = subprocess.run(
-        [str(easyxtb.XTB_BIN), "--version"],
+        [str(easyxtb.XTB.path), "--version"],
         encoding="utf-8",
         capture_output=True,
     ).stdout
     XTB_VERSION = re.findall(pattern, xtb_version_info, re.IGNORECASE)[0]
 else:
     XTB_VERSION = None
-if easyxtb.CREST_BIN:
+if easyxtb.CREST.path:
     crest_version_info = subprocess.run(
-        [str(easyxtb.CREST_BIN), "--version"],
+        [str(easyxtb.CREST.path), "--version"],
         encoding="utf-8",
         capture_output=True,
     ).stdout
@@ -76,9 +76,9 @@ if __name__ == "__main__":
             "avo_xtb plugin\n"
             + f"easyxtb version: {easyxtb.configuration.easyxtb_VERSION}\n"
             + f"xtb version: {xtb_version_msg}\n"
-            + f"xtb path: {easyxtb.XTB_BIN}\n"
+            + f"xtb path: {easyxtb.XTB.path}\n"
             + f"CREST version: {crest_version_msg}\n"
-            + f"CREST path: {easyxtb.CREST_BIN}"
+            + f"CREST path: {easyxtb.CREST.path}"
         )
         
         # Pass back to Avogadro

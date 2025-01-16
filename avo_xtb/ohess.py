@@ -19,15 +19,15 @@ def ohess(avo_input: dict) -> dict:
 
     # Run calculation; returns path to Gaussian file containing frequencies
     logger.debug("avo_xtb is requesting an opt+freq calculation")
-    opt_geom, freqs, calc = easyxtb.calculate.opt_freq(
+    calc = easyxtb.Calculation.ohess(
         geom,
         options=easyxtb.config["xtb_opts"],
-        return_calc=True,
     )
-
+    calc.run()
+    
     # Convert geometry and frequencies to cjson
-    geom_cjson = opt_geom.to_cjson()
-    freq_cjson = easyxtb.convert.freq_to_cjson(freqs)
+    geom_cjson = calc.output_geometry.to_cjson()
+    freq_cjson = easyxtb.convert.freq_to_cjson(calc.frequencies)
 
     # Check for convergence
     # TODO
@@ -52,7 +52,7 @@ def ohess(avo_input: dict) -> dict:
         output["cjson"]["atoms"]["partialCharges"] = calc.partial_charges
 
     # Inform user if there are negative frequencies
-    if freqs[0]["frequency"] < 0:
+    if calc.frequencies[0]["frequency"] < 0:
         output["message"] = (
             "At least one negative frequency found!\n"
             + "This is not a minimum on the potential energy surface.\n"
@@ -77,7 +77,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Disable if xtb missing
-    if easyxtb.XTB_BIN is None:
+    if easyxtb.XTB.path is None:
         quit()
 
     if args.print_options:

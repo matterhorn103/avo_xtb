@@ -23,7 +23,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Disable if xtb missing
-    if easyxtb.XTB_BIN is None:
+    if easyxtb.XTB.path is None:
         quit()
 
     if args.print_options:

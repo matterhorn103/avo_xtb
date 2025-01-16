@@ -36,7 +36,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Disable this command if crest has been found
-    if easyxtb.CREST_BIN is not None:
+    if easyxtb.CREST.path is not None:
         quit()
 
     if args.print_options:
