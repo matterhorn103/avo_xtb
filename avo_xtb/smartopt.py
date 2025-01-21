@@ -68,7 +68,7 @@ if __name__ == "__main__":
     if args.display_name:
         print("Smart Opt")
     if args.menu_path:
-        print("Extensions|Semi-Empirical QM (xTB){860}")
+        print("Extensions|Semi-Empirical QM (xTB){870}")
 
     if args.run_command:
         # Read input from Avogadro
