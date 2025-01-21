@@ -245,4 +245,4 @@ if __name__ == "__main__":
     if args.run_command:
         # Read input from Avogadro
         avo_input = json.loads(sys.stdin.read())
-        update_config()
+        update_config(avo_input)
