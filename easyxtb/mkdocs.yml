@@ -1,0 +1,37 @@
+site_name: easyxtb
+nav:
+  - Home: index.md
+  - Getting started: guide.md
+  - Atoms & Geometries: geometry.md
+  - Programs: program.md
+  - Function-based API: calculate.md
+  - Calculation-based API: calculation.md
+theme:
+  name: material
+  features:
+    - navigation.path
+plugins:
+- mkdocstrings:
+    handlers:
+      python:
+        options:
+          show_source: true
+          parameter_headings: false
+          show_root_heading: true
+          show_symbol_type_heading: true
+          show_symbol_type_toc: true
+          separate_signature: true
+          show_signature_annotations: true
+          signature_crossrefs: true
+          docstring_style: numpy
+          heading_level: 3
+          merge_init_into_class: true
+          show_root_members_full_path: true
+          docstring_section_style: list
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.superfences
