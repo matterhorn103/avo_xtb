@@ -18,23 +18,18 @@ def ohess(avo_input: dict) -> dict:
     geom = easyxtb.Geometry.from_cjson(avo_input["cjson"])
 
     # Run calculation; returns path to Gaussian file containing frequencies
-    logger.debug("avo_xtb is requesting an opt+freq calculation")
-    calc = easyxtb.Calculation.ohess(
+    logger.debug("avo_xtb is requesting a smartopt calculation")
+    output_geom = easyxtb.calculate.smartopt(
         geom,
         options=easyxtb.config["xtb_opts"],
     )
-    calc.run()
     
     # Convert geometry and frequencies to cjson
-    geom_cjson = calc.output_geometry.to_cjson()
-    freq_cjson = easyxtb.convert.freq_to_cjson(calc.frequencies)
+    geom_cjson = output_geom.to_cjson()
 
     # Check for convergence
     # TODO
     # Will need to look for "FAILED TO CONVERGE"
-
-    # Get energy for Avogadro
-    energies = easyxtb.convert.convert_energy(calc.energy, "hartree")
 
     # Format everything appropriately for Avogadro
     # Start from the original cjson
@@ -44,20 +39,7 @@ def ohess(avo_input: dict) -> dict:
     output["cjson"] = cleanup_after_opt(output["cjson"])
 
     # Add data from calculation
-    output["cjson"]["vibrations"] = freq_cjson["vibrations"]
     output["cjson"]["atoms"]["coords"] = geom_cjson["atoms"]["coords"]
-    output["cjson"]["properties"]["totalEnergy"] = round(energies["eV"], 7)
-    # Partial charges if present
-    if hasattr(calc, "partial_charges"):
-        output["cjson"]["atoms"]["partialCharges"] = calc.partial_charges
-
-    # Inform user if there are negative frequencies
-    if calc.frequencies[0]["frequency"] < 0:
-        output["message"] = (
-            "At least one negative frequency found!\n"
-            + "This is not a minimum on the potential energy surface.\n"
-            + "You should reoptimize the geometry."
-        )
 
     # Save result
     with open(easyxtb.TEMP_DIR / "result.cjson", "w", encoding="utf-8") as save_file:
@@ -84,7 +66,7 @@ if __name__ == "__main__":
         options = {"inputMoleculeFormat": "xyz"}
         print(json.dumps(options))
     if args.display_name:
-        print("Opt + Freq")
+        print("Smart Opt")
     if args.menu_path:
         print("Extensions|Semi-Empirical QM (xTB){860}")
 

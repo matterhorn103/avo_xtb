@@ -59,7 +59,7 @@ if __name__ == "__main__":
                 "At least one negative frequency found!\n"
                 + "This is not a minimum on the potential energy surface.\n"
                 + "You should reoptimize the geometry.\n"
-                + "This can be avoided in future by using the Opt + Freq method."
+                + "This can be avoided in future by using the Smart Opt method."
             )
 
         # Save result

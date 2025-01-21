@@ -13,7 +13,7 @@
     { "name": "energy", "command": "avo_xtb/energy.py" },
     { "name": "opt", "command": "avo_xtb/opt.py" },
     { "name": "freq", "command": "avo_xtb/freq.py" },
-    { "name": "ohess", "command": "avo_xtb/ohess.py"},
+    { "name": "smartopt", "command": "avo_xtb/smartopt.py"},
     { "name": "orbitals", "command": "avo_xtb/orbitals.py" },
     { "name": "docs-xtb", "command": "avo_xtb/docs_xtb.py" },
     { "name": "install-crest", "command": "avo_xtb/install_crest.py" },
