@@ -36,7 +36,7 @@ The following options for xtb and/or CREST can currently be configured in the pl
 * implicit solvation with the ALPB model
 * choice of GFN-xTB parameterization
 * optimization level
-In addition, the pluding provides the possibility to specify extra command line options to pass to xtb and CREST in free form.
+In addition, the plugin provides the possibility to specify extra command line options to pass to xtb and CREST in free form.
 
 ## Requirements
 
