@@ -1,3 +1,0 @@
-::: easyxtb.Atom
-
-::: easyxtb.Geometry
