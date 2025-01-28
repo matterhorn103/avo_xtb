@@ -1,16 +1,17 @@
+"""
+For now, all other scripts in the plugin import easyxtb via this module.
+
+As such, this takes the role that __init__.py would normally and runs some code to make sure
+everything is set up correctly.
+"""
+
 import sys
-from pathlib import Path
 
-# Manipulate the Python Path to get everything we need from the easyxtb module
-sys.path.insert(0, str(Path(__file__).parent.parent / "easyxtb/src"))
-
-# Make easyxtb available as to anything that imports support.py as if it was installed
 import easyxtb
 
 
 # Make sure stdout stream is always Unicode, as Avogadro 1.99 expects
 sys.stdout.reconfigure(encoding="utf-8")
-
 
 # Piggyback the easyxtb config and add some extra plugin-specific things
 plugin_defaults = {
