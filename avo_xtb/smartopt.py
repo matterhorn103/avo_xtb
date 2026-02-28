@@ -6,8 +6,8 @@ import json
 import logging
 import sys
 
-from support import easyxtb
-from opt import cleanup_after_opt
+import easyxtb
+from .opt import cleanup_after_opt
 
 
 logger = logging.getLogger(__name__)

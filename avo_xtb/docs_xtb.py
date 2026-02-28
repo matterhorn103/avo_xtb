@@ -14,6 +14,16 @@ logger = logging.getLogger(__name__)
 xtb_docs_url = "https://xtb-docs.readthedocs.io/en/latest/commandline.html"
 
 
+def open_docs(avo_input: dict) -> dict:
+    logger.debug(f"Opening the xtb docs website at {xtb_docs_url}")
+    webbrowser.open(xtb_docs_url)
+    return {
+        "message": "The xtb documentation should have opened in your browser.",
+        "moleculeFormat": "cjson",
+        "cjson": avo_input["cjson"],
+    }
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--debug", action="store_true")
@@ -36,14 +46,7 @@ if __name__ == "__main__":
         # Still have to read input from Avogadro and pass cjson back
         # Otherwise molecule disappears
         avo_input = json.loads(sys.stdin.read())
-        
-        logger.debug(f"Opening the xtb docs website at {xtb_docs_url}")
-        webbrowser.open(xtb_docs_url)
-        output = {
-            "message": "The xtb documentation should have opened in your browser.",
-            "moleculeFormat": "cjson",
-            "cjson": avo_input["cjson"],
-        }
+        output = open_docs(avo_input)
         # Pass back to Avogadro
         print(json.dumps(output))
         logger.debug(f"The following dictionary was passed back to Avogadro: {output}")

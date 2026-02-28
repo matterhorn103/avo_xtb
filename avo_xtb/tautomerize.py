@@ -7,7 +7,7 @@ import logging
 import sys
 from copy import deepcopy
 
-from support import easyxtb
+import easyxtb
 
 
 logger = logging.getLogger(__name__)

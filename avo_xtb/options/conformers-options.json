@@ -1,0 +1,23 @@
+{
+  "ewin": {
+    "type": "integer",
+    "label": "Keep all conformers within",
+    "default": 25,
+    "minimum": 1,
+    "maximum": 1000,
+    "suffix": " kJ/mol",
+    "order": 7.0
+  },
+  "hess": {
+    "type": "boolean",
+    "label": "Calculate frequencies for conformers\nand re-weight ensemble on free energies",
+    "default": false,
+    "order": 8.0
+  },
+  "help": {
+    "type": "text",
+    "label": "For help see",
+    "default": "https://crest-lab.github.io/crest-docs/",
+    "order": 9.0
+  }
+}

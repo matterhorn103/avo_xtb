@@ -10,8 +10,8 @@ import platform
 import sys
 from pathlib import Path
 
-from support import easyxtb
-from install_xtb import get_bin
+import easyxtb
+from .install_xtb import get_bin
 
 
 logger = logging.getLogger(__name__)
@@ -23,6 +23,38 @@ crest_urls = {
     "Darwin": None,
     "Linux": "https://github.com/crest-lab/crest/releases/download/v3.0.2/crest-gnu-12-ubuntu-latest.tar.xz",
 }
+
+_options_file = Path(__file__).parent / "options" / "install-crest-options.json"
+
+
+def get_options() -> dict:
+    with open(_options_file) as f:
+        inner = json.load(f)
+    options = {"userOptions": inner}
+    options["userOptions"]["crest_url"]["default"] = crest_urls[platform.system()]
+    options["userOptions"]["install_dir"]["default"] = str(easyxtb.configuration.BIN_DIR)
+    return options
+
+
+def install_crest(avo_input: dict) -> dict:
+    install_dir = Path(avo_input["install_dir"])
+
+    if platform.system() != "Linux":
+        return {"message": "CREST is unfortunately available only for Linux.\nSorry!"}
+
+    # First make sure the install directory exists
+    try:
+        install_dir.mkdir(parents=True, exist_ok=True)
+        # Check write permissions
+        (install_dir / "probe_file.txt").touch()
+        (install_dir / "probe_file.txt").unlink()
+    except PermissionError:
+        return {"message": "Install directory is not writeable"}
+
+    crest_bin = get_bin(crest_urls[platform.system()], install_dir)
+    return {
+        "message": f"CREST was successfully installed to\n{crest_bin}\nPlease restart Avogadro."
+    }
 
 
 if __name__ == "__main__":
@@ -40,42 +72,8 @@ if __name__ == "__main__":
         quit()
 
     if args.print_options:
-        options = {
-            "userOptions": {
-                "info": {
-                    "type": "text",
-                    "label": "Info",
-                    "default": "CREST was not found on launch!\nThis tool can install it for you.",
-                    "order": 1.0,
-                },
-                "crest_url": {
-                    "type": "text",
-                    "label": "CREST URL",
-                    "default": crest_urls[platform.system()],
-                    "order": 3.0,
-                },
-                "install_dir": {
-                    "type": "string",
-                    "label": "Install in",
-                    "default": str(easyxtb.configuration.BIN_DIR),
-                    "order": 5.0,
-                },
-                "notice": {
-                    "type": "text",
-                    "label": "By clicking OK",
-                    "default": "CREST will be installed from the CREST GitHub repository to the above location.",
-                    "order": 6.0,
-                },
-                "license": {
-                    "type": "text",
-                    "label": "Important",
-                    "default": "CREST is distributed independently under the LGPL license v3.\nThe authors of Avogadro and avo_xtb bear no responsibility for CREST or the contents of the project's repositories.\nSource code for the program is available at the above web address.",
-                    "order": 7.0,
-                },
-            }
-        }
-        print(json.dumps(options))
-        
+        print(json.dumps(get_options()))
+
     if args.display_name:
         print("Get CREST…")
 
@@ -85,30 +83,7 @@ if __name__ == "__main__":
     if args.run_command:
         # Read input from Avogadro
         avo_input = json.loads(sys.stdin.read())
-
-        install_dir = Path(avo_input["install_dir"])
-
-        if platform.system() != "Linux":
-            output = {
-                "message": "CREST is unfortunately available only for Linux.\nSorry!"
-            }
-
-        else:
-            # First make sure the install directory exists
-            try:
-                install_dir.mkdir(parents=True, exist_ok=True)
-                # Check write permissions
-                (install_dir / "probe_file.txt").touch()
-                (install_dir / "probe_file.txt").unlink()
-            except PermissionError:
-                output = {"message": "Install directory is not writeable"}
-            else:
-                crest_bin = get_bin(crest_urls[platform.system()], install_dir)
-                # Report success
-                output = {
-                    "message": f"CREST was successfully installed to\n{crest_bin}\nPlease restart Avogadro."
-                }
-
+        output = install_crest(avo_input)
         # Pass result back to Avogadro to display to user
         print(json.dumps(output))
         logger.debug(f"The following dictionary was passed back to Avogadro: {output}")

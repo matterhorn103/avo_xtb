@@ -8,11 +8,38 @@ import sys
 from copy import deepcopy
 from pathlib import Path
 
-from support import easyxtb
-from about import XTB_VERSION, CREST_VERSION
+import easyxtb
+from .about import XTB_VERSION, CREST_VERSION
 
 
 logger = logging.getLogger(__name__)
+
+_options_file = Path(__file__).parent / "options" / "solvate-options.json"
+
+
+def get_options() -> dict:
+    with open(_options_file) as f:
+        inner = json.load(f)
+    options = {"userOptions": inner}
+    # Add a version-based warning if applicable
+    if XTB_VERSION and CREST_VERSION:
+        xtb_version_tuple = tuple([int(n) for n in XTB_VERSION.split(".")])
+        crest_version_tuple = tuple([int(n) for n in CREST_VERSION.split(".")])
+        if crest_version_tuple >= (3, 0, 0) and xtb_version_tuple < (6, 7, 0):
+            options["userOptions"]["warning"] = {
+                "type": "text",
+                "label": "WARNING",
+                "default": "QCG calculations with version 3 of CREST require xtb 6.7.1 or newer, so this command is unlikely to work for you!",
+                "order": 4.0,
+            }
+        elif (3, 0, 0) <= crest_version_tuple <= (3, 1, 0):
+            options["userOptions"]["warning"] = {
+                "type": "text",
+                "label": "WARNING",
+                "default": "QCG calculations with versions 3.0.x of CREST have a bug, so this command is unlikely to work for you!",
+                "order": 4.0,
+            }
+    return options
 
 
 def split_cjson_by_layer(cjson: dict) -> list[dict]:
@@ -108,53 +135,7 @@ if __name__ == "__main__":
         quit()
 
     if args.print_options:
-        options = {
-            "userOptions": {
-                "solute_layer": {
-                    "type": "integer",
-                    "label": "Layer containing the solute",
-                    "default": 1,
-                    "minimum": 1,
-                    "maximum": 100,
-                    "order": 1.0,
-                },
-                "solvent_layer": {
-                    "type": "integer",
-                    "label": "Layer containing a solvent molecule",
-                    "default": 2,
-                    "minimum": 1,
-                    "maximum": 100,
-                    "order": 2.0,
-                },
-                "nsolv": {
-                    "type": "integer",
-                    "label": "Number of solvent molecules to add",
-                    "default": 4,
-                    "minimum": 1,
-                    "maximum": 1000,
-                    "order": 3.0,
-                },
-            },
-        }
-        # If we think it won't work with the versions of xtb and CREST being used, show
-        # a warning
-        xtb_version_tuple = tuple([int(n) for n in XTB_VERSION.split(".")])
-        crest_version_tuple = tuple([int(n) for n in CREST_VERSION.split(".")])
-        if crest_version_tuple >= (3,0,0) and xtb_version_tuple < (6,7,0):
-            options["userOptions"]["warning"] = {
-                "type": "text",
-                "label": "WARNING",
-                "default": "QCG calculations with version 3 of CREST require xtb 6.7.1 or newer, so this command is unlikely to work for you!",
-                "order": 4.0,
-            }
-        elif (3,0,0) <= crest_version_tuple <= (3,1,0):
-            options["userOptions"]["warning"] = {
-                "type": "text",
-                "label": "WARNING",
-                "default": "QCG calculations with versions 3.0.x of CREST have a bug, so this command is unlikely to work for you!",
-                "order": 4.0,
-            }
-        print(json.dumps(options))
+        print(json.dumps(get_options()))
 
     if args.display_name:
         print("Solvate…")

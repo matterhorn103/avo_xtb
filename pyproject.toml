@@ -6,12 +6,180 @@ readme = "README.md"
 requires-python = ">=3.10"
 dependencies = ["easyxtb"]
 
+[project.scripts]
+avogadro-avo-xtb = "avo_xtb:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
 [dependency-groups]
 dev = [
     "easyxtb==0.10.0",
     "pytest>=8.3.3",
     "ruff>=0.7.2",
 ]
+
+[tool.avogadro]
+minimum-avogadro-version = "1.103"
+
+[[tool.avogadro.menu-commands]]
+identifier = "about"
+input-format = "cjson"
+path.menu = "Extensions"
+path.submenu.label = "Semi-Empirical QM (xTB)"
+path.submenu.priority = 100
+path.item.label = "About avo_xtb"
+path.item.priority = 10
+
+[[tool.avogadro.menu-commands]]
+identifier = "config"
+input-format = "cjson"
+user-options = "avo_xtb/options/config-options.json"
+path.menu = "Extensions"
+path.submenu.label = "Semi-Empirical QM (xTB)"
+path.submenu.priority = 100
+path.item.label = "Configure…"
+path.item.priority = 20
+
+[[tool.avogadro.menu-commands]]
+identifier = "open"
+input-format = "cjson"
+path.menu = "Extensions"
+path.submenu.label = "Semi-Empirical QM (xTB)"
+path.submenu.priority = 100
+path.item.label = "Go to Calculation Files"
+path.item.priority = 340
+
+[[tool.avogadro.menu-commands]]
+identifier = "energy"
+input-format = "cjson"
+path.menu = "Extensions"
+path.submenu.label = "Semi-Empirical QM (xTB)"
+path.submenu.priority = 100
+path.item.label = "Energy"
+path.item.priority = 890
+
+[[tool.avogadro.menu-commands]]
+identifier = "opt"
+input-format = "cjson"
+path.menu = "Extensions"
+path.submenu.label = "Semi-Empirical QM (xTB)"
+path.submenu.priority = 100
+path.item.label = "Optimize"
+path.item.priority = 880
+
+[[tool.avogadro.menu-commands]]
+identifier = "smartopt"
+input-format = "cjson"
+path.menu = "Extensions"
+path.submenu.label = "Semi-Empirical QM (xTB)"
+path.submenu.priority = 100
+path.item.label = "Smart Opt"
+path.item.priority = 870
+
+[[tool.avogadro.menu-commands]]
+identifier = "freq"
+input-format = "cjson"
+path.menu = "Extensions"
+path.submenu.label = "Semi-Empirical QM (xTB)"
+path.submenu.priority = 100
+path.item.label = "Frequencies"
+path.item.priority = 860
+
+[[tool.avogadro.menu-commands]]
+identifier = "orbitals"
+input-format = "cjson"
+path.menu = "Extensions"
+path.submenu.label = "Semi-Empirical QM (xTB)"
+path.submenu.priority = 100
+path.item.label = "Orbitals"
+path.item.priority = 830
+
+[[tool.avogadro.menu-commands]]
+identifier = "docs-xtb"
+input-format = "cjson"
+path.menu = "Extensions"
+path.submenu.label = "Semi-Empirical QM (xTB)"
+path.submenu.priority = 100
+path.item.label = "xtb Help"
+path.item.priority = 800
+
+[[tool.avogadro.menu-commands]]
+identifier = "install-xtb"
+input-format = "cjson"
+user-options = "avo_xtb/options/install-xtb-options.json"
+path.menu = "Extensions"
+path.submenu.label = "Semi-Empirical QM (xTB)"
+path.submenu.priority = 100
+path.item.label = "Get xtb…"
+path.item.priority = 801
+
+[[tool.avogadro.menu-commands]]
+identifier = "conformers"
+input-format = "cjson"
+user-options = "avo_xtb/options/conformers-options.json"
+path.menu = "Extensions"
+path.submenu.label = "Semi-Empirical QM (xTB)"
+path.submenu.priority = 100
+path.item.label = "Conformers…"
+path.item.priority = 770
+
+[[tool.avogadro.menu-commands]]
+identifier = "tautomerize"
+input-format = "cjson"
+path.menu = "Extensions"
+path.submenu.label = "Semi-Empirical QM (xTB)"
+path.submenu.priority = 100
+path.item.label = "Tautomerize"
+path.item.priority = 760
+
+[[tool.avogadro.menu-commands]]
+identifier = "protonate"
+input-format = "cjson"
+path.menu = "Extensions"
+path.submenu.label = "Semi-Empirical QM (xTB)"
+path.submenu.priority = 100
+path.item.label = "Protonate"
+path.item.priority = 750
+
+[[tool.avogadro.menu-commands]]
+identifier = "deprotonate"
+input-format = "cjson"
+path.menu = "Extensions"
+path.submenu.label = "Semi-Empirical QM (xTB)"
+path.submenu.priority = 100
+path.item.label = "Deprotonate"
+path.item.priority = 740
+
+[[tool.avogadro.menu-commands]]
+identifier = "solvate"
+input-format = "cjson"
+user-options = "avo_xtb/options/solvate-options.json"
+path.menu = "Extensions"
+path.submenu.label = "Semi-Empirical QM (xTB)"
+path.submenu.priority = 100
+path.item.label = "Solvate…"
+path.item.priority = 730
+
+[[tool.avogadro.menu-commands]]
+identifier = "install-crest"
+input-format = "cjson"
+user-options = "avo_xtb/options/install-crest-options.json"
+path.menu = "Extensions"
+path.submenu.label = "Semi-Empirical QM (xTB)"
+path.submenu.priority = 100
+path.item.label = "Get CREST…"
+path.item.priority = 701
+
+[[tool.avogadro.menu-commands]]
+identifier = "docs-crest"
+input-format = "cjson"
+path.menu = "Extensions"
+path.submenu.label = "Semi-Empirical QM (xTB)"
+path.submenu.priority = 100
+path.item.label = "CREST Help"
+path.item.priority = 700
 
 [tool.ruff]
 line-length = 100

@@ -6,11 +6,52 @@ import json
 import logging
 import sys
 
-from support import easyxtb
-from tautomerize import cleanup_after_taut
+import easyxtb
+from .tautomerize import cleanup_after_taut
 
 
 logger = logging.getLogger(__name__)
+
+
+def deprotonate(avo_input: dict) -> dict:
+    # Extract the coords
+    geom = easyxtb.Geometry.from_cjson(avo_input["cjson"])
+
+    # Run calculation
+    calc = easyxtb.Calculation.deprotonate(
+        geom,
+        options=easyxtb.config["crest_opts"],
+    )
+    calc.run()
+
+    best_cjson = calc.output_geometry.to_cjson()
+    tautomer_cjson = easyxtb.convert.taut_to_cjson(calc.tautomers)
+
+    # Get energy for Avogadro
+    energies = easyxtb.convert.convert_energy(calc.energy, "hartree")
+
+    # Format everything appropriately for Avogadro
+    # Start by passing back a cleaned version of original cjson
+    output = {
+        "moleculeFormat": "cjson",
+        # Remove anything that is now unphysical after the optimization
+        "cjson": cleanup_after_taut(avo_input["cjson"]),
+    }
+
+    # Add data from calculation
+    output["cjson"]["atoms"] = best_cjson["atoms"]
+    output["cjson"]["properties"]["totalEnergy"] = round(energies["eV"], 7)
+    output["cjson"]["atoms"]["coords"]["3dSets"] = tautomer_cjson["atoms"]["coords"]["3dSets"]
+    output["cjson"]["properties"]["energies"] = tautomer_cjson["properties"]["energies"]
+
+    # Make sure to adjust new charge
+    output["cjson"]["properties"]["totalCharge"] -= 1
+
+    # Save result
+    with open(easyxtb.TEMP_DIR / "result.cjson", "w", encoding="utf-8") as save_file:
+        json.dump(output["cjson"], save_file, indent=2)
+
+    return output
 
 
 if __name__ == "__main__":
@@ -38,43 +79,7 @@ if __name__ == "__main__":
     if args.run_command:
         # Read input from Avogadro
         avo_input = json.loads(sys.stdin.read())
-        # Extract the coords
-        geom = easyxtb.Geometry.from_cjson(avo_input["cjson"])
-
-        # Run calculation
-        calc = easyxtb.Calculation.deprotonate(
-            geom,
-            options=easyxtb.config["crest_opts"],
-        )
-        calc.run()
-
-        best_cjson = calc.output_geometry.to_cjson()
-        tautomer_cjson = easyxtb.convert.taut_to_cjson(calc.tautomers)
-
-        # Get energy for Avogadro
-        energies = easyxtb.convert.convert_energy(calc.energy, "hartree")
-
-        # Format everything appropriately for Avogadro
-        # Start by passing back a cleaned version of original cjson
-        output = {
-            "moleculeFormat": "cjson",
-            # Remove anything that is now unphysical after the optimization
-            "cjson": cleanup_after_taut(avo_input["cjson"]),
-        }
-
-        # Add data from calculation
-        output["cjson"]["atoms"] = best_cjson["atoms"]
-        output["cjson"]["properties"]["totalEnergy"] = round(energies["eV"], 7)
-        output["cjson"]["atoms"]["coords"]["3dSets"] = tautomer_cjson["atoms"]["coords"]["3dSets"]
-        output["cjson"]["properties"]["energies"] = tautomer_cjson["properties"]["energies"]
-
-        # Make sure to adjust new charge
-        output["cjson"]["properties"]["totalCharge"] -= 1
-
-        # Save result
-        with open(easyxtb.TEMP_DIR / "result.cjson", "w", encoding="utf-8") as save_file:
-            json.dump(output["cjson"], save_file, indent=2)
-
+        output = deprotonate(avo_input)
         # Pass back to Avogadro
         print(json.dumps(output))
         logger.debug(f"The following dictionary was passed back to Avogadro: {output}")

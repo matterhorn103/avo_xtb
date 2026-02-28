@@ -8,7 +8,17 @@ import json
 import platform
 import subprocess
 
-from support import easyxtb
+import easyxtb
+
+
+def open_calcs_dir():
+    """Open the calculations directory in the system file manager."""
+    if platform.system() == "Windows":
+        subprocess.run(["explorer.exe", easyxtb.CALCS_DIR])
+    elif platform.system() == "Darwin":
+        subprocess.run(["open", easyxtb.CALCS_DIR])
+    else:
+        subprocess.run(["xdg-open", easyxtb.CALCS_DIR])
 
 
 if __name__ == "__main__":
@@ -30,12 +40,4 @@ if __name__ == "__main__":
         print("Extensions|Semi-Empirical QM (xTB){340}")
 
     if args.run_command:
-        # Have to detect os
-        if platform.system() == "Windows":
-            subprocess.run(["explorer.exe", easyxtb.CALCS_DIR])
-
-        elif platform.system() == "Darwin":
-            subprocess.run(["open", easyxtb.CALCS_DIR])
-
-        else:
-            subprocess.run(["xdg-open", easyxtb.CALCS_DIR])
+        open_calcs_dir()

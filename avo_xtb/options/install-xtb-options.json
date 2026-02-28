@@ -1,0 +1,32 @@
+{
+  "info": {
+    "type": "text",
+    "label": "Info",
+    "default": "xtb was not found on launch!\nThis tool can install it for you.",
+    "order": 1.0
+  },
+  "xtb_url": {
+    "type": "text",
+    "label": "xtb URL",
+    "default": "",
+    "order": 2.0
+  },
+  "install_dir": {
+    "type": "string",
+    "label": "Install in",
+    "default": "",
+    "order": 5.0
+  },
+  "notice": {
+    "type": "text",
+    "label": "By clicking OK",
+    "default": "xtb will be installed from the Grimme group repositories to the above location.",
+    "order": 6.0
+  },
+  "license": {
+    "type": "text",
+    "label": "Important",
+    "default": "xtb is distributed independently under the LGPL license v3.\nThe authors of Avogadro and avo_xtb bear no responsibility for xtb or the contents of the Grimme group's repositories.\nSource code for the program is available at the above web address.",
+    "order": 7.0
+  }
+}

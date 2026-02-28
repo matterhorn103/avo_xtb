@@ -14,7 +14,7 @@ import urllib.request
 import zipfile
 from pathlib import Path
 
-from support import easyxtb
+import easyxtb
 
 
 logger = logging.getLogger(__name__)
@@ -54,6 +54,41 @@ def extract_tar(archive, target_dir) -> Path:
         extracted = target_dir / tar.getnames()[0].split(os.sep)[0]
         tar.extractall(target_dir)
     return extracted
+
+
+_options_file = Path(__file__).parent / "options" / "install-xtb-options.json"
+
+
+def get_options() -> dict:
+    with open(_options_file) as f:
+        inner = json.load(f)
+    options = {"userOptions": inner}
+    options["userOptions"]["xtb_url"]["default"] = xtb_urls[platform.system()]
+    options["userOptions"]["install_dir"]["default"] = str(easyxtb.configuration.BIN_DIR)
+    return options
+
+
+def install_xtb(avo_input: dict) -> dict:
+    install_dir = Path(avo_input["install_dir"])
+
+    if platform.system() == "Darwin":
+        return {
+            "message": "The Grimme group does not supply binaries for macOS.\nYou will have to install xtb manually.\nSorry!"
+        }
+
+    # First make sure the install directory exists
+    try:
+        install_dir.mkdir(parents=True, exist_ok=True)
+        # Check write permissions
+        (install_dir / "probe_file.txt").touch()
+        (install_dir / "probe_file.txt").unlink()
+    except PermissionError:
+        return {"message": "Install directory is not writeable"}
+
+    xtb_bin = get_bin(xtb_urls[platform.system()], install_dir)
+    return {
+        "message": f"xtb was successfully installed to\n{xtb_bin}\nPlease restart Avogadro."
+    }
 
 
 def get_bin(url: str, install_dir: Path) -> Path:
@@ -96,41 +131,7 @@ if __name__ == "__main__":
         quit()
 
     if args.print_options:
-        options = {
-            "userOptions": {
-                "info": {
-                    "type": "text",
-                    "label": "Info",
-                    "default": "xtb was not found on launch!\nThis tool can install it for you.",
-                    "order": 1.0,
-                },
-                "xtb_url": {
-                    "type": "text",
-                    "label": "xtb URL",
-                    "default": xtb_urls[platform.system()],
-                    "order": 2.0,
-                },
-                "install_dir": {
-                    "type": "string",
-                    "label": "Install in",
-                    "default": str(easyxtb.configuration.BIN_DIR),
-                    "order": 5.0,
-                },
-                "notice": {
-                    "type": "text",
-                    "label": "By clicking OK",
-                    "default": "xtb will be installed from the Grimme group repositories to the above location.",
-                    "order": 6.0,
-                },
-                "license": {
-                    "type": "text",
-                    "label": "Important",
-                    "default": "xtb is distributed independently under the LGPL license v3.\nThe authors of Avogadro and avo_xtb bear no responsibility for xtb or the contents of the Grimme group's repositories.\nSource code for the program is available at the above web address.",
-                    "order": 7.0,
-                },
-            }
-        }
-        print(json.dumps(options))
+        print(json.dumps(get_options()))
 
     if args.display_name:
         print("Get xtb…")
@@ -141,30 +142,7 @@ if __name__ == "__main__":
     if args.run_command:
         # Read input from Avogadro
         avo_input = json.loads(sys.stdin.read())
-
-        install_dir = Path(avo_input["install_dir"])
-
-        if platform.system() == "Darwin":
-            output = {
-                "message": "The Grimme group does not supply binaries for macOS.\nYou will have to install xtb manually.\nSorry!"
-            }
-
-        else:
-            # First make sure the install directory exists
-            try:
-                install_dir.mkdir(parents=True, exist_ok=True)
-                # Check write permissions
-                (install_dir / "probe_file.txt").touch()
-                (install_dir / "probe_file.txt").unlink()
-            except PermissionError:
-                output = {"message": "Install directory is not writeable"}
-            else:
-                xtb_bin = get_bin(xtb_urls[platform.system()], install_dir)
-                # Report success
-                output = {
-                    "message": f"xtb was successfully installed to\n{xtb_bin}\nPlease restart Avogadro."
-                }
-
+        output = install_xtb(avo_input)
         # Pass result back to Avogadro to display to user
         print(json.dumps(output))
         logger.debug(f"The following dictionary was passed back to Avogadro: {output}")

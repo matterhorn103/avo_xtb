@@ -1,0 +1,26 @@
+{
+  "solute_layer": {
+    "type": "integer",
+    "label": "Layer containing the solute",
+    "default": 1,
+    "minimum": 1,
+    "maximum": 100,
+    "order": 1.0
+  },
+  "solvent_layer": {
+    "type": "integer",
+    "label": "Layer containing a solvent molecule",
+    "default": 2,
+    "minimum": 1,
+    "maximum": 100,
+    "order": 2.0
+  },
+  "nsolv": {
+    "type": "integer",
+    "label": "Number of solvent molecules to add",
+    "default": 4,
+    "minimum": 1,
+    "maximum": 1000,
+    "order": 3.0
+  }
+}

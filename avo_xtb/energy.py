@@ -6,7 +6,7 @@ import json
 import logging
 import sys
 
-from support import easyxtb
+import easyxtb
 
 
 logger = logging.getLogger(__name__)

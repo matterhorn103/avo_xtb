@@ -8,7 +8,7 @@ import re
 import subprocess
 import sys
 
-from support import easyxtb
+import easyxtb
 
 
 logger = logging.getLogger(__name__)
@@ -38,6 +38,25 @@ else:
     CREST_VERSION = None
 
 
+def about(avo_input: dict) -> dict:
+    output = avo_input.copy()
+
+    xtb_version_msg = XTB_VERSION if XTB_VERSION else "No xtb binary found"
+    crest_version_msg = CREST_VERSION if CREST_VERSION else "No CREST binary found"
+
+    # Do nothing to data other than add message with version and path info
+    output["message"] = (
+        "avo_xtb plugin\n"
+        + f"easyxtb version: {easyxtb.configuration.easyxtb_VERSION}\n"
+        + f"xtb version: {xtb_version_msg}\n"
+        + f"xtb path: {easyxtb.XTB.path}\n"
+        + f"CREST version: {crest_version_msg}\n"
+        + f"CREST path: {easyxtb.CREST.path}"
+    )
+
+    return output
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--debug", action="store_true")
@@ -57,30 +76,9 @@ if __name__ == "__main__":
         print("Extensions|Semi-Empirical QM (xTB){10}")
 
     if args.run_command:
-
         # Read input from Avogadro
         avo_input = json.loads(sys.stdin.read())
-        output = avo_input.copy()
-
-        if XTB_VERSION:
-            xtb_version_msg = XTB_VERSION
-        else:
-            xtb_version_msg = "No xtb binary found"
-        if CREST_VERSION:
-            crest_version_msg = CREST_VERSION
-        else:
-            crest_version_msg = "No CREST binary found"
-
-        # Do nothing to data other than add message with version and path info
-        output["message"] = (
-            "avo_xtb plugin\n"
-            + f"easyxtb version: {easyxtb.configuration.easyxtb_VERSION}\n"
-            + f"xtb version: {xtb_version_msg}\n"
-            + f"xtb path: {easyxtb.XTB.path}\n"
-            + f"CREST version: {crest_version_msg}\n"
-            + f"CREST path: {easyxtb.CREST.path}"
-        )
-        
+        output = about(avo_input)
         # Pass back to Avogadro
         print(json.dumps(output))
         logger.debug(f"The following dictionary was passed back to Avogadro: {output}")
