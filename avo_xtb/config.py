@@ -5,10 +5,26 @@
 
 import argparse
 import json
+import platform
+import shutil
 import sys
 from pathlib import Path
 
 import easyxtb
+
+
+# Package root is two levels up from this file (avo_xtb/config.py -> avo_xtb/ -> pkg_root)
+_pkg_root = Path(__file__).parent.parent
+
+
+def _pixi_bin_path(name: str) -> Path | None:
+    """Return the expected pixi environment binary path for the given program name,
+    or None if it doesn't exist."""
+    if platform.system() == "Windows":
+        candidate = _pkg_root / ".pixi" / "envs" / "default" / "Library" / "bin" / f"{name}.exe"
+    else:
+        candidate = _pkg_root / ".pixi" / "envs" / "default" / "bin" / name
+    return candidate if candidate.exists() else None
 
 
 def convert_options(
@@ -58,9 +74,19 @@ def get_config_options() -> dict:
         inner = json.load(f)
     options = {"userOptions": inner}
 
-    # Populate with current runtime values
-    options["userOptions"]["xtb_bin"]["default"] = str(easyxtb.XTB.path)
-    options["userOptions"]["crest_bin"]["default"] = str(easyxtb.CREST.path)
+    # Populate with current runtime values; fall back to PATH then pixi env path
+    def _resolve_bin(name: str, configured_path) -> Path | None:
+        if configured_path:
+            return configured_path
+        in_path = shutil.which(name)
+        if in_path:
+            return Path(in_path)
+        return _pixi_bin_path(name)
+
+    xtb_path = _resolve_bin("xtb", easyxtb.XTB.path)
+    crest_path = _resolve_bin("crest", easyxtb.CREST.path)
+    options["userOptions"]["xtb_bin"]["default"] = str(xtb_path) if xtb_path else ""
+    options["userOptions"]["crest_bin"]["default"] = str(crest_path) if crest_path else ""
     options["userOptions"]["user_dir"]["default"] = str(easyxtb.CALCS_DIR)
 
     for option in ["n_proc", "energy_units", "solvent", "opt_lvl"]:
