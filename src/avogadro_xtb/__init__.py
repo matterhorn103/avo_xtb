@@ -44,7 +44,7 @@ def main():
     # Read (initial) input from Avogadro
     avo_input = json.loads(sys.stdin.read())
 
-    output = run(avo_input, **args)
+    output = run(avo_input, **vars(args))
 
     print(json.dumps(output))
     logger.debug(f"The following dictionary was passed back to Avogadro: {output}")

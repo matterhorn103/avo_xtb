@@ -164,6 +164,7 @@ cython_debug/
 # pixi environments
 .pixi
 *.egg-info
+pixi.lock
 
 # uv
 uv.lock
