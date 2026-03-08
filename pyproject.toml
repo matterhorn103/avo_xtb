@@ -1,17 +1,40 @@
 [project]
-name = "avo_xtb"
-version = "0.10.0"
-description = "A convenient interface to xtb (and CREST) in Avogadro 2"
+name = "avogadro-xtb"
+version = "0.11.0"
+description = "A convenient interface to xtb in Avogadro 2"
 readme = "README.md"
+authors = [
+    { name = "Matthew Milner", email = "matterhorn103@proton.me" }
+]
 requires-python = ">=3.10"
-dependencies = []
+dependencies = [
+    "easyxtb>=0.10.2",
+]
 
 [dependency-groups]
 dev = [
-    "easyxtb==0.10.0",
     "pytest>=8.3.3",
     "ruff>=0.7.2",
 ]
+
+[project.scripts]
+avogadro-xtb = "avogadro_xtb:main"
+
+[build-system]
+requires = ["uv_build>=0.10.2,<0.11.0"]
+build-backend = "uv_build"
+
+[tool.pixi.workspace]
+channels = ["conda-forge"]
+platforms = ["linux-64", "linux-aarch64", "osx-64", "osx-arm64", "win-64"]
+
+[tool.pixi.pypi-dependencies]
+avogadro-xtb = { path = ".", editable = true }
+
+[tool.pixi.dependencies]
+xtb = ">=6.7.0"
+
+[tool.pixi.tasks]
 
 [tool.ruff]
 line-length = 100
@@ -21,3 +44,79 @@ target-version = "py310"
 [tool.ruff.format]
 quote-style = "double"
 indent-style = "space"
+
+[tool.avogadro]
+minimum-avogadro-version = "1.103"
+
+[[tool.avogadro.menu-commands]]
+identifier = "sp"
+input-format = "xyz"
+input-cjson = true
+menu = "Extensions"
+submenu = "Semi-Empirical QM (xTB)"
+item = "Energy"
+menu-priorities = [ 100, 890 ]
+
+[[tool.avogadro.menu-commands]]
+identifier = "opt"
+input-format = "xyz"
+input-cjson = true
+menu = "Extensions"
+submenu = "Semi-Empirical QM (xTB)"
+item = "Optimize"
+menu-priorities = [ 100, 880 ]
+
+[[tool.avogadro.menu-commands]]
+identifier = "smartopt"
+input-format = "xyz"
+input-cjson = true
+menu = "Extensions"
+submenu = "Semi-Empirical QM (xTB)"
+item = "Smart Opt"
+menu-priorities = [ 100, 870 ]
+
+[[tool.avogadro.menu-commands]]
+identifier = "freq"
+input-format = "xyz"
+input-cjson = true
+menu = "Extensions"
+submenu = "Semi-Empirical QM (xTB)"
+item = "Frequencies"
+menu-priorities = [ 100, 860 ]
+
+[[tool.avogadro.menu-commands]]
+identifier = "orbitals"
+input-format = "xyz"
+input-cjson = true
+menu = "Extensions"
+submenu = "Semi-Empirical QM (xTB)"
+item = "Orbitals"
+menu-priorities = [ 100, 830 ]
+
+#[[tool.avogadro.menu-commands]]
+#identifier = "open"
+#input-format = "xyz"
+#input-cjson = true
+#menu = "Extensions"
+#submenu = "Semi-Empirical QM (xTB)"
+#item = "Go to Calculation Files"
+#menu-priorities = [ 100, 300 ]
+
+#[[tool.avogadro.menu-commands]]
+#identifier = "config"
+#input-format = "xyz"
+#input-cjson = true
+#user-options = "avo_xtb/options/config-options.json"
+#menu = "Extensions"
+#submenu = "Semi-Empirical QM (xTB)"
+#item = "Configure…"
+#menu-priorities = [ 100, 100 ]
+
+#[[tool.avogadro.menu-commands]]
+#identifier = "docs-xtb"
+#input-format = "xyz"
+#input-cjson = true
+#menu = "Extensions"
+#submenu = "Semi-Empirical QM (xTB)"
+#item = "xtb Help"
+#menu-priorities = [ 100, 0 ]
