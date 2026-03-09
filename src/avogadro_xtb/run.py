@@ -20,7 +20,8 @@ for k, v in plugin_defaults.items():
         easyxtb.config[k] = v
 
 
-def sp(cjson: dict) -> dict:
+def sp(avo_input: dict) -> dict:
+    cjson = avo_input["cjson"]
     geom = easyxtb.Geometry.from_cjson(cjson)
 
     # Run calculation; returns energy as float in hartree
@@ -77,7 +78,8 @@ def cleanup_after_opt(cjson: dict) -> dict:
     return cleaned
 
 
-def opt(cjson: dict, ohess: bool) -> dict:
+def opt(avo_input: dict, ohess: bool) -> dict:
+    cjson = avo_input["cjson"]
     geom = easyxtb.Geometry.from_cjson(cjson)
 
     # Run calculation
@@ -121,7 +123,8 @@ def opt(cjson: dict, ohess: bool) -> dict:
     return output
 
 
-def freq(cjson: dict) -> dict:
+def freq(avo_input: dict) -> dict:
+    cjson = avo_input["cjson"]
     geom = easyxtb.Geometry.from_cjson(cjson)
 
     # Run calculation; returns set of frequency data
@@ -152,7 +155,8 @@ def freq(cjson: dict) -> dict:
     return output
 
 
-def orbitals(avo_input: dict, cjson: dict) -> dict:
+def orbitals(avo_input: dict) -> dict:
+    cjson = avo_input["cjson"]
     geom = easyxtb.Geometry.from_cjson(cjson)
 
     # Run calculation; returns Molden output file as string
@@ -168,11 +172,11 @@ def orbitals(avo_input: dict, cjson: dict) -> dict:
         "readProperties": True,
         "moleculeFormat": "molden",
         "molden": molden_string,
-        "cjson": avo_input["cjson"],
+        "cjson": cjson,
     }
     # As it stands, this means any other properties will be wiped
     # If there were e.g. frequencies in the original cjson, notify the user
-    if "vibrations" in avo_input["cjson"]:
+    if "vibrations" in cjson:
         output["message"] = (
             "Calculation complete!\n"
             "The vibrational frequencies may have been lost in this process.\n"
@@ -181,13 +185,11 @@ def orbitals(avo_input: dict, cjson: dict) -> dict:
     else:
         output["message"] = "Calculation complete!"
 
-    # Save result
+    # Save orbitals file as well
     with open(easyxtb.TEMP_DIR / "result.molden", "w", encoding="utf-8") as f:
-        json.dump(molden_string, f, indent=2)
+        f.write(molden_string)
 
-    # Pass back to Avogadro
-    print(json.dumps(output))
-    logger.debug(f"The following dictionary was passed back to Avogadro: {output}")
+    return output
 
 
 def run(
@@ -195,7 +197,6 @@ def run(
     feature: str,
     **args,  # Ignore anything else
 ) -> dict:
-    cjson = avo_input["cjson"]
     match feature:
         case "sp":
             output = sp(avo_input)
@@ -206,7 +207,7 @@ def run(
         case "freq":
             output = freq(avo_input)
         case "orbitals":
-            output = orbitals(avo_input, cjson)
+            output = orbitals(avo_input)
         case _:
             output = {"error": "The runtype was not recognized!"}
 

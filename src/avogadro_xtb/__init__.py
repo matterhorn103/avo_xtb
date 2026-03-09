@@ -39,6 +39,7 @@ def main():
     subparsers.add_parser("opt", parents=[common])
     subparsers.add_parser("smartopt", parents=[common])
     subparsers.add_parser("freq", parents=[common])
+    subparsers.add_parser("orbitals", parents=[common])
 
     args = parser.parse_args()
 
