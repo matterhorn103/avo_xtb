@@ -93,14 +93,14 @@ submenu = "Semi-Empirical QM (xTB)"
 item = "Orbitals"
 menu-priorities = [ 100, 830 ]
 
-#[[tool.avogadro.menu-commands]]
-#identifier = "open"
-#input-format = "xyz"
-#input-cjson = true
-#menu = "Extensions"
-#submenu = "Semi-Empirical QM (xTB)"
-#item = "Go to Calculation Files"
-#menu-priorities = [ 100, 300 ]
+[[tool.avogadro.menu-commands]]
+identifier = "open"
+input-format = "xyz"
+input-cjson = true
+menu = "Extensions"
+submenu = "Semi-Empirical QM (xTB)"
+item = "Go to Calculation Files"
+menu-priorities = [ 100, 300 ]
 
 #[[tool.avogadro.menu-commands]]
 #identifier = "config"
@@ -112,11 +112,11 @@ menu-priorities = [ 100, 830 ]
 #item = "Configure…"
 #menu-priorities = [ 100, 100 ]
 
-#[[tool.avogadro.menu-commands]]
-#identifier = "docs-xtb"
-#input-format = "xyz"
-#input-cjson = true
-#menu = "Extensions"
-#submenu = "Semi-Empirical QM (xTB)"
-#item = "xtb Help"
-#menu-priorities = [ 100, 0 ]
+[[tool.avogadro.menu-commands]]
+identifier = "docs-xtb"
+input-format = "xyz"
+input-cjson = true
+menu = "Extensions"
+submenu = "Semi-Empirical QM (xTB)"
+item = "xtb Help"
+menu-priorities = [ 100, 0 ]

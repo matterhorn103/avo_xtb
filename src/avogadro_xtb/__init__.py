@@ -9,12 +9,46 @@ import logging
 import sys
 import traceback
 
-from .run import run
+import easyxtb
+
+from . import calcs
 
 # Make sure stdout stream is always Unicode, as Avogadro expects
 sys.stdout.reconfigure(encoding="utf-8")
 
 logger = logging.getLogger(__name__)
+
+
+def run(
+    avo_input: dict,
+    feature: str,
+    **args,  # Ignore anything else
+) -> dict:
+    """Run the function corresponding to the selected feature."""
+    match feature:
+        case "sp":
+            output = calcs.sp(avo_input)
+        case "opt":
+            output = calcs.opt(avo_input, ohess=False)
+        case "smartopt":
+            output = calcs.opt(avo_input, ohess=True)
+        case "freq":
+            output = calcs.freq(avo_input)
+        case "orbitals":
+            output = calcs.orbitals(avo_input)
+        case "open":
+            from .links import open_calcs_dir
+            output = open_calcs_dir(avo_input)
+        case "docs-xtb":
+            from .links import open_xtb_docs
+            output = open_xtb_docs(avo_input)
+        case _:
+            output = {"error": "The runtype was not recognized!"}
+
+    # Save result
+    with open(easyxtb.TEMP_DIR / "result.cjson", "w", encoding="utf-8") as f:
+        json.dump(output["cjson"], f, indent=2)
+    return output
 
 
 def main():
@@ -40,6 +74,9 @@ def main():
     subparsers.add_parser("smartopt", parents=[common])
     subparsers.add_parser("freq", parents=[common])
     subparsers.add_parser("orbitals", parents=[common])
+    subparsers.add_parser("open", parents=[common])
+    subparsers.add_parser("config", parents=[common])
+    subparsers.add_parser("docs-xtb", parents=[common])
 
     args = parser.parse_args()
 

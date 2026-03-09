@@ -1,7 +1,6 @@
 # SPDX-FileCopyrightText: 2026 Matthew Milner <matterhorn103@proton.me>
 # SPDX-License-Identifier: BSD-3-Clause
 
-import json
 import logging
 
 import easyxtb
@@ -189,29 +188,4 @@ def orbitals(avo_input: dict) -> dict:
     with open(easyxtb.TEMP_DIR / "result.molden", "w", encoding="utf-8") as f:
         f.write(molden_string)
 
-    return output
-
-
-def run(
-    avo_input: dict,
-    feature: str,
-    **args,  # Ignore anything else
-) -> dict:
-    match feature:
-        case "sp":
-            output = sp(avo_input)
-        case "opt":
-            output = opt(avo_input, ohess=False)
-        case "smartopt":
-            output = opt(avo_input, ohess=True)
-        case "freq":
-            output = freq(avo_input)
-        case "orbitals":
-            output = orbitals(avo_input)
-        case _:
-            output = {"error": "The runtype was not recognized!"}
-
-    # Save result
-    with open(easyxtb.TEMP_DIR / "result.cjson", "w", encoding="utf-8") as f:
-        json.dump(output["cjson"], f, indent=2)
     return output
