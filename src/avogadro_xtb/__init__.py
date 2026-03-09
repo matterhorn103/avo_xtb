@@ -7,6 +7,7 @@ import argparse
 import json
 import logging
 import sys
+import traceback
 
 from .run import run
 
@@ -44,7 +45,14 @@ def main():
     # Read (initial) input from Avogadro
     avo_input = json.loads(sys.stdin.read())
 
-    output = run(avo_input, **vars(args))
+    try:
+        output = run(avo_input, **vars(args))
+    except Exception as e:
+        limit = None if args.debug else 3
+        output = {"error": "".join(traceback.format_exception(e, limit=limit))}
+        print(json.dumps(output))
+        print()
+        raise e
 
     print(json.dumps(output))
     logger.debug(f"The following dictionary was passed back to Avogadro: {output}")
