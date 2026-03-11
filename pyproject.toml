@@ -102,15 +102,15 @@ submenu = "Semi-Empirical QM (xTB)"
 item = "Go to Calculation Files"
 menu-priorities = [ 100, 300 ]
 
-#[[tool.avogadro.menu-commands]]
-#identifier = "config"
-#input-format = "xyz"
-#input-cjson = true
-#user-options = "avo_xtb/options/config-options.json"
-#menu = "Extensions"
-#submenu = "Semi-Empirical QM (xTB)"
-#item = "Configure…"
-#menu-priorities = [ 100, 100 ]
+[[tool.avogadro.menu-commands]]
+identifier = "config"
+input-format = "xyz"
+input-cjson = true
+user-options = "dynamic"
+menu = "Extensions"
+submenu = "Semi-Empirical QM (xTB)"
+item = "Configure…"
+menu-priorities = [ 100, 100 ]
 
 [[tool.avogadro.menu-commands]]
 identifier = "docs-xtb"

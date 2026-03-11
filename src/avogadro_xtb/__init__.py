@@ -42,12 +42,21 @@ def run(
         case "docs-xtb":
             from .links import open_xtb_docs
             output = open_xtb_docs(avo_input)
+        case "config":
+            from .config import get_config_options, update_config
+            if args.user_options:
+                options = get_config_options()
+                output = {"userOptions": options}
+            else:
+                # Read input from Avogadro
+                output = update_config(avo_input)
         case _:
             output = {"error": "The runtype was not recognized!"}
 
-    # Save result
-    with open(easyxtb.TEMP_DIR / "result.cjson", "w", encoding="utf-8") as f:
-        json.dump(output["cjson"], f, indent=2)
+    # Save output to make debugging easier
+    with open(easyxtb.TEMP_DIR / "output.json", "w", encoding="utf-8") as f:
+        json.dump(output, f, indent=2)
+    
     return output
 
 
@@ -75,7 +84,8 @@ def main():
     subparsers.add_parser("freq", parents=[common])
     subparsers.add_parser("orbitals", parents=[common])
     subparsers.add_parser("open", parents=[common])
-    subparsers.add_parser("config", parents=[common])
+    config_parser = subparsers.add_parser("config", parents=[common])
+    config_parser.add_argument("--user-options", action="store_true")
     subparsers.add_parser("docs-xtb", parents=[common])
 
     args = parser.parse_args()
