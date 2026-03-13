@@ -50,126 +50,124 @@ methods = ["GFN0-xTB", "GFN1-xTB", "GFN2-xTB"]
 
 def get_config_options() -> dict:
     """Dynamically generate the config dialog and populate its options."""
-    options = {
-        "userOptions": {
-            "xtb_bin": {
-                "type": "filePath",
-                "label": "Location of the xtb binary",
-                "default": str(easyxtb.XTB.path),
-                "order": 1.0,
+    user_options = {
+        "xtb_bin": {
+            "type": "filePath",
+            "label": "Location of the xtb binary",
+            "default": str(easyxtb.XTB.path),
+            "order": 1.0,
+        },
+        "crest_bin": {
+            "type": "filePath",
+            "label": "Location of the CREST binary",
+            "default": str(easyxtb.CREST.path),
+            "order": 2.0,
+        },
+        "user_dir": {
+            "type": "string",
+            "label": "Run calculations in",
+            "default": str(easyxtb.CALCS_DIR),
+            "order": 3.0,
+        },
+        "n_proc": {
+            "type": "integer",
+            "label": "Parallel processes to run",
+            "minimum": 1,
+            "default": 1,
+            "order": 4.0
             },
-            "crest_bin": {
-                "type": "filePath",
-                "label": "Location of the CREST binary",
-                "default": str(easyxtb.CREST.path),
-                "order": 2.0,
-            },
-            "user_dir": {
-                "type": "string",
-                "label": "Run calculations in",
-                "default": str(easyxtb.CALCS_DIR),
-                "order": 3.0,
-            },
-            "n_proc": {
-                "type": "integer",
-                "label": "Parallel processes to run",
-                "minimum": 1,
-                "default": 1,
-                "order": 4.0
-                },
-            "energy_units": {
-                "type": "stringList",
-                "label": "Preferred energy units",
-                "values": ["kJ/mol", "kcal/mol"],
-                "default": 0,
-                "order": 5.0,
-            },
-            "solvent": {
-                "type": "stringList",
-                "label": "Solvation",
-                "values": [
-                    "none",
-                    "acetone",
-                    "acetonitrile",
-                    "aniline",
-                    "benzaldehyde",
-                    "benzene",
-                    "ch2cl2",
-                    "chcl3",
-                    "cs2",
-                    "dioxane",
-                    "dmf",
-                    "dmso",
-                    "ether",
-                    "ethylacetate",
-                    "furane",
-                    "hexandecane",
-                    "hexane",
-                    "methanol",
-                    "nitromethane",
-                    "octanol",
-                    "woctanol",
-                    "phenol",
-                    "toluene",
-                    "thf",
-                    "water",
-                ],
-                "default": 0,
-                "order": 6.0,
-            },
-            "method": {
-                "type": "stringList",
-                "label": "Method",
-                "values": methods,
-                "default": methods[-1],
-                "order": 7.0,
-            },
-            "opt_lvl": {
-                "type": "stringList",
-                "label": "Optimization level (xtb only)",
-                "values": [
-                    "crude",
-                    "sloppy",
-                    "loose",
-                    "lax",
-                    "normal",
-                    "tight",
-                    "vtight",
-                    "extreme",
-                ],
-                "default": 4,
-                "order": 8.0,
-            },
-            "xtb_opts": {
-                "type": "string",
-                "label": "Extra command line options for xtb (separate with ;)",
-                "default": "",
-                "order": 9.0,
-            },
-            "crest_opts": {
-                "type": "string",
-                "label": "Extra command line options for CREST (separate with ;)",
-                "default": "",
-                "order": 10.0,
-            },
-            "warning": {
-                "type": "text",
-                "label": "Note",
-                "default": "Some changes here will only affect other\ndialogs after restarting Avogadro!",
-                "order": 12.0,
-            },
-        }
+        "energy_units": {
+            "type": "stringList",
+            "label": "Preferred energy units",
+            "values": ["kJ/mol", "kcal/mol"],
+            "default": 0,
+            "order": 5.0,
+        },
+        "solvent": {
+            "type": "stringList",
+            "label": "Solvation",
+            "values": [
+                "none",
+                "acetone",
+                "acetonitrile",
+                "aniline",
+                "benzaldehyde",
+                "benzene",
+                "ch2cl2",
+                "chcl3",
+                "cs2",
+                "dioxane",
+                "dmf",
+                "dmso",
+                "ether",
+                "ethylacetate",
+                "furane",
+                "hexandecane",
+                "hexane",
+                "methanol",
+                "nitromethane",
+                "octanol",
+                "woctanol",
+                "phenol",
+                "toluene",
+                "thf",
+                "water",
+            ],
+            "default": 0,
+            "order": 6.0,
+        },
+        "method": {
+            "type": "stringList",
+            "label": "Method",
+            "values": methods,
+            "default": methods[-1],
+            "order": 7.0,
+        },
+        "opt_lvl": {
+            "type": "stringList",
+            "label": "Optimization level (xtb only)",
+            "values": [
+                "crude",
+                "sloppy",
+                "loose",
+                "lax",
+                "normal",
+                "tight",
+                "vtight",
+                "extreme",
+            ],
+            "default": 4,
+            "order": 8.0,
+        },
+        "xtb_opts": {
+            "type": "string",
+            "label": "Extra command line options for xtb (separate with ;)",
+            "default": "",
+            "order": 9.0,
+        },
+        "crest_opts": {
+            "type": "string",
+            "label": "Extra command line options for CREST (separate with ;)",
+            "default": "",
+            "order": 10.0,
+        },
+        "warning": {
+            "type": "text",
+            "label": "Note",
+            "default": "Some changes here will only affect other\ndialogs after restarting Avogadro!",
+            "order": 12.0,
+        },
     }
     # Populate with any values found in user config
-    for option in options["userOptions"].keys():
+    for option in user_options.keys():
         if easyxtb.config.get(option) is not None:
             if option in ["xtb_opts", "crest_opts"]:
                 opts_dict = easyxtb.config[option]
                 opts_string = convert_options(opts_dict=opts_dict)[0]
-                options["userOptions"][option]["default"] = opts_string
+                user_options[option]["default"] = opts_string
             else:
-                options["userOptions"][option]["default"] = easyxtb.config[option]
-    return options
+                user_options[option]["default"] = easyxtb.config[option]
+    return user_options
 
 
 def update_config(avo_input: dict) -> dict:
