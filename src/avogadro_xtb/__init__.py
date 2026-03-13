@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 def run(
     avo_input: dict,
     feature: str,
-    **args,  # Ignore anything else
+    **args,  # Anything else
 ) -> dict:
     """Run the function corresponding to the selected feature."""
     match feature:
@@ -44,7 +44,7 @@ def run(
             output = open_xtb_docs(avo_input)
         case "config":
             from .config import get_config_options, update_config
-            if args.user_options:
+            if args["user_options"]:
                 options = get_config_options()
                 output = {"userOptions": options}
             else:
