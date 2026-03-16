@@ -3,6 +3,7 @@ name = "avogadro-xtb"
 version = "0.11.0"
 description = "A convenient interface to xtb in Avogadro 2"
 readme = "README.md"
+license = "BSD-3-Clause"
 authors = [
     { name = "Matthew Milner", email = "matterhorn103@proton.me" }
 ]
