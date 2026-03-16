@@ -57,12 +57,6 @@ def get_config_options() -> dict:
             "default": str(easyxtb.XTB.path),
             "order": 1.0,
         },
-        "crest_bin": {
-            "type": "filePath",
-            "label": "Location of the CREST binary",
-            "default": str(easyxtb.CREST.path),
-            "order": 2.0,
-        },
         "user_dir": {
             "type": "string",
             "label": "Run calculations in",
@@ -125,7 +119,7 @@ def get_config_options() -> dict:
         },
         "opt_lvl": {
             "type": "stringList",
-            "label": "Optimization level (xtb only)",
+            "label": "Optimization level",
             "values": [
                 "crude",
                 "sloppy",
@@ -145,12 +139,6 @@ def get_config_options() -> dict:
             "default": "",
             "order": 9.0,
         },
-        "crest_opts": {
-            "type": "string",
-            "label": "Extra command line options for CREST (separate with ;)",
-            "default": "",
-            "order": 10.0,
-        },
         "warning": {
             "type": "text",
             "label": "Note",
@@ -161,10 +149,15 @@ def get_config_options() -> dict:
     # Populate with any values found in user config
     for option in user_options.keys():
         if easyxtb.config.get(option) is not None:
-            if option in ["xtb_opts", "crest_opts"]:
+            if option in ["xtb_opts"]:
                 opts_dict = easyxtb.config[option]
                 opts_string = convert_options(opts_dict=opts_dict)[0]
                 user_options[option]["default"] = opts_string
+            elif option in ["energy_units", "solvent", "opt_lvl"]:
+                # String lists need to have the string converted to an integer
+                # (Except method, which is stored as the integer i in GFNi-xTB)
+                str_list: list[str] = user_options[option]["values"]
+                user_options[option]["default"] = str_list.index(easyxtb.config[option])
             else:
                 user_options[option]["default"] = easyxtb.config[option]
     return user_options
@@ -176,14 +169,16 @@ def update_config(avo_input: dict) -> dict:
     # We don't want anything about the current file itself to change
     output = {"cjson": avo_input["cjson"]}
 
+    options = avo_input["options"]
+
     # Replace any string none with actual Python None
-    for k, v in avo_input.items():
+    for k, v in options.items():
         if v == "none" or v == "None":
-            avo_input[k] = None
+            options[k] = None
 
     # Save change to user_dir if there has been one
-    if avo_input["user_dir"] != str(easyxtb.CALCS_DIR):
-        easyxtb.CALCS_DIR = Path(avo_input["user_dir"])
+    if options["user_dir"] != str(easyxtb.CALCS_DIR):
+        easyxtb.CALCS_DIR = Path(options["user_dir"])
         easyxtb.TEMP_DIR = easyxtb.CALCS_DIR / "last"
         try:
             easyxtb.TEMP_DIR.mkdir(parents=True, exist_ok=True)
@@ -192,29 +187,24 @@ def update_config(avo_input: dict) -> dict:
         easyxtb.config["calcs_dir"] = str(easyxtb.CALCS_DIR.as_posix())
 
     # Save any changes to binary paths
-    for program in ["xtb", "crest"]:
-        if not avo_input[f"{program}_bin"]:
+    for program in ["xtb"]:
+        if not options[f"{program}_bin"]:
             pass
-        elif avo_input[f"{program}_bin"] != str():
-            bin_path = Path(avo_input[f"{program}_bin"])
-            if program == "crest":
-                easyxtb.CREST.path = bin_path
-            else:
-                easyxtb.XTB.path = bin_path
+        elif options[f"{program}_bin"] != str():
+            bin_path = Path(options[f"{program}_bin"])
+            easyxtb.XTB.path = bin_path
             easyxtb.config[f"{program}_bin"] = str(bin_path.as_posix())
 
     # Update other options that don't need coercing
     for option in ["n_proc", "energy_units", "solvent", "opt_lvl"]:
-        easyxtb.config[option] = avo_input[option]
+        easyxtb.config[option] = options[option]
 
     # Update method
-    easyxtb.config["method"] = methods.index(avo_input["method"])
+    easyxtb.config["method"] = methods.index(options["method"])
 
     # Update extra options for xtb and crest
-    xtb_opts_string = convert_options(opts_string=avo_input["xtb_opts"])[1]
-    crest_opts_string = convert_options(opts_string=avo_input["crest_opts"])[1]
+    xtb_opts_string = convert_options(opts_string=options["xtb_opts"])[1]
     easyxtb.config["xtb_opts"] = xtb_opts_string
-    easyxtb.config["crest_opts"] = crest_opts_string
 
     easyxtb.configuration.save_config()
 

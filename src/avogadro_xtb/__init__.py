@@ -62,7 +62,7 @@ def run(
 
 def main():
     """Entry point for the plugin."""
-
+    logger.debug("CLI input: " + " ".join(sys.argv))
     parser = argparse.ArgumentParser()
     # It is planned to offer multiple feature types in future
     # When the args for each feature differ, we have to delegate to subparsers
@@ -89,9 +89,11 @@ def main():
     subparsers.add_parser("docs-xtb", parents=[common])
 
     args = parser.parse_args()
+    logger.debug(f"Parsed args: {str(args)}")
 
     # Read (initial) input from Avogadro
     avo_input = json.loads(sys.stdin.read())
+    logger.debug(f"The following JSON object was received from Avogadro: {avo_input}")
 
     try:
         output = run(avo_input, **vars(args))
@@ -103,4 +105,4 @@ def main():
         raise e
 
     print(json.dumps(output))
-    logger.debug(f"The following dictionary was passed back to Avogadro: {output}")
+    logger.debug(f"The following JSON object was passed back to Avogadro: {output}")
