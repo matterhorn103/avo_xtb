@@ -84,12 +84,12 @@ def opt(avo_input: dict, ohess: bool) -> dict:
     # Run calculation
     logger.debug("The plugin is requesting a geometry optimization")
     if ohess:
-        calc = easyxtb.Calculation.opt(
+        calc = easyxtb.Calculation.ohess(
             geom,
             options=easyxtb.config["xtb_opts"],
         )
     else:
-        calc = easyxtb.Calculation.ohess(
+        calc = easyxtb.Calculation.opt(
             geom,
             options=easyxtb.config["xtb_opts"],
         )
