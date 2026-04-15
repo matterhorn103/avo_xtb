@@ -1,6 +1,6 @@
 [project]
 name = "avogadro-xtb"
-version = "0.11.0"
+version = "0.11.1"
 description = "A convenient interface to xtb in Avogadro 2"
 readme = "README.md"
 license = "BSD-3-Clause"
