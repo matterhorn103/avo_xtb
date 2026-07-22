@@ -38,7 +38,7 @@ def win():
         return
 
     print(f"Downloading archive from {XTB_BIN_URL_WINDOWS}")
-    archive, message = urllib.request.urlretrieve(XTB_BIN_URL_WINDOWS)
+    archive, _message = urllib.request.urlretrieve(XTB_BIN_URL_WINDOWS)
     print("Download complete")
     with open(archive, "rb") as f:
         contents = f.read()
@@ -63,44 +63,9 @@ def win():
     print(f"               to {bin_path}")
 
 
-def linux():
-    """Set up things appropriately on Linux by installing an xtb binary from GitHub."""
-
-    # Only need to do this for Pixi installs, as otherwise the user is responsible for sourcing xtb
-    # themselves
-    if PIXI_PROJECT_ROOT is None:
-        print("Not a pixi project – aborting")
-        return
-
-    print(f"Downloading archive from {XTB_BIN_URL_LINUX}")
-    archive, message = urllib.request.urlretrieve(XTB_BIN_URL_LINUX)
-    print("Download complete")
-    with open(archive, "rb") as f:
-        contents = f.read()
-        hash = hashlib.sha256()
-        hash.update(contents)
-        print("SHA256 hash of downloaded archive:", hash.hexdigest())
-        print("Expected SHA256 hash:             ", XTB_HASH_LINUX)
-        success = hash.hexdigest() == XTB_HASH_LINUX
-        if not success:
-            print("Hashes do not match – aborting")
-            return
-
-    pixi_root = Path(PIXI_PROJECT_ROOT)
-    bin_dir = pixi_root / ".pixi/envs/default/bin"
-    print(f"Unpacking archive to {bin_dir}")
-    shutil.unpack_archive(archive, bin_dir, "xztar")
-    # Create a link
-    bin_path = bin_dir / XTB_TREE_PATH_LINUX
-    link_path = bin_dir / "xtb"
-    (link_path).hardlink_to(bin_path)
-    print(f"Created a link at {link_path}")
-    print(f"               to {bin_path}")
-
-
 def setup():
     """Run setup, which should only actually do anything on Windows."""
     if platform.system() == "Windows":
         win()
     else:
-        linux()
+        pass
