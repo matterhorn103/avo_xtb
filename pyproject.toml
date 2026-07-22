@@ -33,8 +33,14 @@ platforms = ["linux-64", "linux-aarch64", "osx-64", "osx-arm64", "win-64"]
 [tool.pixi.pypi-dependencies]
 avogadro-xtb = { path = ".", editable = true }
 
-[tool.pixi.dependencies]
-#xtb = ">=6.7.0"
+[tool.pixi.target.linux.dependencies]
+xtb = ">=6.7.0"
+
+[tool.pixi.target.osx.dependencies]
+xtb = ">=6.7.0"
+
+[tool.pixi.target.win.dependencies]
+# xtb = ">=6.7.0" # Broken! Installed manually using setup script instead
 
 [tool.pixi.tasks]
 
